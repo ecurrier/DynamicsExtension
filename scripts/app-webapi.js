@@ -16,11 +16,8 @@
                 fetchChildAttributeMetadata(entityName, "Status"),
             ]);
 
-            chrome.runtime.sendMessage(document.getElementById("extension-id").value, {
-                category: category,
-                command: "populateAttributeMetadata",
-                data: [attributeMetadata.Attributes, picklistMetadata.value.concat(stateMetadata.value).concat(statusMetadata.value), booleanMetadata.value],
-            });
+            const data = [attributeMetadata.Attributes, picklistMetadata.value.concat(stateMetadata.value).concat(statusMetadata.value), booleanMetadata.value];
+            EMC.App.Global.sendExtensionMessage("populateAttributeMetadata", data, category);
         }
 
         async function fetchAttributeMetadata(entityName) {
@@ -52,14 +49,11 @@
 
             var response = await Xrm.WebApi.updateRecord(entityName, entityId, payload);
             if (!response || !response.entityType) {
+                EMC.App.Global.sendExtensionMessage("displayNotification", { sucess: false, text: "Error occurred" });
                 return;
             }
 
-            chrome.runtime.sendMessage(document.getElementById("extension-id").value, {
-                category: "Global",
-                command: "displayNotification",
-                data: { sucess: true, text: "Update successful" },
-            });
+            EMC.App.Global.sendExtensionMessage("displayNotification", { sucess: true, text: "Update complete" });
         }
 
         return {

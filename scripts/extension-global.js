@@ -39,11 +39,13 @@
         }
 
         function showLoadingIndicator(display = true) {
-            display ? $('.loading-container').show() : $('.loading-container').hide();
+            display ? $(".loading-container").show() : $(".loading-container").hide();
         }
 
         function displayNotification(response) {
-            
+            $(".toast-header-message").text(response.success ? "Action Failed" : "Action Successful");
+            $(".toast-body-message").text(response.text);
+            $("#toast-notification").toast("show");
         }
 
         function getEntitySetName(logicalName) {
@@ -64,6 +66,7 @@
             executeChromeScript: executeChromeScript,
             getEntitySetName: getEntitySetName,
             showLoadingIndicator: showLoadingIndicator,
+            displayNotification: displayNotification,
         };
     })();
 })(this);
