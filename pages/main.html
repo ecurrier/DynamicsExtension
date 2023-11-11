@@ -1,0 +1,215 @@
+<html lang="en">
+    <head>
+        <script type="text/javascript" src="../scripts/jquery.min.js"></script>
+        <script type="text/javascript" src="../scripts/bootstrap.bundle.min.js"></script>
+        <script type="text/javascript" src="../scripts/extension-global.js"></script>
+        <script type="text/javascript" src="../scripts/extension-utilities.js"></script>
+        <script type="text/javascript" src="../scripts/extension-webapi.js"></script>
+        <link rel="stylesheet" href="../styles/bootstrap.min.css" />
+        <link rel="stylesheet" href="../styles/styles.css" />
+    </head>
+    <body>
+        <div class="loading-container overlay">
+            <div class="d-flex justify-content-center">
+                <div class="spinner-border text-primary" role="status">
+                </div>
+            </div>
+        </div>
+        <!-- MAIN CONTAINER -->
+        <main id="main-page-content">
+            <div class="container">
+                <!-- TABS -->
+                <ul class="nav nav-pills nav-fill" id="pills-tab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button
+                            class="nav-link active"
+                            id="utilities-tab"
+                            data-bs-toggle="pill"
+                            data-bs-target="#utilities-content"
+                            type="button"
+                            role="tab"
+                            aria-controls="utilities-content"
+                            aria-selected="true"
+                        >
+                            Utilities
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button
+                            class="nav-link"
+                            id="templates-tab"
+                            data-bs-toggle="pill"
+                            data-bs-target="#templates-content"
+                            type="button"
+                            role="tab"
+                            aria-controls="templates-content"
+                            aria-selected="false"
+                        >
+                            Templates
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button
+                            class="nav-link"
+                            id="webapi-tab"
+                            data-bs-toggle="pill"
+                            data-bs-target="#webapi-content"
+                            type="button"
+                            role="tab"
+                            aria-controls="webapi-content"
+                            aria-selected="false"
+                        >
+                            Web API
+                        </button>
+                    </li>
+                </ul>
+                <!-- END TABS -->
+                <!-- PAGE CONTENT -->
+                <div class="tab-content" id="pills-tabContent">
+                    <!-- UTILTIES -->
+                    <div class="tab-pane fade show active" id="utilities-content" role="tabpanel" aria-labelledby="utilities-tab">
+                        <div class="container">
+                            <div class="row text-center">
+                                <div class="col d-grid">
+                                    <button type="button" class="btn btn-outline-primary" data-function-name="refreshCommandBar">Refresh Command Bar</button>
+                                </div>
+                                <div class="col d-grid">
+                                    <button type="button" class="btn btn-outline-primary">Primary 1</button>
+                                </div>
+                            </div>
+                            <div class="row text-center">
+                                <div class="col d-grid">
+                                    <button type="button" class="btn btn-outline-primary btn-block">Primary 2</button>
+                                </div>
+                                <div class="col d-grid">
+                                    <button type="button" class="btn btn-outline-primary btn-block">Primary 3</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- END UTILITIES -->
+                    <!-- TEMPLATES -->
+                    <div class="tab-pane fade" id="templates-content" role="tabpanel" aria-labelledby="templates-tab">Main content for templates tab</div>
+                    <!-- END TEMPLATES -->
+                    <!-- WEB API -->
+                    <div class="tab-pane fade" id="webapi-content" role="tabpanel" aria-labelledby="webapi-tab">
+                        <div class="container">
+                            <div class="d-flex align-items-start">
+                                <!-- WEB API NAVIGATION -->
+                                <div class="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                                    <button
+                                        class="nav-link active"
+                                        id="v-pills-update-field-tab"
+                                        data-bs-toggle="pill"
+                                        data-bs-target="#v-pills-update-field"
+                                        type="button"
+                                        role="tab"
+                                        aria-controls="v-pills-update-field"
+                                        aria-selected="true"
+                                    >
+                                        Update Field
+                                    </button>
+                                </div>
+                                <!-- END WEB API NAVIGATION -->
+                                <div class="tab-content" id="v-pills-tabContent">
+                                    <!-- WEB API - UPDATE FIELD -->
+                                    <div class="tab-pane fade show active" id="v-pills-update-field" role="tabpanel" aria-labelledby="v-pills-update-field-tab">
+                                        <div class="container">
+                                            <div class="row text-center">
+                                                <div class="col d-grid">
+                                                    <button type="button" class="btn btn-outline-primary" data-function-name="loadAttributeMetadata">
+                                                        Load Attribute Metadata
+                                                    </button>
+                                                </div>
+                                                <div class="col d-grid d-select-container">
+                                                    <select
+                                                        class="form-select"
+                                                        id="attribute-metadata-selector"
+                                                        aria-label="Attribute Metadata Field List"
+                                                        disabled
+                                                    >
+                                                        <option selected>Select a field to update...</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-1"></div>
+                                            </div>
+                                            <div class="container" id="update-field-inputs-container">
+                                                <div class="row text-center">
+                                                    <div class="embedded-container">
+                                                        <p class="text-start fs-4 fw-bold">Field Attribute Information:</p>
+                                                        <p class="text-start fw-bold no-margin">
+                                                            Display Name: <span class="fw-normal attribute-label" id="field-display-name"></span>
+                                                        </p>
+                                                        <p class="text-start fw-bold no-margin">
+                                                            Logical Name: <span class="fw-normal attribute-label" id="field-logical-name"></span>
+                                                        </p>
+                                                        <p class="text-start fw-bold no-margin">
+                                                            Field Type: <span class="fw-normal attribute-label" id="field-attribute-type"></span>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="embedded-container">
+                                                        <div class="col-8">
+                                                            <div class="mb-3">
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input" type="checkbox" value="" id="update-field-null" />
+                                                                    <label class="form-check-label" for="update-field-null">Clear field?</label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="mb-3 field-input field-input-select-entity">
+                                                                <label for="update-field-select-entity" class="form-label">Table Logical Name</label>
+                                                                <select class="form-select" id="update-field-select-entity" aria-label="Select a table">
+                                                                    <option selected>Select a table...</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="mb-3 field-input field-input-text-singleline">
+                                                                <label for="update-field-text-singleline" class="form-label">...</label>
+                                                                <input type="text" value="" class="form-control" id="update-field-text-singleline" />
+                                                            </div>
+                                                            <div class="mb-3 field-input field-input-text-multiline">
+                                                                <label for="update-field-text-multiline" class="form-label">Enter a value</label>
+                                                                <textarea value="" class="form-control" id="update-field-text-multiline"></textarea>
+                                                            </div>
+                                                            <div class="mb-3 field-input field-input-number">
+                                                                <label for="update-field-number" class="form-label">Enter a number</label>
+                                                                <input type="text" value="" class="form-control" id="update-field-number" />
+                                                            </div>
+                                                            <div class="mb-3 field-input field-input-select-choice">
+                                                                <label for="update-field-select-choice" class="form-label">Choices</label>
+                                                                <select class="form-select" id="update-field-select-choice" aria-label="Select a choice">
+                                                                    <option selected>Select a choice...</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row text-center">
+                                                    <div class="col d-grid">
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-outline-primary"
+                                                            data-function-name="updateField"
+                                                            data-has-parameters="true"
+                                                        >
+                                                            Update Field
+                                                        </button>
+                                                    </div>
+                                                    <div class="col-1"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- END WEB API - UPDATE FIELD -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- END WEB API -->
+                </div>
+            </div>
+        </main>
+    </body>
+</html>
+
+<script type="text/javascript" src="../scripts/extension-main.js"></script>
