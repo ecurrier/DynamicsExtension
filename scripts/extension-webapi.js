@@ -9,6 +9,7 @@
         let tableAttributeMetadata = null;
         let picklistMetadata = null;
         let booleanMetadata = null;
+        let recordValues = null;
 
         const $attributeMetadataSelector = "#attribute-metadata-selector";
 
@@ -27,12 +28,19 @@
             $("#update-field-null").change(disableForm);
         }
 
-        function populateAttributeMetadata(attributeMetadataCollection) {
+        function populateAttributeMetadata(response) {
+            tableAttributeMetadata = response.AttributeMetadata;
+            picklistMetadata = response.PicklistMetadata;
+            booleanMetadata = response.BooleanMetadata;
+            recordValues = response.RecordValues;
+
+            if (response.RefreshForm) {
+                $($attributeMetadataSelector).trigger("change");
+                return;
+            }
+
             $(`${$attributeMetadataSelector} option:not(:first)`).remove();
             $($attributeMetadataSelector).prop("disabled", true);
-            tableAttributeMetadata = attributeMetadataCollection[0];
-            picklistMetadata = attributeMetadataCollection[1];
-            booleanMetadata = attributeMetadataCollection[2];
 
             $.each(tableAttributeMetadata, function (index, attributeMetadata) {
                 $($attributeMetadataSelector).append(
@@ -60,8 +68,12 @@
             }
 
             fieldAttributeMetadata = filteredArray[0];
+            let fieldValue = retrieveRecordValue(fieldLogicalName, fieldAttributeMetadata);
+            if (fieldValue == null) {
+                fieldValue = "-";
+            }
 
-            loadFormFields();
+            loadFormFields(fieldValue);
         }
 
         function resetFormFields() {
@@ -75,18 +87,22 @@
                 $(this).find("option:not(:first)").remove();
                 $(this).prop("disabled", false);
             });
+
+            enableInputs();
         }
 
-        function loadFormFields() {
+        function loadFormFields(fieldValue) {
             $("#field-display-name").text(fieldAttributeMetadata?.DisplayName?.UserLocalizedLabel?.Label);
             $("#field-logical-name").text(fieldAttributeMetadata.LogicalName);
             $("#field-attribute-type").text(fieldAttributeMetadata.AttributeType);
+            $("#field-attribute-value").text(fieldValue);
 
             switch (fieldAttributeMetadata.AttributeType) {
                 case "Money":
                 case "Integer":
                 case "BigInt":
                 case "Double":
+                case "Decimal":
                     $(".field-input-number").show();
                     break;
                 case "String":
@@ -189,9 +205,46 @@
 
         function disableForm() {
             const disabled = $(this).prop("checked");
-            $(".field-input select").prop("disabled", disabled);
-            $(".field-input input").prop("disabled", disabled);
-            $(".field-input textarea").prop("disabled", disabled);
+            enableInputs(disabled);
+        }
+
+        function enableInputs(disable = false) {
+            $(".field-input select").prop("disabled", disable);
+            $(".field-input input").prop("disabled", disable);
+            $(".field-input textarea").prop("disabled", disable);
+        }
+
+        function retrieveRecordValue(fieldLogicalName, attributeMetadata) {
+            switch (attributeMetadata.AttributeType) {
+                case "Money":
+                case "Integer":
+                case "BigInt":
+                case "Double":
+                case "Decimal":
+                case "String":
+                case "Memo":
+                    return recordValues[fieldLogicalName];
+                case "DateTime":
+                    return recordValues[fieldLogicalName];
+                case "Lookup":
+                case "Owner":
+                case "Customer":
+                    let value = recordValues[`_${fieldLogicalName}_value`];
+                    if (value == null) {
+                        return null;
+                    }
+
+                    return `${recordValues[`${fieldLogicalName}${EMC.Extension.Global.ODataFormattedValueKeys.DisplayValue}`]} (${
+                        recordValues[`${fieldLogicalName}${EMC.Extension.Global.ODataFormattedValueKeys.LogicalName}`]
+                    })`;
+                case "Boolean":
+                case "Picklist":
+                case "State":
+                case "Status":
+                    return recordValues[`${fieldLogicalName}${EMC.Extension.Global.ODataFormattedValueKeys.DisplayValue}`];
+                default:
+                    return null;
+            }
         }
 
         function sendUpdateRequest() {
@@ -199,14 +252,19 @@
             let payload = {};
 
             const clearField = $("#update-field-null").prop("checked");
+            if (!validateInput(clearField)) {
+                EMC.Extension.Global.displayNotification({ success: false, text: "Please populate the required fields" });
+                return;
+            }
 
             switch (fieldAttributeMetadata.AttributeType) {
                 case "Money":
                 case "Integer":
                 case "BigInt":
                 case "Double":
+                case "Decimal":
                     const numberValue = $(".field-input-number input").val();
-                    payload[fieldLogicalName] = clearField ? "null" : numberValue;
+                    payload[fieldLogicalName] = clearField ? "null" : parseInt(numberValue);
                     break;
                 case "String":
                     const stringValue = $(".field-input-text-singleline input").val();
@@ -229,20 +287,74 @@
                         : `/${EMC.Extension.Global.getEntitySetName(selectEntityValue)}(${guidValue})`;
                     break;
                 case "Picklist":
-                case "Boolean":
                 case "State":
                 case "Status":
                     const selectChoiceValue = $(".field-input-select-choice select").val();
                     payload[fieldLogicalName] = clearField ? "null" : selectChoiceValue;
+                    break;
+                case "Boolean":
+                    const booleanChoiceValue = $(".field-input-select-choice select").val();
+                    payload[fieldLogicalName] = clearField ? "null" : parseBoolean(booleanChoiceValue);
                     break;
             }
 
             EMC.Extension.Global.executeChromeScript($(this).attr("data-function-name"), category, payload);
         }
 
+        function validateInput(clearField) {
+            if (clearField) {
+                return true;
+            }
+
+            let value = null;
+
+            switch (fieldAttributeMetadata.AttributeType) {
+                case "Money":
+                case "Integer":
+                case "BigInt":
+                case "Double":
+                case "Decimal":
+                    value = $(".field-input-number input").val();
+                    break;
+                case "String":
+                case "DateTime":
+                    value = $(".field-input-text-singleline input").val();
+                    break;
+                case "Memo":
+                    value = $(".field-input-text-multiline textarea").val();
+                    break;
+                case "Lookup":
+                case "Owner":
+                case "Customer":
+                    value = $(".field-input-text-singleline input").val();
+                    break;
+                case "Picklist":
+                case "Boolean":
+                case "State":
+                case "Status":
+                    value = $(".field-input-select-choice select").val();
+                    break;
+            }
+
+            if (value === "Select a choice..." || value == null || value.length === 0) {
+                return false;
+            }
+
+            return true;
+        }
+
+        function parseBoolean(text) {
+            return text === "1" ? true : false;
+        }
+
+        function refreshForm() {
+            EMC.Extension.Global.executeChromeScript("loadAttributeMetadata", category, true);
+        }
+
         return {
             executeOnLoad: executeOnLoad,
             populateAttributeMetadata: populateAttributeMetadata,
+            refreshForm: refreshForm,
         };
     })();
 })(this);

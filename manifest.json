@@ -1,13 +1,13 @@
 {
     "manifest_version": 3,
-    "name": "Level Up Remastered",
+    "name": "Power Up",
     "version": "1.0",
-    "description": "Provides custom functionality for Dynamics 365/Power Platform",
+    "description": "Boost productivity & streamline workflows on Power Platform/Dynamics 365. Custom functionality & quality-of-life features.",
     "icons": {
-        "16": "images/icon-16.png",
-        "32": "images/icon-32.png",
-        "48": "images/icon-48.png",
-        "128": "images/icon-128.png"
+        "16": "images/powerup2-16.png",
+        "32": "images/powerup2-32.png",
+        "48": "images/powerup2-48.png",
+        "128": "images/powerup2-128.png"
     },
     "background": {
         "service_worker": "scripts/extension-service.js",
@@ -22,7 +22,7 @@
         }
     ],
     "action": {
-        "default_title": "TO-DO: NAME",
+        "default_title": "Power Up",
         "default_popup": "pages/main.html"
     },
     "web_accessible_resources": [

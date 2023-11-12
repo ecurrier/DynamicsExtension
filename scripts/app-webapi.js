@@ -6,7 +6,7 @@
     global.EMC.App.WebAPI = (function () {
         const category = "WebAPI";
 
-        async function loadAttributeMetadata() {
+        async function loadAttributeMetadata(refreshForm = false) {
             const entityName = Xrm.Page.data.entity.getEntityName();
             const [attributeMetadata, picklistMetadata, booleanMetadata, stateMetadata, statusMetadata] = await Promise.all([
                 fetchAttributeMetadata(entityName),
@@ -16,8 +16,27 @@
                 fetchChildAttributeMetadata(entityName, "Status"),
             ]);
 
-            const data = [attributeMetadata.Attributes, picklistMetadata.value.concat(stateMetadata.value).concat(statusMetadata.value), booleanMetadata.value];
+            const recordValues = await retrieveRecordValues(entityName);
+            const data = {
+                AttributeMetadata: attributeMetadata.Attributes,
+                PicklistMetadata: picklistMetadata.value.concat(stateMetadata.value).concat(statusMetadata.value),
+                BooleanMetadata: booleanMetadata.value,
+                RecordValues: recordValues,
+                RefreshForm: refreshForm,
+            };
+
             EMC.App.Global.sendExtensionMessage("populateAttributeMetadata", data, category);
+        }
+
+        async function retrieveRecordValues(entityName) {
+            const entityId = Xrm.Page.data.entity.getId();
+
+            const response = await Xrm.WebApi.retrieveRecord(entityName, entityId);
+            if (!response) {
+                return;
+            }
+
+            return response;
         }
 
         async function fetchAttributeMetadata(entityName) {
@@ -47,12 +66,20 @@
                 payload[Object.keys(payload)[0]] = null;
             }
 
-            var response = await Xrm.WebApi.updateRecord(entityName, entityId, payload);
+            let response = null;
+            try {
+                response = await Xrm.WebApi.updateRecord(entityName, entityId, payload);
+            } catch (error) {
+                EMC.App.Global.sendExtensionMessage("displayNotification", { sucess: false, text: `Error occurred: ${error.message}` });
+                return;
+            }
+
             if (!response || !response.entityType) {
                 EMC.App.Global.sendExtensionMessage("displayNotification", { sucess: false, text: "Error occurred" });
                 return;
             }
 
+            EMC.App.Global.sendExtensionMessage("refreshForm", null, "WebAPI");
             EMC.App.Global.sendExtensionMessage("displayNotification", { sucess: true, text: "Update complete" });
         }
 

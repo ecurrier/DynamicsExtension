@@ -4,6 +4,11 @@
     global.EMC = global.EMC || {};
     global.EMC.Extension = global.EMC.Extension || {};
     global.EMC.Extension.Global = (function () {
+        const ODataFormattedValueKeys = {
+            DisplayValue: "@OData.Community.Display.V1.FormattedValue",
+            LogicalName: "@Microsoft.Dynamics.CRM.lookuplogicalname",
+        };
+
         let activeTabId = null;
 
         function executeOnLoad() {
@@ -63,6 +68,7 @@
 
         return {
             executeOnLoad: executeOnLoad,
+            ODataFormattedValueKeys: ODataFormattedValueKeys,
             executeChromeScript: executeChromeScript,
             getEntitySetName: getEntitySetName,
             showLoadingIndicator: showLoadingIndicator,
