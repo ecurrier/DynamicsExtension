@@ -2,10 +2,13 @@
     <head>
         <script type="text/javascript" src="../scripts/jquery.min.js"></script>
         <script type="text/javascript" src="../scripts/bootstrap.bundle.min.js"></script>
+        <script type="text/javascript" src="../scripts/jsoneditor.min.js"></script>
         <script type="text/javascript" src="../scripts/extension-global.js"></script>
         <script type="text/javascript" src="../scripts/extension-utilities.js"></script>
+        <script type="text/javascript" src="../scripts/extension-templates.js"></script>
         <script type="text/javascript" src="../scripts/extension-webapi.js"></script>
         <link rel="stylesheet" href="../styles/bootstrap.min.css" />
+        <link rel="stylesheet" href="../styles/jsoneditor.min.css" />
         <link rel="stylesheet" href="../styles/styles.css" />
     </head>
     <body>
@@ -103,14 +106,78 @@
                     </div>
                     <!-- END UTILITIES -->
                     <!-- TEMPLATES -->
-                    <div class="tab-pane fade" id="templates-content" role="tabpanel" aria-labelledby="templates-tab">Main content for templates tab</div>
+                    <div class="tab-pane fade" id="templates-content" role="tabpanel" aria-labelledby="templates-tab">
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-7 d-grid d-select-container file-selector">
+                                    <select class="form-select" id="template-file-selector" aria-label="Template File Selector">
+                                        <option selected>Select a template...</option>
+                                    </select>
+                                </div>
+                                <div class="col-2 align-left no-margin no-padding directory-selector">
+                                    <button type="button" class="btn btn-primary" id="folder-selector-button">Select Folder</button>
+                                    <label for="folder-selector" class="hidden">...</label>
+                                    <input class="form-control hidden" type="file" id="folder-selector" webkitdirectory />
+                                </div>
+                                <div class="col-3 content-center">
+                                    <div class="dropdown">
+                                        <button
+                                            class="btn btn-primary dropdown-toggle"
+                                            type="button"
+                                            id="dropdownMenu2"
+                                            data-bs-toggle="dropdown"
+                                            aria-haspopup="true"
+                                            aria-expanded="false"
+                                        >
+                                            Actions
+                                        </button>
+                                        <div class="dropdown-menu" aria-labelledby="dropdownMenu2">
+                                            <button class="dropdown-item" type="button">Apply Template</button>
+                                            <hr class="dropdown-divider" />
+                                            <button class="dropdown-item" type="button">Save New Template</button>
+                                            <button class="dropdown-item" type="button">Save to Existing</button>
+                                            <hr class="dropdown-divider" />
+                                            <button class="dropdown-item" type="button">Export Template</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="" id="show-template-editor" />
+                                        <label class="form-check-label" for="show-template-editor">Show JSON Editor?</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="template-preview-container">
+                                <div class="row">
+                                    <div class="row no-padding-top">
+                                        <div class="col-8">
+                                            <span>JSON Previewer/Editor</span>
+                                        </div>
+                                        <div class="col-4 content-right">
+                                            <button type="button" class="btn btn-xs btn-primary" id="update-template-json">Update JSON</button>
+                                        </div>
+                                    </div>
+                                    <!-- JSON EDITOR -->
+                                    <div class="row no-padding-top" style="max-height: 375px">
+                                        <div class="template-editor-container">
+                                            <div id="template-json-editor"></div>
+                                        </div>
+                                    </div>
+                                    <!-- END JSON EDITOR -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <!-- END TEMPLATES -->
                     <!-- WEB API -->
                     <div class="tab-pane fade" id="webapi-content" role="tabpanel" aria-labelledby="webapi-tab">
-                        <div class="container">
+                        <div>
                             <div class="d-flex align-items-start">
                                 <!-- WEB API NAVIGATION -->
-                                <div class="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                                <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
                                     <button
                                         class="nav-link active"
                                         id="v-pills-update-field-tab"

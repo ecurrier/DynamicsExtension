@@ -141,7 +141,7 @@
                 return;
             }
 
-            var options = tableLogicalNames.map(function (tableLogicalName) {
+            const options = tableLogicalNames.map(function (tableLogicalName) {
                 return {
                     value: tableLogicalName,
                     text: tableLogicalName,

@@ -17,7 +17,15 @@ main .container {
 }
 
 .d-grid button {
-    margin: 20px 20px 0px 20px;
+    margin: 0px 20px 0px 20px;
+}
+
+.btn-group-xs > .btn,
+.btn-xs {
+    padding: 0.25rem 0.4rem;
+    font-size: 0.875rem;
+    line-height: 0.8;
+    border-radius: 0.2rem;
 }
 
 #pills-tab .nav-item:not(:last-child) {
@@ -32,12 +40,40 @@ main .container {
     width: 100%;
 }
 
-.d-select-container {
-    margin-top: 20px;
+.tab-pane .container {
+    padding-left: 20px;
+}
+
+.tab-pane .container .row {
+    padding-top: 20px;
 }
 
 .no-margin {
-    margin: 0;
+    margin: 0 !important;
+}
+
+.no-padding {
+    padding: 0 !important;
+}
+
+.no-padding-top {
+    padding-top: 0 !important;
+}
+
+.align-left {
+    float: left;
+}
+
+.content-right {
+    text-align: right;
+}
+
+.content-center {
+    text-align: center;
+}
+
+.hidden {
+    display: none;
 }
 
 #update-field-inputs-container {
@@ -65,4 +101,19 @@ main .container {
     width: 3rem;
     height: 3rem;
     z-index: 20;
+}
+
+.file-selector {
+    padding-right: 0;
+}
+
+.template-preview-container {
+    display: none;
+}
+
+.template-editor-container {
+    padding: 0px 10px 10px 10px;
+}
+
+#template-json-editor {
 }
