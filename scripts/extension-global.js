@@ -54,7 +54,7 @@
         }
 
         function displayNotification(response) {
-            $(".toast-header-message").text(response.success ? "Action Failed" : "Action Successful");
+            $(".toast-header-message").text(response.success ? "Action Successful" : "Action Failed");
             $(".toast-body-message").text(response.text);
             $("#toast-notification").toast("show");
         }

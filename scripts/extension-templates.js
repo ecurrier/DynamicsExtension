@@ -55,13 +55,9 @@
                 return;
             }
 
-            const json = jsonEditor.get();
-            const templateJson = {
-                templateName: templateName,
-                fields: json,
-            };
-
+            const templateJson = generateTemplateJSON();
             const jsonGuid = currentTemplateId !== null ? currentTemplateId : EMC.Extension.Global.generateGuid();
+
             const syncStorageValue = {};
             syncStorageValue[jsonGuid] = templateJson;
 
@@ -89,12 +85,7 @@
         }
 
         function exportCurrentTemplate() {
-            const templateName = $($templateNameInput).val();
-            const json = jsonEditor.get();
-            const templateJson = {
-                templateName: templateName,
-                fields: json,
-            };
+            const templateJson = generateTemplateJSON();
 
             const jsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(templateJson));
             let $exportTemplateAnchor = $("#export-template-anchor");
@@ -140,6 +131,16 @@
                 sortObjectKeys: true,
             };
             jsonEditor = new JSONEditor(container, options);
+        }
+
+        function generateTemplateJSON(templateName = null, fieldsJson = null) {
+            const name = templateName === null ? $($templateNameInput).val() : templateName;
+            const fields = fieldsJson === null ? jsonEditor.get() : fieldsJson;
+
+            return {
+                templateName: name,
+                fields: fields,
+            };
         }
 
         async function retrieveSavedTemplates() {
