@@ -109,17 +109,12 @@
                     <div class="tab-pane fade" id="templates-content" role="tabpanel" aria-labelledby="templates-tab">
                         <div class="container">
                             <div class="row">
-                                <div class="col-7 d-grid d-select-container file-selector">
+                                <div class="col-8 d-grid d-select-container file-selector">
                                     <select class="form-select" id="template-file-selector" aria-label="Template File Selector">
-                                        <option selected>Select a template...</option>
+                                        <option value="" selected disabled>Select a template...</option>
                                     </select>
                                 </div>
-                                <div class="col-2 align-left no-margin no-padding directory-selector">
-                                    <button type="button" class="btn btn-primary" id="folder-selector-button">Select Folder</button>
-                                    <label for="folder-selector" class="hidden">...</label>
-                                    <input class="form-control hidden" type="file" id="folder-selector" webkitdirectory />
-                                </div>
-                                <div class="col-3 content-center">
+                                <div class="col-4 content-center">
                                     <div class="dropdown">
                                         <button
                                             class="btn btn-primary dropdown-toggle"
@@ -132,32 +127,31 @@
                                             Actions
                                         </button>
                                         <div class="dropdown-menu" aria-labelledby="dropdownMenu2">
-                                            <button class="dropdown-item" type="button">Apply Template</button>
+                                            <button class="dropdown-item" type="button" data-function-name="generateNewTemplate">Generate New Template</button>
+                                            <button class="dropdown-item" type="button" id="applyCurrentTemplate">Apply Template</button>
                                             <hr class="dropdown-divider" />
-                                            <button class="dropdown-item" type="button">Save New Template</button>
-                                            <button class="dropdown-item" type="button">Save to Existing</button>
+                                            <button class="dropdown-item" type="button" id="saveCurrentTemplate">Save Template</button>
+                                            <button class="dropdown-item" type="button" id="deleteCurrentTemplate">Delete Template</button>
                                             <hr class="dropdown-divider" />
-                                            <button class="dropdown-item" type="button">Export Template</button>
+                                            <button class="dropdown-item" type="button" id="exportCurrentTemplate">Export Template</button>
+                                            <a id="export-template-anchor" style="display: none"></a>
+                                            <button class="dropdown-item" type="button" id="importTemplate">Import Template</button>
+                                            <input type="file" id="import-template-file" style="display: none" />
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" value="" id="show-template-editor" />
-                                        <label class="form-check-label" for="show-template-editor">Show JSON Editor?</label>
                                     </div>
                                 </div>
                             </div>
                             <div class="template-preview-container">
                                 <div class="row">
                                     <div class="row no-padding-top">
-                                        <div class="col-8">
+                                        <div class="col-6">
                                             <span>JSON Previewer/Editor</span>
                                         </div>
-                                        <div class="col-4 content-right">
-                                            <button type="button" class="btn btn-xs btn-primary" id="update-template-json">Update JSON</button>
+                                        <div class="col-6">
+                                            <div class="mb-3 field-input">
+                                                <label for="input-template-name" class="form-label">Template Name</label>
+                                                <input type="text" value="" class="form-control" id="input-template-name" />
+                                            </div>
                                         </div>
                                     </div>
                                     <!-- JSON EDITOR -->

@@ -15,6 +15,7 @@ injectScript("scripts/app-dispatcher.js");
 injectScript("scripts/app-constants.js");
 injectScript("scripts/app-global.js");
 injectScript("scripts/app-utilities.js");
+injectScript("scripts/app-templates.js");
 injectScript("scripts/app-webapi.js");
 
 function injectHiddenAttribute(id, val) {
