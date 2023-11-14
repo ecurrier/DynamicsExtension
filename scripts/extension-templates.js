@@ -25,11 +25,10 @@
                 EMC.Extension.Global.executeChromeScript($(this).attr("data-function-name"), category);
             });
 
-            $("#applyCurrentTemplate").click(applyCurrentTemplate);
-            $("#saveCurrentTemplate").click(saveCurrentTemplate);
-            $("#deleteCurrentTemplate").click(deleteCurrentTemplate);
-            $("#exportCurrentTemplate").click(exportCurrentTemplate);
-            $("#importTemplate").click(importTemplate);
+            $("#templates-content button[data-extension-function-name]").click(function () {
+                EMC.Extension.Templates[$(this).attr("data-extension-function-name")]();
+            });
+
             $("#import-template-file").change(importNewTemplate);
 
             $($templateSelectSelector).change(loadSelectedTemplate);
@@ -217,6 +216,11 @@
         return {
             executeOnLoad: executeOnLoad,
             loadNewTemplate: loadNewTemplate,
+            applyCurrentTemplate: applyCurrentTemplate,
+            saveCurrentTemplate: saveCurrentTemplate,
+            deleteCurrentTemplate: deleteCurrentTemplate,
+            exportCurrentTemplate: exportCurrentTemplate,
+            importTemplate: importTemplate,
         };
     })();
 })(this);
