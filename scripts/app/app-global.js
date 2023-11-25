@@ -14,8 +14,13 @@
             });
         }
 
+        function parseDOM(selector) {
+            return $(selector);
+        }
+
         return {
             sendExtensionMessage: sendExtensionMessage,
+            parseDOM: parseDOM,
         };
     })();
 })(this);

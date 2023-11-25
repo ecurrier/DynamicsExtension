@@ -3,6 +3,7 @@
         <script type="text/javascript" src="../scripts/libs/jquery.min.js"></script>
         <script type="text/javascript" src="../scripts/libs/bootstrap.bundle.min.js"></script>
         <script type="text/javascript" src="../scripts/libs/jsoneditor.min.js"></script>
+        <script type="text/javascript" src="../scripts/libs/highlight.min.js"></script>
         <script type="text/javascript" src="../scripts/extension/extension-global.js"></script>
         <script type="text/javascript" src="../scripts/extension/extension-utilities.js"></script>
         <script type="text/javascript" src="../scripts/extension/extension-templates.js"></script>
@@ -10,6 +11,7 @@
         <script type="text/javascript" src="../scripts/extension/extension-security.js"></script>
         <link rel="stylesheet" href="../styles/bootstrap.min.css" />
         <link rel="stylesheet" href="../styles/jsoneditor.min.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css" />
         <link rel="stylesheet" href="../styles/styles.css" />
     </head>
     <body>
@@ -20,19 +22,47 @@
             </div>
         </div>
         <!-- END LOADING OVERLAY -->
-        <!-- TOASTS -->
-        <div class="toast-container">
-            <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-                <div id="toast-notification" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
-                    <div class="toast-header">
-                        <span class="me-auto">
-                            <strong class="toast-header-message">...</strong>
-                            <span class="toast-header-icon"> </span>
-                        </span>
-                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        <!-- MODALS -->
+        <div
+            class="modal fade"
+            id="fetch-xml-modal"
+            data-bs-backdrop="static"
+            data-bs-keyboard="false"
+            tabindex="-1"
+            aria-labelledby="fetch-xml-modal-label"
+            aria-hidden="true"
+            data-category="utilities"
+        >
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="fetch-xml-modal-label">Generated Fetch XML</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="toast-body toast-body-message">...</div>
+                    <pre>
+                        <code class="language-xml">
+                            <div class="modal-body fetch-xml-modal-body"></div>
+                        </code>
+                    </pre>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-extension-function-name="copyContentToClipboard">Copy to Clipboard</button>
+                        <button type="button" class="btn btn-primary" data-extension-function-name="sendContentToWebAPI">Retrieve Records</button>
+                    </div>
                 </div>
+            </div>
+        </div>
+        <!-- END MODALS -->
+        <!-- TOASTS -->
+        <div class="toast-container position-absolute p-3 top-0 start-50 translate-middle-x">
+            <div id="toast-notification" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <span class="me-auto">
+                        <strong class="toast-header-message">...</strong>
+                        <span class="toast-header-icon"> </span>
+                    </span>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body toast-body-message">...</div>
             </div>
         </div>
         <!-- END TOASTS -->
@@ -127,7 +157,7 @@
                                     <button type="button" class="btn btn-outline-primary" data-function-name="refreshCommandBar">Refresh Command Bar</button>
                                 </div>
                                 <div class="col d-grid">
-                                    <button type="button" class="btn btn-outline-primary">Primary 1</button>
+                                    <button type="button" class="btn btn-outline-primary" data-function-name="generateFetchXml">Generate Fetch XML</button>
                                 </div>
                             </div>
                             <div class="row text-center">
@@ -369,11 +399,15 @@
                                         <div class="table-responsive position-relative sticky-header" id="results-viewer-table-container">
                                             <table class="table">
                                                 <thead class="table-header sticky-top"></thead>
-                                                <tbody></tbody>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>No results</td>
+                                                    </tr>
+                                                </tbody>
                                             </table>
                                         </div>
                                         <p class="results-viewer-record-count-label">
-                                            <small><span id="record-count">...</span></small>
+                                            <small><span id="record-count">Please execute a Fetch XML statement to view records.</span></small>
                                         </p>
                                     </div>
                                 </div>

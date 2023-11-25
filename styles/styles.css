@@ -198,6 +198,14 @@ main .container {
     background-color: #f8d7da !important;
 }
 
+.toast-container {
+    z-index: 1061;
+}
+
+.toast-header {
+    font-size: 12px;
+}
+
 .toast.bg-success {
     background-color: #d1e7dd !important;
 }
@@ -221,4 +229,8 @@ main .container {
 
 code textarea {
     font-size: 14px !important;
+}
+
+.modal-content {
+    max-height: 535px;
 }
