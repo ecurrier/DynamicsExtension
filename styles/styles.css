@@ -158,7 +158,18 @@ main .container {
     border: 1px #6c757d solid;
 }
 
-#security-table-container table {
+#results-viewer-table-container {
+    max-height: 385px;
+    max-width: 675px;
+    border: 1px #6c757d solid;
+}
+
+.results-viewer-record-count-label {
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.sticky-header table {
     border-collapse: separate;
     border-spacing: 0;
 }
@@ -206,4 +217,8 @@ main .container {
 .form-control-sm {
     border: 1px solid #ced4da;
     float: right;
+}
+
+code textarea {
+    font-size: 14px !important;
 }

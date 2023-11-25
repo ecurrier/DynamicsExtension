@@ -9,6 +9,11 @@
             LogicalName: "@Microsoft.Dynamics.CRM.lookuplogicalname",
         };
 
+        const KeyCodes = {
+            Tab: 9,
+            Enter: 13
+        };
+
         let activeTabId = null;
 
         const toastIconSuccessComponent = `
@@ -96,6 +101,7 @@
         return {
             executeOnLoad: executeOnLoad,
             ODataFormattedValueKeys: ODataFormattedValueKeys,
+            KeyCodes: KeyCodes,
             executeChromeScript: executeChromeScript,
             generateGuid: generateGuid,
             getEntitySetName: getEntitySetName,

@@ -83,9 +83,33 @@
             EMC.App.Global.sendExtensionMessage("displayNotification", { success: true, text: "Update complete" });
         }
 
+        async function executeFetchXml(fetchXml) {
+            const regex = /<entity[^>]*name="([^"]*)"/;
+            const match = fetchXml.match(regex);
+
+            let entityName = null;
+            if (match && match.length > 1) {
+                entityName = match[1];
+            } else {
+                EMC.App.Global.sendExtensionMessage("displayNotification", { success: false, text: "Entity name not found in XML" });
+                return;
+            }
+
+            const query = `?fetchXml=${fetchXml}`;
+            const response = await Xrm.WebApi.retrieveMultipleRecords(entityName, query);
+            if (!response || !response.entities) {
+                EMC.App.Global.sendExtensionMessage("displayNotification", { success: false, text: "Error occurred" });
+                return;
+            }
+
+            EMC.App.Global.sendExtensionMessage("populateResultsTable", response.entities, category);
+            EMC.App.Global.sendExtensionMessage("displayNotification", { success: true, text: "Successfully executed Fetch XML" });
+        }
+
         return {
             loadAttributeMetadata: loadAttributeMetadata,
             updateField: updateField,
+            executeFetchXml: executeFetchXml,
         };
     })();
 })(this);

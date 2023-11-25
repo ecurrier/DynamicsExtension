@@ -18,14 +18,19 @@
         }
 
         function registerHandlers() {
-            $("#webapi-content button[data-function-name]:not([data-has-parameters])").click(function () {
+            $("[data-category='webapi'] button[data-function-name]:not([data-has-parameters])").click(function () {
                 EMC.Extension.Global.executeChromeScript($(this).attr("data-function-name"), category);
             });
 
-            $("#webapi-content button[data-function-name='updateField']").click(sendUpdateRequest);
+            $("[data-category='webapi'] button[data-extension-function-name]").click(function () {
+                EMC.Extension.WebAPI[$(this).attr("data-extension-function-name")]();
+            });
+
+            $("[data-category='webapi'] button[data-function-name='updateField']").click(sendUpdateRequest);
 
             $($attributeMetadataSelector).change(initializeUpdateFieldForm);
             $("#update-field-null").change(disableForm);
+            $("#fetchxml-textarea").on("keydown", handleSpecialKeyDown);
         }
 
         function populateAttributeMetadata(response) {
@@ -351,10 +356,95 @@
             EMC.Extension.Global.executeChromeScript("loadAttributeMetadata", category, true);
         }
 
+        function executeFetchXml() {
+            const fetchXmlInput = $("#fetchxml-textarea").val();
+            EMC.Extension.Global.executeChromeScript("executeFetchXml", category, fetchXmlInput);
+        }
+
+        function populateResultsTable(results) {
+            const uniqueAttributes = getUniqueAttributes(results);
+            buildResultsTable(results, uniqueAttributes);
+        }
+
+        function buildResultsTable(results, attributes) {
+            resetResultsTable();
+
+            buildTableHeader(attributes);
+            buildTableBody(results, attributes);
+            setResultsCountLabel(results);
+
+            $("#accordion-header-results-viewer button.accordion-button").click();
+        }
+
+        function resetResultsTable() {
+            $("#results-viewer-table-container table tr").remove();
+        }
+
+        function buildTableHeader(attributes) {
+            let tableCellsHtml = "";
+
+            $.each(attributes, function (index, attribute) {
+                tableCellsHtml = tableCellsHtml.concat(`<th scope="col">${attribute}</th>`);
+            });
+
+            $("#results-viewer-table-container table thead").append(`<tr>${tableCellsHtml}</tr>`);
+        }
+
+        function buildTableBody(results, attributes) {
+            $.each(results, function (index, result) {
+                let tableCellsHtml = "";
+
+                $.each(attributes, function (index, attribute) {
+                    const value = result[attribute];
+                    tableCellsHtml = tableCellsHtml.concat(`<td>${value ?? "---"}</td>`);
+                });
+
+                const html = `
+                    <tr>
+                        ${tableCellsHtml}
+                    </tr>`;
+
+                $("#results-viewer-table-container table tbody").append(html);
+            });
+        }
+
+        function setResultsCountLabel(results) {
+            $("#record-count").text(`${results.length} records retrieved`)
+        }
+
+        function getUniqueAttributes(arr) {
+            const uniqueAttributes = new Set();
+
+            arr.forEach((obj) => {
+                Object.keys(obj).forEach((attr) => {
+                    if (attr.startsWith("@")) {
+                        return;
+                    }
+                    uniqueAttributes.add(attr);
+                });
+            });
+
+            return Array.from(uniqueAttributes).sort();
+        }
+
+        function handleSpecialKeyDown(e) {
+            if (e.which !== EMC.Extension.Global.KeyCodes.Tab) {
+                return;
+            }
+
+            e.preventDefault();
+            const start = this.selectionStart;
+            const end = this.selectionEnd;
+            this.value = this.value.substring(0, start) + "\t" + this.value.substring(end);
+            this.selectionStart = this.selectionEnd = start + 1;
+        }
+
         return {
             executeOnLoad: executeOnLoad,
             populateAttributeMetadata: populateAttributeMetadata,
             refreshForm: refreshForm,
+            executeFetchXml: executeFetchXml,
+            populateResultsTable: populateResultsTable,
         };
     })();
 })(this);

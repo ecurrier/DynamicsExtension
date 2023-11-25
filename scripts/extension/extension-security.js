@@ -35,7 +35,7 @@
             });
 
             $("#security-user-search-input").on("keyup", function (e) {
-                if (e.which !== 13) {
+                if (e.which !== EMC.Extension.Global.KeyCodes.Enter) {
                     return;
                 }
 
