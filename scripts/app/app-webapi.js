@@ -70,17 +70,17 @@
             try {
                 response = await Xrm.WebApi.updateRecord(entityName, entityId, payload);
             } catch (error) {
-                EMC.App.Global.sendExtensionMessage("displayNotification", { sucess: false, text: `Error occurred: ${error.message}` });
+                EMC.App.Global.sendExtensionMessage("displayNotification", { success: false, text: `Error occurred: ${error.message}` });
                 return;
             }
 
             if (!response || !response.entityType) {
-                EMC.App.Global.sendExtensionMessage("displayNotification", { sucess: false, text: "Error occurred" });
+                EMC.App.Global.sendExtensionMessage("displayNotification", { success: false, text: "Error occurred" });
                 return;
             }
 
             EMC.App.Global.sendExtensionMessage("refreshForm", null, "WebAPI");
-            EMC.App.Global.sendExtensionMessage("displayNotification", { sucess: true, text: "Update complete" });
+            EMC.App.Global.sendExtensionMessage("displayNotification", { success: true, text: "Update complete" });
         }
 
         return {

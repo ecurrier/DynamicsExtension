@@ -1,12 +1,13 @@
 <html lang="en">
     <head>
-        <script type="text/javascript" src="../scripts/jquery.min.js"></script>
-        <script type="text/javascript" src="../scripts/bootstrap.bundle.min.js"></script>
-        <script type="text/javascript" src="../scripts/jsoneditor.min.js"></script>
-        <script type="text/javascript" src="../scripts/extension-global.js"></script>
-        <script type="text/javascript" src="../scripts/extension-utilities.js"></script>
-        <script type="text/javascript" src="../scripts/extension-templates.js"></script>
-        <script type="text/javascript" src="../scripts/extension-webapi.js"></script>
+        <script type="text/javascript" src="../scripts/libs/jquery.min.js"></script>
+        <script type="text/javascript" src="../scripts/libs/bootstrap.bundle.min.js"></script>
+        <script type="text/javascript" src="../scripts/libs/jsoneditor.min.js"></script>
+        <script type="text/javascript" src="../scripts/extension/extension-global.js"></script>
+        <script type="text/javascript" src="../scripts/extension/extension-utilities.js"></script>
+        <script type="text/javascript" src="../scripts/extension/extension-templates.js"></script>
+        <script type="text/javascript" src="../scripts/extension/extension-webapi.js"></script>
+        <script type="text/javascript" src="../scripts/extension/extension-security.js"></script>
         <link rel="stylesheet" href="../styles/bootstrap.min.css" />
         <link rel="stylesheet" href="../styles/jsoneditor.min.css" />
         <link rel="stylesheet" href="../styles/styles.css" />
@@ -35,52 +36,77 @@
         <!-- MAIN CONTAINER -->
         <main id="main-page-content">
             <div class="container">
-                <!-- TABS -->
-                <ul class="nav nav-pills nav-fill" id="pills-tab" role="tablist">
-                    <li class="nav-item" role="presentation">
+                <!-- OFFCANVAS NAVIGATION -->
+                <nav class="navbar navbar-light bg-light">
+                    <div class="container-fluid">
                         <button
-                            class="nav-link active"
-                            id="utilities-tab"
-                            data-bs-toggle="pill"
-                            data-bs-target="#utilities-content"
+                            class="navbar-toggler"
                             type="button"
-                            role="tab"
-                            aria-controls="utilities-content"
-                            aria-selected="true"
+                            data-bs-toggle="offcanvas"
+                            data-bs-target="#offcanvasNavbar"
+                            aria-controls="offcanvasNavbar"
                         >
-                            Utilities
+                            <span class="navbar-toggler-icon"></span>
                         </button>
-                    </li>
-                    <li class="nav-item">
-                        <button
-                            class="nav-link"
-                            id="templates-tab"
-                            data-bs-toggle="pill"
-                            data-bs-target="#templates-content"
-                            type="button"
-                            role="tab"
-                            aria-controls="templates-content"
-                            aria-selected="false"
-                        >
-                            Templates
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button
-                            class="nav-link"
-                            id="webapi-tab"
-                            data-bs-toggle="pill"
-                            data-bs-target="#webapi-content"
-                            type="button"
-                            role="tab"
-                            aria-controls="webapi-content"
-                            aria-selected="false"
-                        >
-                            Web API
-                        </button>
-                    </li>
-                </ul>
-                <!-- END TABS -->
+                        <a class="navbar-brand" href="#">Power Tools For Power Platform/Power Pages</a>
+                        <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+                            <div class="offcanvas-header">
+                                <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Navigation</h5>
+                                <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                            </div>
+                            <div class="offcanvas-body">
+                                <ul class="navbar-nav justify-content-end flex-grow-1 pe-3 nav nav-pills nav-fill">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" aria-current="page" data-bs-toggle="pill" data-bs-target="#utilities-content" href="#"
+                                            >Utilities</a
+                                        >
+                                    </li>
+                                    <li class="nav-item dropdown">
+                                        <a
+                                            class="nav-link dropdown-toggle"
+                                            href="#"
+                                            id="offcanvas-templates-dropdown"
+                                            role="button"
+                                            data-bs-toggle="dropdown"
+                                            aria-expanded="false"
+                                        >
+                                            Templates
+                                        </a>
+                                        <ul class="dropdown-menu" aria-labelledby="offcanvas-templates-dropdown">
+                                            <li>
+                                                <a class="nav-link" href="#" data-bs-toggle="pill" data-bs-target="#templates-content">Model-Driven App</a>
+                                            </li>
+                                            <li><a class="nav-link" href="#">Power Pages</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="nav-item dropdown">
+                                        <a
+                                            class="nav-link dropdown-toggle"
+                                            href="#"
+                                            id="offcanvas-webapi-dropdown"
+                                            role="button"
+                                            data-bs-toggle="dropdown"
+                                            aria-expanded="false"
+                                        >
+                                            Web API
+                                        </a>
+                                        <ul class="dropdown-menu" aria-labelledby="offcanvas-webapi-dropdown">
+                                            <li>
+                                                <a class="nav-link" href="#" data-bs-toggle="pill" data-bs-target="#webapi-content">Update Fields</a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" aria-current="page" data-bs-toggle="pill" data-bs-target="#security-content" href="#"
+                                            >Security Management</a
+                                        >
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+                <!-- END OFFCANVAS NAVIGATION -->
                 <!-- PAGE CONTENT -->
                 <div class="tab-content" id="pills-tabContent">
                     <!-- UTILTIES -->
@@ -128,12 +154,20 @@
                                         </button>
                                         <div class="dropdown-menu" aria-labelledby="dropdownMenu2">
                                             <button class="dropdown-item" type="button" data-function-name="generateNewTemplate">Generate New Template</button>
-                                            <button class="dropdown-item" type="button" data-extension-function-name="applyCurrentTemplate">Apply Template</button>
+                                            <button class="dropdown-item" type="button" data-extension-function-name="applyCurrentTemplate">
+                                                Apply Template
+                                            </button>
                                             <hr class="dropdown-divider" />
-                                            <button class="dropdown-item" type="button" data-extension-function-name="saveCurrentTemplate">Save Template</button>
-                                            <button class="dropdown-item" type="button" data-extension-function-name="deleteCurrentTemplate">Delete Template</button>
+                                            <button class="dropdown-item" type="button" data-extension-function-name="saveCurrentTemplate">
+                                                Save Template
+                                            </button>
+                                            <button class="dropdown-item" type="button" data-extension-function-name="deleteCurrentTemplate">
+                                                Delete Template
+                                            </button>
                                             <hr class="dropdown-divider" />
-                                            <button class="dropdown-item" type="button" data-extension-function-name="exportCurrentTemplate">Export Template</button>
+                                            <button class="dropdown-item" type="button" data-extension-function-name="exportCurrentTemplate">
+                                                Export Template
+                                            </button>
                                             <a id="export-template-anchor" style="display: none"></a>
                                             <button class="dropdown-item" type="button" data-extension-function-name="importTemplate">Import Template</button>
                                             <input type="file" id="import-template-file" style="display: none" />
@@ -167,22 +201,6 @@
                     <div class="tab-pane fade" id="webapi-content" role="tabpanel" aria-labelledby="webapi-tab">
                         <div>
                             <div class="d-flex align-items-start">
-                                <!-- WEB API NAVIGATION -->
-                                <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-                                    <button
-                                        class="nav-link active"
-                                        id="v-pills-update-field-tab"
-                                        data-bs-toggle="pill"
-                                        data-bs-target="#v-pills-update-field"
-                                        type="button"
-                                        role="tab"
-                                        aria-controls="v-pills-update-field"
-                                        aria-selected="true"
-                                    >
-                                        Update Field
-                                    </button>
-                                </div>
-                                <!-- END WEB API NAVIGATION -->
                                 <div class="tab-content" id="v-pills-tabContent">
                                     <!-- WEB API - UPDATE FIELD -->
                                     <div class="tab-pane fade show active" id="v-pills-update-field" role="tabpanel" aria-labelledby="v-pills-update-field-tab">
@@ -206,24 +224,30 @@
                                                 <div class="col-1"></div>
                                             </div>
                                             <div class="container" id="update-field-inputs-container">
-                                                <div class="row text-center">
+                                                <div class="row text-center no-padding">
                                                     <div class="embedded-container">
                                                         <p class="text-start fs-4 fw-bold">Field Attribute Information:</p>
-                                                        <p class="text-start fw-bold no-margin">
-                                                            Display Name: <span class="fw-normal attribute-label" id="field-display-name"></span>
-                                                        </p>
-                                                        <p class="text-start fw-bold no-margin">
-                                                            Logical Name: <span class="fw-normal attribute-label" id="field-logical-name"></span>
-                                                        </p>
-                                                        <p class="text-start fw-bold no-margin">
-                                                            Field Type: <span class="fw-normal attribute-label" id="field-attribute-type"></span>
-                                                        </p>
-                                                        <p class="text-start fw-bold no-margin">
-                                                            Current Value: <span class="fw-normal attribute-label" id="field-attribute-value"></span>
-                                                        </p>
+                                                        <div class="row no-padding">
+                                                            <div class="col-6">
+                                                                <p class="text-start fw-bold no-margin">
+                                                                    Current Value: <span class="fw-normal attribute-label" id="field-attribute-value"></span>
+                                                                </p>
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <p class="text-start fw-bold no-margin">
+                                                                    Display Name: <span class="fw-normal attribute-label" id="field-display-name"></span>
+                                                                </p>
+                                                                <p class="text-start fw-bold no-margin">
+                                                                    Logical Name: <span class="fw-normal attribute-label" id="field-logical-name"></span>
+                                                                </p>
+                                                                <p class="text-start fw-bold no-margin">
+                                                                    Field Type: <span class="fw-normal attribute-label" id="field-attribute-type"></span>
+                                                                </p>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div class="row">
+                                                <div class="row no-padding">
                                                     <div class="embedded-container">
                                                         <div class="col-8">
                                                             <div class="mb-3">
@@ -259,7 +283,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="row text-center">
+                                                <div class="row text-center no-padding">
                                                     <div class="col d-grid">
                                                         <button
                                                             type="button"
@@ -281,10 +305,75 @@
                         </div>
                     </div>
                     <!-- END WEB API -->
+                    <!-- SECURITY MANAGEMENT -->
+                    <div class="tab-pane fade" id="security-content" role="tabpanel" aria-labelledby="security-tab">
+                        <div class="container">
+                            <div class="row align-items-end">
+                                <div class="col-5 d-grid">
+                                    <label for="security-user-search-input" class="form-label">Username/Email Address</label>
+                                    <div class="input-group">
+                                        <input class="form-control" type="text" placeholder="Enter..." id="security-user-search-input" />
+                                        <button class="btn btn-outline-secondary" type="button" data-extension-function-name="retrieveSystemUsers">
+                                            Search
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-4 d-grid d-select-container">
+                                    <select class="form-select" id="security-user-selector" aria-label="System User Selector">
+                                        <option value="" selected disabled>Select a user...</option>
+                                    </select>
+                                </div>
+                                <div class="col-3">
+                                    <div class="dropdown">
+                                        <button
+                                            class="btn btn-primary dropdown-toggle"
+                                            type="button"
+                                            id="security-actions-dropdown"
+                                            data-bs-toggle="dropdown"
+                                            aria-haspopup="true"
+                                            aria-expanded="false"
+                                        >
+                                            Actions
+                                        </button>
+                                        <div class="dropdown-menu" aria-labelledby="security-actions-dropdown">
+                                            <button class="dropdown-item" type="button" data-function-name="loadCurrentUserSecurity">Load My User</button>
+                                            <button class="dropdown-item" type="button" data-extension-function-name="applySecurityRoleChanges">
+                                                Apply Changes
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-8">
+                                    <div class="table-responsive" id="security-table-container">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col" class="col-1"></th>
+                                                    <th scope="col" class="col-11">Security Role</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <p class="text-start fw-bold">Current Security Roles</p>
+                                    <div class="list-group-container">
+                                        <ul class="list-group current-security-role-list">
+                                            <li class="list-group-item">No user selected</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- END SECURITY MANAGEMENT -->
                 </div>
             </div>
         </main>
     </body>
 </html>
 
-<script type="text/javascript" src="../scripts/extension-main.js"></script>
+<script type="text/javascript" src="../scripts/extension/extension-main.js"></script>

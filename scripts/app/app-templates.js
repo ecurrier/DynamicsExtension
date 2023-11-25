@@ -37,7 +37,7 @@
                 }
             });
 
-            EMC.App.Global.sendExtensionMessage("displayNotification", { sucess: true, text: "Successfully applied template" });
+            EMC.App.Global.sendExtensionMessage("displayNotification", { success: true, text: "Successfully applied template" });
         }
 
         return {

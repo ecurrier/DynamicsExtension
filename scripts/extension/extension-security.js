@@ -1,0 +1,218 @@
+(function (global) {
+    "use strict";
+
+    global.EMC = global.EMC || {};
+    global.EMC.Extension = global.EMC.Extension || {};
+    global.EMC.Extension.Security = (function () {
+        const category = "Security";
+
+        let currentUserDetails = {
+            userId: null,
+            userName: null,
+            securityRoles: null,
+        };
+
+        let allSecurityRoles = [];
+        let selectedUserId = null;
+
+        const $systemUserSelectSelector = "#security-user-selector";
+        const tableRowCheckboxComponent = '<input class="form-check-input security-role-checkbox" type="checkbox" value="" />';
+
+        function executeOnLoad() {
+            retrieveCurrentUserDetails();
+            retrieveAllSecurityRoleDetails();
+
+            registerHandlers();
+        }
+
+        function registerHandlers() {
+            $("#security-content button[data-function-name]").click(function () {
+                EMC.Extension.Global.executeChromeScript($(this).attr("data-function-name"), category);
+            });
+
+            $("#security-content button[data-extension-function-name]").click(function () {
+                EMC.Extension.Security[$(this).attr("data-extension-function-name")]();
+            });
+
+            $("#security-user-search-input").on("keyup", function (e) {
+                if (e.which !== 13) {
+                    return;
+                }
+
+                $(this).siblings("button").click();
+            });
+
+            $($systemUserSelectSelector).change(loadSelectedUserSecurity);
+
+            $("#security-table-container table").on("change", ".security-role-checkbox", handleRowSelect);
+        }
+
+        function retrieveCurrentUserDetails() {
+            EMC.Extension.Global.executeChromeScript("retrieveCurrentUserDetails", category, null, false);
+        }
+
+        function initializeCurrentUserDetails(data) {
+            currentUserDetails = data;
+        }
+
+        function retrieveAllSecurityRoleDetails() {
+            EMC.Extension.Global.executeChromeScript("retrieveAllSecurityRoleDetails", category, null, false);
+        }
+
+        function initializeSecurityRoleDetails(data) {
+            allSecurityRoles = data;
+            initializeTable(allSecurityRoles);
+        }
+
+        function retrieveSystemUsers() {
+            const searchQuery = $("#security-user-search-input").val();
+            const payload = {
+                query: searchQuery,
+            };
+
+            EMC.Extension.Global.executeChromeScript("retrieveSystemUsers", category, payload);
+        }
+
+        function populateSystemUserSelect(systemUsers) {
+            resetSystemUserSelect();
+
+            $.each(systemUsers, function (index, systemUser) {
+                $($systemUserSelectSelector).append(
+                    $("<option>", {
+                        value: systemUser.systemuserid,
+                        text: systemUser.fullname,
+                    })
+                );
+            });
+        }
+
+        function resetSystemUserSelect() {
+            $(`${$systemUserSelectSelector} option:not(:first)`).remove();
+        }
+
+        function loadCurrentUserSecurity() {
+            selectedUserId = currentUserDetails.userId;
+            loadUserSecurity(selectedUserId);
+        }
+
+        function loadSelectedUserSecurity() {
+            selectedUserId = $($systemUserSelectSelector).val();
+            if (!selectedUserId) {
+                EMC.Extension.Global.displayNotification({ success: false, text: "Please select a user from the list" });
+                return;
+            }
+
+            loadUserSecurity(selectedUserId);
+        }
+
+        function loadUserSecurity(systemUserId) {
+            EMC.Extension.Global.executeChromeScript("retrieveUserSecurityRoles", category, systemUserId);
+        }
+
+        function setSecurityRolesData(securityRoles) {
+            resetTable();
+            resetList();
+            selectAssignedRoles(securityRoles);
+        }
+
+        function refreshSecurityRolesData() {
+            loadUserSecurity(selectedUserId);
+        }
+
+        function resetTable() {
+            $("#security-table-container table tbody tr").removeClass("table-primary table-success table-danger");
+            $("#security-table-container table tbody tr th input").prop("checked", false);
+            $(`tr[data-attribute-assigned]`).removeAttr("data-attribute-assigned");
+        }
+
+        function resetList() {
+            $(".current-security-role-list li").remove();
+        }
+
+        function selectAssignedRoles(securityRoles) {
+            $.each(securityRoles, function (index, securityRole) {
+                $(`tr[data-attribute-id="${securityRole.roleid}"]`).addClass("table-primary");
+                $(`tr[data-attribute-id="${securityRole.roleid}"]`).find("th > .security-role-checkbox").prop("checked", true);
+                $(`tr[data-attribute-id="${securityRole.roleid}"]`).attr("data-attribute-assigned", "true");
+
+                $(".current-security-role-list").append(
+                    `<li class="list-group-item security-role-list-item" data-attribute-id="${securityRole.roleid}">${securityRole.name}</li>`
+                );
+            });
+        }
+
+        function handleRowSelect() {
+            if (!selectedUserId) {
+                return;
+            }
+
+            const checked = $(this).is(":checked");
+            const tableRow = $(this).parents("tr");
+            const roleId = tableRow.attr("data-attribute-id");
+            const roleName = tableRow.attr("data-attribute-name");
+            const assignedRole = tableRow.attr("data-attribute-assigned") ? true : false;
+            const roleListItem = $(`.security-role-list-item[data-attribute-id="${roleId}"]`);
+
+            if (assignedRole) {
+                tableRow.toggleClass("table-danger", !checked);
+                roleListItem.toggleClass("list-group-item-danger", !checked);
+            } else {
+                tableRow.toggleClass("table-success", checked);
+
+                if (checked) {
+                    $(".current-security-role-list").append(
+                        `<li class="list-group-item security-role-list-item list-group-item-success" data-attribute-id="${roleId}">${roleName}</li>`
+                    );
+                } else {
+                    roleListItem.remove();
+                }
+            }
+        }
+
+        function initializeTable(securityRoles) {
+            $.each(securityRoles, function (index, securityRole) {
+                const html = `
+                    <tr class="table-important" data-attribute-id="${securityRole.roleid}" data-attribute-name="${securityRole.name}">
+                        <th scope="row" class="contains-component">${tableRowCheckboxComponent}</th>
+                        <td>${securityRole.name}</td>
+                    </tr>`;
+
+                $("#security-table-container table tbody").append(html);
+            });
+        }
+
+        function applySecurityRoleChanges() {
+            const associateRoleIds = $(`.security-role-list-item.list-group-item-success`)
+                .map(function () {
+                    return $(this).attr("data-attribute-id");
+                })
+                .get();
+
+            const disassociateRoleIds = $(`.security-role-list-item.list-group-item-danger`)
+                .map(function () {
+                    return $(this).attr("data-attribute-id");
+                })
+                .get();
+
+            const payload = {
+                systemUserId: selectedUserId,
+                associateRoleIds: associateRoleIds,
+                disassociateRoleIds: disassociateRoleIds,
+            };
+
+            EMC.Extension.Global.executeChromeScript("applySecurityRoleChanges", category, payload);
+        }
+
+        return {
+            executeOnLoad: executeOnLoad,
+            initializeCurrentUserDetails: initializeCurrentUserDetails,
+            initializeSecurityRoleDetails: initializeSecurityRoleDetails,
+            retrieveSystemUsers: retrieveSystemUsers,
+            populateSystemUserSelect: populateSystemUserSelect,
+            loadCurrentUserSecurity: loadCurrentUserSecurity,
+            setSecurityRolesData: setSecurityRolesData,
+            applySecurityRoleChanges: applySecurityRoleChanges,
+            refreshSecurityRolesData: refreshSecurityRolesData,
+        };
+    })();
+})(this);

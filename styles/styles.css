@@ -36,6 +36,40 @@ main .container {
     background-color: #e4e4e4;
 }
 
+.offcanvas-start {
+    width: 250px;
+}
+
+.bg-light {
+    background-color: #00204f59 !important;
+}
+
+.navbar-light .navbar-toggler {
+    border-color: rgba(0, 0, 0, 0.9) !important;
+}
+
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+    color: #fff;
+    background-color: #00204f59 !important;
+}
+
+.nav-fill .nav-item,
+.nav-fill > .nav-link {
+    flex: 1 1 auto;
+    text-align: start;
+}
+
+.nav-item > .nav-link,
+.dropdown-menu .nav-link {
+    padding-left: 20px;
+}
+
+.dropdown-menu .nav-link.active {
+    color: rgba(0, 0, 0, 0.55) !important;
+    background-color: unset !important;
+}
+
 .tab-content {
     width: 100%;
 }
@@ -116,4 +150,35 @@ main .container {
 }
 
 #template-json-editor {
+    max-height: 360px;
 }
+
+#security-table-container {
+    height: 415px;
+    border: 1px #6c757d solid;
+}
+
+.contains-component {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.list-group-container {
+    padding-right: 5px;
+    margin-right: 20px;
+    max-height: 375px;
+    overflow-y: scroll;
+}
+
+.security-role-list-item {
+    word-wrap: break-word;
+}
+
+.table-important.table-success {
+    background-color: #d1e7dd!important;
+}
+
+.table-important.table-danger {
+    background-color: #f8d7da!important;
+}
+

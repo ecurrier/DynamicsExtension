@@ -11,12 +11,13 @@ if (!isCRMPage) {
 const extensionId = chrome.runtime.id;
 injectHiddenAttribute('extension-id', extensionId);
 
-injectScript("scripts/app-dispatcher.js");
-injectScript("scripts/app-constants.js");
-injectScript("scripts/app-global.js");
-injectScript("scripts/app-utilities.js");
-injectScript("scripts/app-templates.js");
-injectScript("scripts/app-webapi.js");
+injectScript("scripts/app/app-dispatcher.js");
+injectScript("scripts/app/app-constants.js");
+injectScript("scripts/app/app-global.js");
+injectScript("scripts/app/app-utilities.js");
+injectScript("scripts/app/app-templates.js");
+injectScript("scripts/app/app-webapi.js");
+injectScript("scripts/app/app-security.js");
 
 function injectHiddenAttribute(id, val) {
     const inputElement = document.createElement('input');

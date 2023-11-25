@@ -11,15 +11,22 @@
 
         let activeTabId = null;
 
-        function executeOnLoad() {
-            initializeTabId();
+        async function executeOnLoad() {
+            attachHandlers();
+
+            await initializeTabId();
             initializeListener();
         }
 
-        function initializeTabId() {
-            chrome.tabs.query({ currentWindow: true, active: true }, function (tabArray) {
-                activeTabId = tabArray[0].id;
+        function attachHandlers() {
+            $(".offcanvas a:not(.dropdown-toggle)").click(function () {
+                $(".offcanvas").offcanvas("hide");
             });
+        }
+
+        async function initializeTabId() {
+            const results = await chrome.tabs.query({ currentWindow: true, active: true });
+            activeTabId = results[0].id;
         }
 
         function initializeListener() {
@@ -29,8 +36,8 @@
             });
         }
 
-        function executeChromeScript(command, category, additionalArgs = null) {
-            showLoadingIndicator();
+        function executeChromeScript(command, category, additionalArgs = null, showIndicator = true) {
+            showLoadingIndicator(showIndicator);
 
             chrome.scripting.executeScript({
                 target: { tabId: activeTabId },

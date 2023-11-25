@@ -9,7 +9,7 @@
         function refreshCommandBar() {
             Xrm.Page.ui.refreshRibbon();
 
-            EMC.App.Global.sendExtensionMessage("displayNotification", { sucess: true, text: "Ribbon refreshed" });
+            EMC.App.Global.sendExtensionMessage("displayNotification", { success: true, text: "Ribbon refreshed" });
         }
 
         return {
