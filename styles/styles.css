@@ -1,6 +1,8 @@
 body {
+    max-width: 700px;
     min-width: 700px;
     min-height: 600px;
+    max-height: 600px;
 }
 
 main .container {
@@ -159,7 +161,7 @@ main .container {
 }
 
 #results-viewer-table-container {
-    max-height: 385px;
+    max-height: 360px;
     max-width: 675px;
     border: 1px #6c757d solid;
 }
