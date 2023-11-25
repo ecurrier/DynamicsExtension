@@ -25,7 +25,10 @@
             <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
                 <div id="toast-notification" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
                     <div class="toast-header">
-                        <strong class="me-auto toast-header-message">...</strong>
+                        <span class="me-auto">
+                            <strong class="toast-header-message">...</strong>
+                            <span class="toast-header-icon"> </span>
+                        </span>
                         <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
                     </div>
                     <div class="toast-body toast-body-message">...</div>
@@ -336,7 +339,9 @@
                                             Actions
                                         </button>
                                         <div class="dropdown-menu" aria-labelledby="security-actions-dropdown">
-                                            <button class="dropdown-item" type="button" data-function-name="loadCurrentUserSecurity">Load My User</button>
+                                            <button class="dropdown-item" type="button" data-extension-function-name="loadCurrentUserSecurity">
+                                                Load My User
+                                            </button>
                                             <button class="dropdown-item" type="button" data-extension-function-name="applySecurityRoleChanges">
                                                 Apply Changes
                                             </button>
@@ -346,12 +351,20 @@
                             </div>
                             <div class="row">
                                 <div class="col-8">
-                                    <div class="table-responsive" id="security-table-container">
+                                    <div class="table-responsive position-relative" id="security-table-container">
                                         <table class="table">
-                                            <thead>
+                                            <thead class="table-header sticky-top">
                                                 <tr>
                                                     <th scope="col" class="col-1"></th>
-                                                    <th scope="col" class="col-11">Security Role</th>
+                                                    <th scope="col" class="col-11">
+                                                        <span class="table-header-label">Security Role</span
+                                                        ><input
+                                                            class="form-control-sm"
+                                                            type="text"
+                                                            placeholder="Filter..."
+                                                            id="security-table-search"
+                                                        />
+                                                    </th>
                                                 </tr>
                                             </thead>
                                             <tbody></tbody>

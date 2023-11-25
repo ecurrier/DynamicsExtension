@@ -42,6 +42,8 @@
                 $(this).siblings("button").click();
             });
 
+            $("#security-table-search").on("keyup", filterSecurityTable);
+
             $($systemUserSelectSelector).change(loadSelectedUserSecurity);
 
             $("#security-table-container table").on("change", ".security-role-checkbox", handleRowSelect);
@@ -92,6 +94,10 @@
 
         function loadCurrentUserSecurity() {
             selectedUserId = currentUserDetails.userId;
+
+            populateSystemUserSelect([{ systemuserid: selectedUserId, fullname: currentUserDetails.userName }]);
+            $(`${$systemUserSelectSelector} option:last`).prop("selected", true);
+
             loadUserSecurity(selectedUserId);
         }
 
@@ -169,6 +175,13 @@
             }
         }
 
+        function filterSecurityTable() {
+            const filterQuery = $(this).val().toLowerCase();
+            $("#security-table-container tbody tr").filter(function() {
+              $(this).toggle($(this).attr("data-attribute-name").toLowerCase().indexOf(filterQuery) > -1)
+            });
+        }
+
         function initializeTable(securityRoles) {
             $.each(securityRoles, function (index, securityRole) {
                 const html = `
@@ -213,6 +226,7 @@
             setSecurityRolesData: setSecurityRolesData,
             applySecurityRoleChanges: applySecurityRoleChanges,
             refreshSecurityRolesData: refreshSecurityRolesData,
+            filterSecurityTable: filterSecurityTable,
         };
     })();
 })(this);

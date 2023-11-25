@@ -78,6 +78,7 @@
                     <entity name="role">
                         <attribute name="name" />
                         <attribute name="roleid" />
+                        <order attribute="name" descending="false" />
                         <link-entity name="systemuserroles" from="roleid" to="roleid">
                             <link-entity name="systemuser" from="systemuserid" to="systemuserid">
                                 <filter type="and">
@@ -106,9 +107,14 @@
             }
 
             EMC.App.Global.sendExtensionMessage("refreshSecurityRolesData", null, category);
+            EMC.App.Global.sendExtensionMessage("displayNotification", { success: true, text: `Successfully applied security role changes` });
         }
 
         async function associateSecurityRoles(roleIds, systemUserId) {
+            if (!roleIds || roleIds.length === 0) {
+                return;
+            }
+
             const manyToOneAssociateRequest = {
                 getMetadata: () => ({
                     boundParameter: null,
