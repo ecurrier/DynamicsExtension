@@ -15,9 +15,15 @@
             BulkEdit: 6,
         };
 
+        const PageContexts = {
+            ModelDrivenApp: "model-driven-app",
+            Portal: "portal",
+        };
+
         return {
             WebApiEndpoint,
             FormTypes: FormTypes,
+            PageContexts: PageContexts,
         };
     })();
 })(this);

@@ -1,4 +1,4 @@
-const ExtensionNamespaces = ["Utilities", "Templates", "WebAPI", "Security"];
+const ExtensionNamespaces = ["Global", "Utilities", "Templates", "WebAPI", "Security"];
 
 addExtensionListener("message", (event) => {
     if (!ExtensionNamespaces.includes(event.data.category)) {

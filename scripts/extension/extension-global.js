@@ -4,6 +4,9 @@
     global.EMC = global.EMC || {};
     global.EMC.Extension = global.EMC.Extension || {};
     global.EMC.Extension.Global = (function () {
+        const category = "Global";
+        let pageContext = null;
+
         const ODataFormattedValueKeys = {
             DisplayValue: "@OData.Community.Display.V1.FormattedValue",
             LogicalName: "@Microsoft.Dynamics.CRM.lookuplogicalname",
@@ -11,7 +14,7 @@
 
         const KeyCodes = {
             Tab: 9,
-            Enter: 13
+            Enter: 13,
         };
 
         let activeTabId = null;
@@ -31,6 +34,7 @@
 
             await initializeTabId();
             initializeListener();
+            initializePageContext();
         }
 
         function attachHandlers() {
@@ -49,6 +53,19 @@
                 showLoadingIndicator(false);
                 window["EMC"]["Extension"][request.category][request.command](request.data);
             });
+        }
+
+        function initializePageContext() {
+            executeChromeScript("initializePageContext", category, null, false);
+        }
+
+        function handlePageContext(context) {
+            pageContext = context;
+
+            EMC.Extension.Utilities.executeOnLoad();
+            EMC.Extension.Templates.executeOnLoad();
+            EMC.Extension.WebAPI.executeOnLoad();
+            EMC.Extension.Security.executeOnLoad();
         }
 
         function executeChromeScript(command, category, additionalArgs = null, showIndicator = true) {
@@ -98,15 +115,21 @@
             return `${logicalName}s`;
         }
 
+        function getPageContext() {
+            return pageContext;
+        }
+
         return {
             executeOnLoad: executeOnLoad,
             ODataFormattedValueKeys: ODataFormattedValueKeys,
             KeyCodes: KeyCodes,
             executeChromeScript: executeChromeScript,
+            handlePageContext: handlePageContext,
             generateGuid: generateGuid,
             getEntitySetName: getEntitySetName,
             showLoadingIndicator: showLoadingIndicator,
             displayNotification: displayNotification,
+            getPageContext: getPageContext,
         };
     })();
 })(this);

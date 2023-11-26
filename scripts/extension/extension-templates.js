@@ -58,7 +58,8 @@
             const jsonGuid = currentTemplateId !== null ? currentTemplateId : EMC.Extension.Global.generateGuid();
 
             const syncStorageValue = {};
-            syncStorageValue[jsonGuid] = templateJson;
+            const storageKey = formatStorageKey(jsonGuid);
+            syncStorageValue[storageKey] = templateJson;
 
             await chrome.storage.sync.set(syncStorageValue);
 
@@ -70,7 +71,8 @@
         }
 
         function deleteCurrentTemplate() {
-            chrome.storage.sync.remove([`${currentTemplateId}`], function () {
+            const storageKey = formatStorageKey(currentTemplateId);
+            chrome.storage.sync.remove([`${storageKey}`], function () {
                 const error = chrome.runtime.lastError;
                 if (error) {
                     EMC.Extension.Global.displayNotification({ success: false, text: `Error occurred deleting template: ${error}` });
@@ -117,8 +119,9 @@
             const $selector = $(this);
             currentTemplateId = $selector.val();
 
-            const syncStorageTemplate = await chrome.storage.sync.get(currentTemplateId);
-            const templateJson = syncStorageTemplate[currentTemplateId];
+            const storageKey = formatStorageKey(currentTemplateId);
+            const syncStorageTemplate = await chrome.storage.sync.get(storageKey);
+            const templateJson = syncStorageTemplate[storageKey];
 
             setJSONTemplateName(templateJson.templateName);
             setJSONEditor(templateJson.fields);
@@ -144,10 +147,15 @@
 
         async function retrieveSavedTemplates() {
             const syncStorageCache = await chrome.storage.sync.get();
-            const syncStoragekeys = Object.keys(syncStorageCache);
+
+            const pageContext = EMC.Extension.Global.getPageContext();
+            const syncStoragekeys = Object.keys(syncStorageCache).filter(function (key) {
+                return key.startsWith(`${category}.${pageContext}`);
+            });
             let options = syncStoragekeys.map((key) => {
+                const templateId = parseStorageKey(key);
                 return {
-                    value: key,
+                    value: templateId,
                     text: syncStorageCache[key].templateName,
                 };
             });
@@ -211,6 +219,16 @@
 
         function showJSONEditor(show) {
             show ? $(".template-preview-container").show() : $(".template-preview-container").hide();
+        }
+
+        function formatStorageKey(templateId) {
+            const pageContext = EMC.Extension.Global.getPageContext();
+            return `${category}.${pageContext}.${templateId}`;
+        }
+
+        function parseStorageKey(storageKey) {
+            const pageContext = EMC.Extension.Global.getPageContext();
+            return storageKey.split(`${category}.${pageContext}.`)[1];
         }
 
         return {
