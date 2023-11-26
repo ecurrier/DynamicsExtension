@@ -5,9 +5,7 @@ addExtensionListener("message", (event) => {
         return;
     }
 
-    window.dispatchEvent(
-        new CustomEvent("EMC_Message", { detail: event.data })
-    );
+    window.dispatchEvent(new CustomEvent("EMC_Message", { detail: event.data }));
 });
 
 addExtensionListener("EMC_Message", (event) => {

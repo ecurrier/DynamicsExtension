@@ -12,6 +12,11 @@
             const pageContext = EMC.App.Global.getPageContext();
             switch (pageContext) {
                 case EMC.App.Constants.PageContexts.ModelDrivenApp:
+                    if (!Xrm.Page || !Xrm.Page.data || !Xrm.Page.data.entity) {
+                        EMC.App.Global.displayNotification(false, "Please navigate to a record before applying a template");
+                        return;
+                    }
+
                     formJson = retrieveAppFormJSON();
                     break;
                 case EMC.App.Constants.PageContexts.Portal:
@@ -71,7 +76,7 @@
                     return;
             }
 
-            EMC.App.Global.sendExtensionMessage("displayNotification", { success: true, text: "Successfully applied template" });
+            EMC.App.Global.displayNotification(true, "Successfully applied template");
         }
 
         function populateAppFormFromTemplate(json) {

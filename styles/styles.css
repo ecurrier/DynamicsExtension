@@ -202,10 +202,14 @@ main .container {
 
 .toast-container {
     z-index: 1061;
+    padding: 0.5rem !important;
+    font-size: 12px;
+    line-height: 12px;
 }
 
-.toast-header {
-    font-size: 12px;
+.toast-icon {
+    margin: auto;
+    padding-left: 0.3rem;
 }
 
 .toast.bg-success {
@@ -214,6 +218,10 @@ main .container {
 
 .toast.bg-danger {
     background-color: #f8d7da !important;
+}
+
+.toast-body {
+    padding-left: 0.3rem;
 }
 
 .table-header.sticky-top {

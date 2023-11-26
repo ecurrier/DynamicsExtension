@@ -7,6 +7,11 @@
         const category = "WebAPI";
 
         async function loadAttributeMetadata(refreshForm = false) {
+            if (!Xrm.Page || !Xrm.Page.data || !Xrm.Page.data.entity) {
+                EMC.App.Global.displayNotification(false, "Please navigate to a record before loading attribute metadata");
+                return;
+            }
+
             const entityName = Xrm.Page.data.entity.getEntityName();
             const [attributeMetadata, picklistMetadata, booleanMetadata, stateMetadata, statusMetadata] = await Promise.all([
                 fetchAttributeMetadata(entityName),
@@ -70,17 +75,17 @@
             try {
                 response = await Xrm.WebApi.updateRecord(entityName, entityId, payload);
             } catch (error) {
-                EMC.App.Global.sendExtensionMessage("displayNotification", { success: false, text: `Error occurred: ${error.message}` });
+                EMC.App.Global.displayNotification(false, error.message);
                 return;
             }
 
             if (!response || !response.entityType) {
-                EMC.App.Global.sendExtensionMessage("displayNotification", { success: false, text: "Error occurred" });
+                EMC.App.Global.displayNotification(false, "Error occurred");
                 return;
             }
 
             EMC.App.Global.sendExtensionMessage("refreshForm", null, "WebAPI");
-            EMC.App.Global.sendExtensionMessage("displayNotification", { success: true, text: "Update complete" });
+            EMC.App.Global.displayNotification(true, "Update complete");
         }
 
         async function executeFetchXml(fetchXml) {
@@ -91,19 +96,21 @@
             if (match && match.length > 1) {
                 entityName = match[1];
             } else {
-                EMC.App.Global.sendExtensionMessage("displayNotification", { success: false, text: "Entity name not found in XML" });
+                EMC.App.Global.displayNotification(false, "Entity name not found in XML");
                 return;
             }
 
             const query = `?fetchXml=${fetchXml}`;
-            const response = await Xrm.WebApi.retrieveMultipleRecords(entityName, query);
-            if (!response || !response.entities) {
-                EMC.App.Global.sendExtensionMessage("displayNotification", { success: false, text: "Error occurred" });
+            let response = null;
+            try {
+                response = await Xrm.WebApi.retrieveMultipleRecords(entityName, query);
+            } catch (error) {
+                EMC.App.Global.displayNotification(false, error.message);
                 return;
             }
 
             EMC.App.Global.sendExtensionMessage("populateResultsTable", response.entities, category);
-            EMC.App.Global.sendExtensionMessage("displayNotification", { success: true, text: "Successfully executed Fetch XML" });
+            EMC.App.Global.displayNotification(true, "Successfully executed Fetch XML");
         }
 
         return {

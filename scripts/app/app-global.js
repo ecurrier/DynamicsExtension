@@ -15,6 +15,10 @@
             });
         }
 
+        function displayNotification(success, message) {
+            sendExtensionMessage("displayNotification", { success: success, text: message });
+        }
+
         function initializePageContext() {
             pageContext = window.Xrm ? EMC.App.Constants.PageContexts.ModelDrivenApp : window.portal ? EMC.App.Constants.PageContexts.Portal : null;
             EMC.App.Global.sendExtensionMessage("handlePageContext", pageContext, category);
@@ -30,6 +34,7 @@
 
         return {
             sendExtensionMessage: sendExtensionMessage,
+            displayNotification: displayNotification,
             initializePageContext: initializePageContext,
             parseDOM: parseDOM,
             getPageContext: getPageContext,

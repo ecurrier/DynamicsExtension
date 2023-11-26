@@ -23,12 +23,12 @@
             const query = `?fetchXml=${fetchXml}`;
             const response = await Xrm.WebApi.retrieveMultipleRecords("systemuser", query);
             if (!response || !response.entities || response.entities.length === 0) {
-                EMC.App.Global.sendExtensionMessage("displayNotification", { success: false, text: "No users found" });
+                EMC.App.Global.displayNotification(false, "No users found");
                 return;
             }
 
             EMC.App.Global.sendExtensionMessage("populateSystemUserSelect", response.entities, category);
-            EMC.App.Global.sendExtensionMessage("displayNotification", { success: true, text: `Successfully found ${response.entities.length} system users` });
+            EMC.App.Global.displayNotification(true, `Successfully found ${response.entities.length} system users`);
         }
 
         function retrieveCurrentUserDetails() {
@@ -91,8 +91,8 @@
 
             const query = `?fetchXml=${fetchXml}`;
             const response = await Xrm.WebApi.retrieveMultipleRecords("role", query);
-            if (!response || !response.entities || response.entities.length === 0) {
-                EMC.App.Global.sendExtensionMessage("displayNotification", { success: false, text: "Error occurred" });
+            if (!response || !response.entities) {
+                EMC.App.Global.displayNotification(false, "Error occurred");
                 return;
             }
 
@@ -107,7 +107,7 @@
             }
 
             EMC.App.Global.sendExtensionMessage("refreshSecurityRolesData", null, category);
-            EMC.App.Global.sendExtensionMessage("displayNotification", { success: true, text: `Successfully applied security role changes` });
+            EMC.App.Global.displayNotification(true, "Successfully applied security role changes");
         }
 
         async function associateSecurityRoles(roleIds, systemUserId) {

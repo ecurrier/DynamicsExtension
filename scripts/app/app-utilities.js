@@ -9,7 +9,7 @@
         function refreshCommandBar() {
             Xrm.Page.ui.refreshRibbon();
 
-            EMC.App.Global.sendExtensionMessage("displayNotification", { success: true, text: "Ribbon refreshed" });
+            EMC.App.Global.displayNotification(true, "Ribbon refreshed");
         }
 
         function generateFetchXml() {
@@ -19,13 +19,13 @@
         async function parseForSavedQuery() {
             const savedQueryId = retrieveSavedQueryId();
             if (savedQueryId === null) {
-                EMC.App.Global.sendExtensionMessage("displayNotification", { success: false, text: "Could not obtain Fetch XML from record/view" });
+                EMC.App.Global.displayNotification(false, "Could not obtain Fetch XML from record/view");
                 return;
             }
 
             const response = await Xrm.WebApi.retrieveRecord("savedquery", savedQueryId, "?$select=fetchxml");
             if (!response) {
-                EMC.App.Global.sendExtensionMessage("displayNotification", { success: false, text: "Could not obtain Fetch XML from record/view" });
+                EMC.App.Global.displayNotification(false, "Could not obtain Fetch XML from record/view");
                 return;
             }
 
@@ -54,7 +54,7 @@
 
         function generateRecordFetchXml() {
             if (!Xrm.Page.data.entity) {
-                EMC.App.Global.sendExtensionMessage("displayNotification", { success: false, text: "Could not obtain Fetch XML from record/view" });
+                EMC.App.Global.displayNotification(false, "Could not obtain Fetch XML from record/view");
                 return;
             }
 
