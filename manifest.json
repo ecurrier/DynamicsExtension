@@ -1,20 +1,20 @@
 {
     "manifest_version": 3,
-    "name": "Power Up",
+    "name": "Power Tools for Power Platform/Dynamics 365",
     "version": "1.0",
     "description": "Boost productivity & streamline workflows on Power Platform/Dynamics 365. Custom functionality & quality-of-life features.",
     "icons": {
-        "16": "images/powerup2-16.png",
-        "32": "images/powerup2-32.png",
-        "48": "images/powerup2-48.png",
-        "128": "images/powerup2-128.png"
+        "16": "images/powertools-16.png",
+        "32": "images/powertools-32.png",
+        "48": "images/powertools-48.png",
+        "128": "images/powertools-128.png"
     },
     "background": {
         "service_worker": "scripts/extension/extension-service.js",
         "type": "module"
     },
     "host_permissions": ["https://*/*"],
-    "permissions": ["scripting", "storage", "activeTab", "tabs"],
+    "permissions": ["scripting", "storage", "activeTab"],
     "content_scripts": [
         {
             "matches": ["<all_urls>"],
