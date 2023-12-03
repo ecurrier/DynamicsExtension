@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Power Tools for Power Platform/Dynamics 365",
-    "version": "1.0",
+    "version": "1.1",
     "description": "Boost productivity & streamline workflows on Power Platform/Dynamics 365. Custom functionality & quality-of-life features.",
     "icons": {
         "16": "images/powertools-16.png",
@@ -22,7 +22,7 @@
         }
     ],
     "action": {
-        "default_title": "Power Up",
+        "default_title": "Power Tools",
         "default_popup": "pages/main.html"
     },
     "web_accessible_resources": [
