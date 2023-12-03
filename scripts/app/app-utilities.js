@@ -154,11 +154,19 @@
             EMC.App.Global.displayNotification(true);
         }
 
+        function openWebApiUrl() {
+            const clientUrl = Xrm.Utility.getGlobalContext().getClientUrl();
+            Xrm.Navigation.openUrl(`${clientUrl}/api/data/v9.2`);
+
+            EMC.App.Global.displayNotification(true);
+        }
+
         return {
             refreshCommandBar: refreshCommandBar,
             generateFetchXml: generateFetchXml,
             generateUrls: generateUrls,
             openUrlNewTab: openUrlNewTab,
+            openWebApiUrl: openWebApiUrl,
         };
     })();
 })(this);
