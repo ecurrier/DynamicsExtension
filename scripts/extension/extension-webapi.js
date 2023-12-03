@@ -14,10 +14,10 @@
         const $attributeMetadataSelector = "#attribute-metadata-selector";
 
         function executeOnLoad() {
-            registerHandlers();
+            attachHandlers();
         }
 
-        function registerHandlers() {
+        function attachHandlers() {
             $("[data-category='webapi'] button[data-function-name]:not([data-has-parameters])").click(function () {
                 EMC.Extension.Global.executeChromeScript($(this).attr("data-function-name"), category);
             });
@@ -378,6 +378,7 @@
 
         function resetResultsTable() {
             $("#results-viewer-table-container table tr").remove();
+            $("#results-viewer-table-container").hide();
         }
 
         function buildTableHeader(attributes) {
@@ -406,10 +407,12 @@
 
                 $("#results-viewer-table-container table tbody").append(html);
             });
+
+            $("#results-viewer-table-container").toggle(results.length !== 0);
         }
 
         function setResultsCountLabel(results) {
-            $("#record-count").text(`${results.length} records retrieved`)
+            $("#record-count").text(`${results.length} records retrieved`);
         }
 
         function getUniqueAttributes(arr) {

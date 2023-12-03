@@ -13,7 +13,9 @@
         }
 
         function generateFetchXml() {
-            Xrm.Page.data === null ? parseForSavedQuery() : generateRecordFetchXml();
+            const queries = Xrm.Page.data === null ? parseForSavedQuery() : generateRecordFetchXml();
+
+            EMC.App.Global.sendExtensionMessage("handleFetchXmlResult", queries, category);
         }
 
         async function parseForSavedQuery() {
@@ -23,13 +25,13 @@
                 return;
             }
 
-            const response = await Xrm.WebApi.retrieveRecord("savedquery", savedQueryId, "?$select=fetchxml");
+            const response = await Xrm.WebApi.retrieveRecord("savedquery", savedQueryId, "?$select=fetchxml,name");
             if (!response) {
                 EMC.App.Global.displayNotification(false, "Could not obtain Fetch XML from record/view");
                 return;
             }
 
-            EMC.App.Global.sendExtensionMessage("handleFetchXmlResult", response.fetchxml, category);
+            return [{ name: response.name, fetchXml: response.fetchxml }];
         }
 
         function retrieveSavedQueryId() {
@@ -58,10 +60,17 @@
                 return;
             }
 
+            const recordQuery = createRecordQuery();
+            const subgridQueries = createSubgridQueries();
+
+            return [recordQuery].concat(subgridQueries);
+        }
+
+        function createRecordQuery() {
             const entityName = Xrm.Page.data.entity.getEntityName();
             const entityId = Xrm.Page.data.entity.getId();
 
-            const fetchXml = `
+            const recordFetchXml = `
                 <fetch>
                     <entity name="${entityName}">
                         <attribute name="${entityName}id" />
@@ -71,12 +80,85 @@
                     </entity>
                 </fetch>`.replace(/  +|\n/g, "");
 
-            EMC.App.Global.sendExtensionMessage("handleFetchXmlResult", fetchXml, category);
+            return {
+                name: `Current Record (${entityName})`,
+                fetchXml: recordFetchXml,
+            };
+        }
+
+        function createSubgridQueries() {
+            const subgridControls = Xrm.Page.getControl().filter((c) => {
+                return !(!c?.getFetchXml || !c.getFetchXml() || !c?.getRelationship || !c.getRelationship());
+            });
+
+            const subgridQueries = subgridControls.map((sc) => ({
+                name: `${sc.getLabel()} (${sc.getRelationship().name})`,
+                fetchXml: sc.getFetchXml(),
+            }));
+
+            return subgridQueries;
+        }
+
+        function generateUrls() {
+            const urls = Xrm.Page.data !== null ? generateRecordUrls() : [{ name: "Current Record/View", url: window.location.href }];
+
+            const response = {
+                AppUrl: Xrm.Utility.getGlobalContext().getCurrentAppUrl(),
+                Urls: urls,
+            };
+
+            EMC.App.Global.sendExtensionMessage("handleGenerateUrlsResult", response, category);
+        }
+
+        function generateRecordUrls() {
+            const currentRecordUrl = generateRecordUrl();
+            const lookupUrls = generateLookupUrls();
+
+            return [currentRecordUrl].concat(lookupUrls);
+        }
+
+        function generateRecordUrl() {
+            const entityName = Xrm.Page.data.entity.getEntityName();
+            const entityId = Xrm.Page.data.entity.getId();
+            const baseUrl = Xrm.Utility.getGlobalContext().getCurrentAppUrl();
+
+            return {
+                name: "Current Record/View",
+                url: `${baseUrl}&pagetype=entityrecord&etn=${entityName}&id=${entityId}`,
+            };
+        }
+
+        function generateLookupUrls() {
+            const baseUrl = Xrm.Utility.getGlobalContext().getCurrentAppUrl();
+
+            const lookupControls = Xrm.Page.getControl().filter((c) => {
+                return c.getControlType() === "lookup" && c.getAttribute && c.getAttribute() && c.getAttribute().getValue();
+            });
+
+            const lookupUrls = lookupControls.map((c) => ({
+                name: `${c.getLabel()} (${c.getAttribute().getValue()[0].entityType})`,
+                url: `${baseUrl}&pagetype=entityrecord&etn=${c.getAttribute().getValue()[0].entityType}&id=${c.getAttribute().getValue()[0].id}`,
+            }));
+
+            return lookupUrls.reduce((unique, o) => {
+                if (!unique.some((obj) => obj.url === o.url)) {
+                    unique.push(o);
+                }
+                return unique;
+            }, []);
+        }
+
+        function openUrlNewTab(url) {
+            Xrm.Navigation.openUrl(url);
+
+            EMC.App.Global.displayNotification(true);
         }
 
         return {
             refreshCommandBar: refreshCommandBar,
             generateFetchXml: generateFetchXml,
+            generateUrls: generateUrls,
+            openUrlNewTab: openUrlNewTab,
         };
     })();
 })(this);

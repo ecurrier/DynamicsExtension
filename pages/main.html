@@ -23,6 +23,35 @@
         </div>
         <!-- END LOADING OVERLAY -->
         <!-- MODALS -->
+        <!-- CONFIRMATION MODAL -->
+        <div
+            class="modal fade"
+            id="confirmation-modal"
+            data-bs-backdrop="static"
+            data-bs-keyboard="false"
+            tabindex="-1"
+            aria-labelledby="confirmation-modal-label"
+            aria-hidden="true"
+            data-category="global"
+        >
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="confirmation-modal-label">Confirmation</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body confirmation-modal-body">
+                        <p class="confirmation-modal-body-label"></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END CONFIRMATION MODAL -->
+        <!-- FETCH XML DISPLAY MODAL -->
         <div
             class="modal fade"
             id="fetch-xml-modal"
@@ -39,11 +68,18 @@
                         <h5 class="modal-title" id="fetch-xml-modal-label">Generated Fetch XML</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <pre>
-                        <code class="language-xml">
-                            <div class="modal-body fetch-xml-modal-body"></div>
-                        </code>
-                    </pre>
+                    <div class="modal-body fetch-xml-modal-body">
+                        <div class="col-8 d-grid d-select-container">
+                            <select class="form-select" id="fetch-xml-selector" aria-label="Fetch Xml Selector">
+                                <option value="" selected disabled>Select a query...</option>
+                            </select>
+                        </div>
+                        <pre>
+                            <code class="language-xml">
+                                <div class="fetch-xml-modal-body-content"></div>
+                            </code>
+                        </pre>
+                    </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-extension-function-name="copyContentToClipboard">Copy to Clipboard</button>
                         <button type="button" class="btn btn-primary" data-extension-function-name="sendContentToWebAPI">Retrieve Records</button>
@@ -51,6 +87,88 @@
                 </div>
             </div>
         </div>
+        <!-- END FETCH XML DISPLAY MODAL -->
+        <!-- URL DISPLAY MODAL -->
+        <div
+            class="modal fade"
+            id="url-modal"
+            data-bs-backdrop="static"
+            data-bs-keyboard="false"
+            tabindex="-1"
+            aria-labelledby="url-modal-modal-label"
+            aria-hidden="true"
+            data-category="utilities"
+        >
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="url-modal-modal-label">Generate URLs</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body url-modal-modal-body">
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-9 d-grid d-select-container">
+                                    <select class="form-select" id="url-selector" aria-label="Url Selector">
+                                        <option value="" selected disabled>Select a url/link...</option>
+                                        <option value="1">Manual Entry</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row url-modal-form">
+                                <div class="row modal-content-row url-modal-form-manual-entry hidden">
+                                    <div class="col-6">
+                                        <div class="mb-3 field-input">
+                                            <label for="record-url-logical-name" class="form-label">Record Logical Name</label>
+                                            <input type="text" value="" class="form-control" id="record-url-logical-name" />
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="mb-3 field-input">
+                                            <label for="record-url-id" class="form-label">Record Id</label>
+                                            <input type="text" value="" class="form-control" id="record-url-id" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row modal-content-row url-modal-form-link hidden">
+                                    <div class="col-12">
+                                        <div class="mb-3 field-input">
+                                            <label for="record-url-link" class="form-label">Record Url/Link</label>
+                                            <input type="text" class="form-control" id="record-url-link" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary btn-submit" data-extension-function-name="copyUrlToClipboard" disabled>
+                            Copy to Clipboard
+                        </button>
+                        <button type="button" class="btn btn-primary btn-submit" data-extension-function-name="navigateToUrl" disabled>
+                            Open in new Tab<svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                fill="currentColor"
+                                class="bi bi-box-arrow-up-right icon-button"
+                                viewBox="0 0 16 16"
+                            >
+                                <path
+                                    fill-rule="evenodd"
+                                    d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"
+                                />
+                                <path
+                                    fill-rule="evenodd"
+                                    d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"
+                                />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END URL DISPLAY MODAL -->
         <!-- END MODALS -->
         <!-- TOASTS -->
         <div class="toast-container position-absolute p-3 top-0 end-0">
@@ -157,16 +275,13 @@
                                     <button type="button" class="btn btn-outline-primary" data-function-name="generateFetchXml">Generate Fetch XML</button>
                                 </div>
                             </div>
-                            <!--
-                            <div class="row text-center">
+                            <div class="row text-center button-grid-row">
                                 <div class="col d-grid">
-                                    <button type="button" class="btn btn-outline-primary btn-block">Primary 2</button>
+                                    <button type="button" class="btn btn-outline-primary" data-function-name="generateUrls">Generate Record URL</button>
                                 </div>
-                                <div class="col d-grid">
-                                    <button type="button" class="btn btn-outline-primary btn-block">Primary 3</button>
-                                </div>
+                                <div class="col d-grid"></div>
                             </div>
-                        --></div>
+                        </div>
                     </div>
                     <!-- END UTILITIES -->
                     <!-- TEMPLATES -->

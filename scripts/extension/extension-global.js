@@ -94,12 +94,22 @@
         }
 
         function displayNotification(response) {
+            if (!response || !response.text) {
+                return;
+            }
+
             $(".toast-body-message").text(response.text);
             $("#toast-notification").removeClass("bg-success bg-danger");
             $("#toast-notification").addClass(response.success ? "bg-success" : "bg-danger");
             $(".toast-icon svg").remove();
             $(".toast-icon").append(response.success ? toastIconSuccessComponent : toastIconFailureComponent);
             $("#toast-notification").toast("show");
+        }
+
+        function confirmAction(handler, content, htmlContent = false) {
+            htmlContent ? $(".confirmation-modal-body-label").html(content) : $(".confirmation-modal-body-label").text(content);
+            $("#confirmation-modal button.btn-primary").off("click").on("click", handler);
+            $("#confirmation-modal").modal("show");
         }
 
         function getEntitySetName(logicalName) {
@@ -130,6 +140,7 @@
             showLoadingIndicator: showLoadingIndicator,
             displayNotification: displayNotification,
             getPageContext: getPageContext,
+            confirmAction: confirmAction,
         };
     })();
 })(this);

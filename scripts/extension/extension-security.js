@@ -22,10 +22,10 @@
             retrieveCurrentUserDetails();
             retrieveAllSecurityRoleDetails();
 
-            registerHandlers();
+            attachHandlers();
         }
 
-        function registerHandlers() {
+        function attachHandlers() {
             $("#security-content button[data-function-name]").click(function () {
                 EMC.Extension.Global.executeChromeScript($(this).attr("data-function-name"), category);
             });
@@ -177,8 +177,8 @@
 
         function filterSecurityTable() {
             const filterQuery = $(this).val().toLowerCase();
-            $("#security-table-container tbody tr").filter(function() {
-              $(this).toggle($(this).attr("data-attribute-name").toLowerCase().indexOf(filterQuery) > -1)
+            $("#security-table-container tbody tr").filter(function () {
+                $(this).toggle($(this).attr("data-attribute-name").toLowerCase().indexOf(filterQuery) > -1);
             });
         }
 
@@ -195,17 +195,11 @@
         }
 
         function applySecurityRoleChanges() {
-            const associateRoleIds = $(`.security-role-list-item.list-group-item-success`)
-                .map(function () {
-                    return $(this).attr("data-attribute-id");
-                })
-                .get();
+            const $successItems = $(".security-role-list-item.list-group-item-success");
+            const $dangerItems = $(".security-role-list-item.list-group-item-danger");
 
-            const disassociateRoleIds = $(`.security-role-list-item.list-group-item-danger`)
-                .map(function () {
-                    return $(this).attr("data-attribute-id");
-                })
-                .get();
+            const associateRoleIds = getRoleIds($successItems);
+            const disassociateRoleIds = getRoleIds($dangerItems);
 
             const payload = {
                 systemUserId: selectedUserId,
@@ -213,7 +207,26 @@
                 disassociateRoleIds: disassociateRoleIds,
             };
 
+            if (payload.disassociateRoleIds.length > 0) {
+                EMC.Extension.Global.confirmAction(
+                    function () {
+                        EMC.Extension.Global.executeChromeScript("applySecurityRoleChanges", category, payload);
+                    },
+                    'You have selected to remove one or more security roles from the selected user.<br/><br/>Removing security roles may result in a loss of accessibility to certain system functionalities.<br/><br/><span class="fw-bold">Please confirm you would like to proceed with removing the selected security roles.</span>',
+                    true
+                );
+                return;
+            }
+
             EMC.Extension.Global.executeChromeScript("applySecurityRoleChanges", category, payload);
+        }
+
+        function getRoleIds(selector) {
+            return $(selector)
+                .map(function () {
+                    return $(this).attr("data-attribute-id");
+                })
+                .get();
         }
 
         return {

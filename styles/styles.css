@@ -248,3 +248,20 @@ code textarea {
 .modal-content {
     max-height: 535px;
 }
+
+.modal-body {
+    overflow-y: auto;
+}
+
+.modal-content-row {
+    padding-top: 20px;
+}
+
+.icon-button {
+    vertical-align: unset;
+    margin-left: 5px;
+}
+
+.url-modal-form {
+    padding-top: 20px;
+}
