@@ -13,9 +13,10 @@
             }
 
             const entityName = Xrm.Page.data.entity.getEntityName();
-            const [attributeMetadata, picklistMetadata, booleanMetadata, stateMetadata, statusMetadata] = await Promise.all([
+            const [attributeMetadata, picklistMetadata, multiselectPicklistMetadata, booleanMetadata, stateMetadata, statusMetadata] = await Promise.all([
                 fetchAttributeMetadata(entityName),
                 fetchChildAttributeMetadata(entityName, "Picklist"),
+                fetchChildAttributeMetadata(entityName, "MultiSelectPicklist"),
                 fetchChildAttributeMetadata(entityName, "Boolean"),
                 fetchChildAttributeMetadata(entityName, "State"),
                 fetchChildAttributeMetadata(entityName, "Status"),
@@ -23,14 +24,17 @@
 
             const recordValues = await retrieveRecordValues(entityName);
             const data = {
-                AttributeMetadata: attributeMetadata.Attributes,
-                PicklistMetadata: picklistMetadata.value.concat(stateMetadata.value).concat(statusMetadata.value),
+                AttributeMetadata: attributeMetadata.Attributes.filter((a) => {
+                    return a.AttributeType !== "Virtual" || (a.AttributeType === "Virtual" && a?.AttributeTypeName?.Value === "MultiSelectPicklistType");
+                }),
+                PicklistMetadata: picklistMetadata.value.concat(multiselectPicklistMetadata.value).concat(stateMetadata.value).concat(statusMetadata.value),
                 BooleanMetadata: booleanMetadata.value,
                 RecordValues: recordValues,
                 RefreshForm: refreshForm,
             };
 
             EMC.App.Global.sendExtensionMessage("populateAttributeMetadata", data, category);
+            EMC.App.Global.displayNotification(true, "Successfully loaded attribute metadata");
         }
 
         async function retrieveRecordValues(entityName) {
@@ -46,7 +50,7 @@
 
         async function fetchAttributeMetadata(entityName) {
             const response = await fetch(
-                `${EMC.App.Constants.WebApiEndpoint}EntityDefinitions(LogicalName='${entityName}')?$select=LogicalName&$expand=Attributes($filter=AttributeType ne 'Virtual' and AttributeType ne 'Uniqueidentifier')`
+                `${EMC.App.Constants.WebApiEndpoint}EntityDefinitions(LogicalName='${entityName}')?$select=LogicalName&$expand=Attributes($filter=AttributeType ne 'Uniqueidentifier')`
             );
             return await response.json();
         }

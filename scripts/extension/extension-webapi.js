@@ -99,7 +99,7 @@
         function loadFormFields(fieldValue) {
             $("#field-display-name").text(fieldAttributeMetadata?.DisplayName?.UserLocalizedLabel?.Label);
             $("#field-logical-name").text(fieldAttributeMetadata.LogicalName);
-            $("#field-attribute-type").text(fieldAttributeMetadata.AttributeType);
+            $("#field-attribute-type").text(fieldAttributeMetadata.AttributeType === "Virtual" ? "MultiSelectPicklist" : fieldAttributeMetadata.AttributeType);
             $("#field-attribute-value").text(fieldValue);
 
             switch (fieldAttributeMetadata.AttributeType) {
@@ -136,6 +136,12 @@
                     initializeChoiceOptionSet(fieldAttributeMetadata.LogicalName, fieldAttributeMetadata.AttributeType);
                     $(".field-input-select-choice").show();
                     break;
+                case "Virtual":
+                    initializeMultiselectChoiceOptionSet(fieldAttributeMetadata.LogicalName, fieldAttributeMetadata.AttributeType);
+                    $(".field-input-multiselect-choice").show();
+                    break;
+                default:
+                    return;
             }
 
             $("#update-field-inputs-container").show();
@@ -190,6 +196,21 @@
             }
 
             populateSelectOptions("#update-field-select-choice", options);
+        }
+
+        function initializeMultiselectChoiceOptionSet(fieldLogicalName, attributeType) {
+            const metadata = picklistMetadata;
+            const filteredMetadata = metadata.find((object) => object.LogicalName === fieldLogicalName && object.AttributeType === attributeType);
+            if (!filteredMetadata) {
+                return;
+            }
+
+            const options = filteredMetadata.OptionSet.Options.map((option) => ({
+                value: option.Value,
+                text: option.Label.UserLocalizedLabel.Label,
+            }));
+
+            populateSelectOptions("#update-field-multiselect-choice", options);
         }
 
         function populateSelectOptions($selector, options) {
@@ -247,6 +268,8 @@
                 case "State":
                 case "Status":
                     return recordValues[`${fieldLogicalName}${EMC.Extension.Global.ODataFormattedValueKeys.DisplayValue}`];
+                case "Virtual":
+                    return recordValues[`${fieldLogicalName}${EMC.Extension.Global.ODataFormattedValueKeys.DisplayValue}`];
                 default:
                     return null;
             }
@@ -301,6 +324,10 @@
                     const booleanChoiceValue = $(".field-input-select-choice select").val();
                     payload[fieldLogicalName] = clearField ? "null" : parseBoolean(booleanChoiceValue);
                     break;
+                case "Virtual":
+                    const multiselectChoiceValue = $(".field-input-multiselect-choice select").val();
+                    payload[fieldLogicalName] = clearField ? "null" : multiselectChoiceValue.toString();
+                    break;
             }
 
             EMC.Extension.Global.executeChromeScript($(this).attr("data-function-name"), category, payload);
@@ -338,6 +365,9 @@
                 case "State":
                 case "Status":
                     value = $(".field-input-select-choice select").val();
+                    break;
+                case "Virtual":
+                    value = $(".field-input-multiselect-choice select").val();
                     break;
             }
 

@@ -156,7 +156,7 @@
 
         function openWebApiUrl() {
             const clientUrl = Xrm.Utility.getGlobalContext().getClientUrl();
-            Xrm.Navigation.openUrl(`${clientUrl}/api/data/v9.2`);
+            Xrm.Navigation.openUrl(`${clientUrl}${EMC.App.Constants.WebApiEndpoint}`);
 
             EMC.App.Global.displayNotification(true);
         }
