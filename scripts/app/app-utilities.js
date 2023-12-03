@@ -187,6 +187,46 @@
             EMC.App.Global.displayNotification(true, `Successfully toggled control labels to display ${toggleSchema ? "logical names" : "control labels"}`);
         }
 
+        function enableAdminMode() {
+            setAttributesOptional();
+            showAndEnableControls();
+
+            const selectedTab = getSelectedTab();
+            showTabsAndSections();
+            focusAndExpandTab(selectedTab);
+
+            EMC.App.Global.displayNotification(true, "Successfully enabled admin mode");
+        }
+
+        function setAttributesOptional() {
+            Xrm.Page.data.entity.attributes.forEach((a) => a?.setRequiredLevel?.("none"));
+        }
+
+        function showAndEnableControls() {
+            Xrm.Page.ui.controls.forEach((c) => {
+                c?.setVisible?.(true);
+                c?.setDisabled?.(false);
+                c?.clearNotification?.();
+            });
+        }
+
+        function getSelectedTab() {
+            return Xrm.Page.ui.tabs.get((t) => t?.getDisplayState?.() === "expanded")[0];
+        }
+
+        function showTabsAndSections() {
+            Xrm.Page.ui.tabs.forEach((t) => {
+                t?.setVisible?.(true);
+                t?.setDisplayState?.("expanded");
+                tab.sections.forEach((s) => s?.setVisible?.(true));
+            });
+        }
+
+        function focusAndExpandTab(tab) {
+            tab?.setDisplayState?.("expanded");
+            tab?.setFocus?.();
+        }
+
         return {
             refreshCommandBar: refreshCommandBar,
             generateFetchXml: generateFetchXml,
@@ -194,6 +234,7 @@
             openUrlNewTab: openUrlNewTab,
             openWebApiUrl: openWebApiUrl,
             toggleControlLogicalNames: toggleControlLogicalNames,
+            enableAdminMode: enableAdminMode,
         };
     })();
 })(this);
