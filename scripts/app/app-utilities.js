@@ -12,8 +12,8 @@
             EMC.App.Global.displayNotification(true, "Ribbon refreshed");
         }
 
-        function generateFetchXml() {
-            const queries = Xrm.Page.data === null ? parseForSavedQuery() : generateRecordFetchXml();
+        async function generateFetchXml() {
+            const queries = Xrm.Page.data === null ? await parseForSavedQuery() : generateRecordFetchXml();
 
             EMC.App.Global.sendExtensionMessage("handleFetchXmlResult", queries, category);
         }

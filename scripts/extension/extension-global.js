@@ -36,6 +36,7 @@
             await initializeTabId();
             initializeListener();
             initializePageContext();
+            initializeTooltips();
         }
 
         function attachHandlers() {
@@ -58,6 +59,13 @@
 
         function initializePageContext() {
             executeChromeScript("initializePageContext", category, null, false);
+        }
+
+        function initializeTooltips() {
+            const tooltipTriggerList = [].slice.call($('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
         }
 
         function handlePageContext(context) {

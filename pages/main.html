@@ -222,9 +222,8 @@
                                         </a>
                                         <ul class="dropdown-menu" aria-labelledby="offcanvas-templates-dropdown">
                                             <li>
-                                                <a class="nav-link" href="#" data-bs-toggle="pill" data-bs-target="#templates-content">Model-Driven App</a>
+                                                <a class="nav-link" href="#" data-bs-toggle="pill" data-bs-target="#templates-content">Pre-populate Forms</a>
                                             </li>
-                                            <li><a class="nav-link" href="#" data-bs-toggle="pill" data-bs-target="#templates-content">Power Pages</a></li>
                                         </ul>
                                     </li>
                                     <li class="nav-item dropdown">
@@ -269,18 +268,52 @@
                         <div class="container">
                             <div class="row text-center button-grid-row">
                                 <div class="col d-grid">
-                                    <button type="button" class="btn btn-outline-primary" data-function-name="refreshCommandBar">Refresh Command Bar</button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-primary"
+                                        data-function-name="refreshCommandBar"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="Refreshes the main command bar of the current record/view"
+                                    >
+                                        Refresh Command Bar
+                                    </button>
                                 </div>
                                 <div class="col d-grid">
-                                    <button type="button" class="btn btn-outline-primary" data-function-name="generateFetchXml">Generate Fetch XML</button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-primary"
+                                        data-function-name="generateFetchXml"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="Generates fetch xml queries based on the current form/view"
+                                    >
+                                        Generate Fetch XML
+                                    </button>
                                 </div>
                             </div>
                             <div class="row text-center button-grid-row">
                                 <div class="col d-grid">
-                                    <button type="button" class="btn btn-outline-primary" data-function-name="generateUrls">Generate Record URL</button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-primary"
+                                        data-function-name="generateUrls"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="Generates record urls/links based on the current form/view"
+                                    >
+                                        Generate Record URL
+                                    </button>
                                 </div>
                                 <div class="col d-grid">
-                                    <button type="button" class="btn btn-outline-primary" data-function-name="openWebApiUrl">
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-primary"
+                                        data-function-name="openWebApiUrl"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="Opens the current environment's Web API in a new tab"
+                                    >
                                         Open Web API URL<svg
                                             xmlns="http://www.w3.org/2000/svg"
                                             width="16"
@@ -303,10 +336,28 @@
                             </div>
                             <div class="row text-center button-grid-row">
                                 <div class="col d-grid">
-                                    <button type="button" class="btn btn-outline-primary" data-function-name="toggleControlLogicalNames">Toggle Logical Names</button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-primary"
+                                        data-function-name="toggleControlLogicalNames"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="Toggles the display of logical names on all form controls"
+                                    >
+                                        Toggle Logical Names
+                                    </button>
                                 </div>
                                 <div class="col d-grid">
-                                    <button type="button" class="btn btn-outline-primary" data-function-name="enableAdminMode">Enable Admin Mode</button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-primary"
+                                        data-function-name="enableAdminMode"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="Displays and enables all form controls (fields, tabs, sections) and removes all field requirements"
+                                    >
+                                        Enable Admin Mode
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -334,8 +385,24 @@
                                             Actions
                                         </button>
                                         <div class="dropdown-menu" aria-labelledby="dropdownMenu2">
-                                            <button class="dropdown-item" type="button" data-function-name="generateNewTemplate">Generate New Template</button>
-                                            <button class="dropdown-item" type="button" data-extension-function-name="applyCurrentTemplate">
+                                            <button
+                                                class="dropdown-item"
+                                                type="button"
+                                                data-function-name="generateNewTemplate"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="left"
+                                                title="Generates a JSON template of input/value data from the current form"
+                                            >
+                                                Generate New Template
+                                            </button>
+                                            <button
+                                                class="dropdown-item"
+                                                type="button"
+                                                data-extension-function-name="applyCurrentTemplate"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="left"
+                                                title="Applies the selected JSON data to the current form"
+                                            >
                                                 Apply Template
                                             </button>
                                             <hr class="dropdown-divider" />
@@ -346,12 +413,28 @@
                                                 Delete Template
                                             </button>
                                             <hr class="dropdown-divider" />
-                                            <button class="dropdown-item" type="button" data-extension-function-name="exportCurrentTemplate">
+                                            <button
+                                                class="dropdown-item"
+                                                type="button"
+                                                data-extension-function-name="exportCurrentTemplate"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="left"
+                                                title="Downloads the selected JSON data"
+                                            >
                                                 Export Template
                                             </button>
                                             <a id="export-template-anchor" style="display: none"></a>
-                                            <button class="dropdown-item" type="button" data-extension-function-name="importTemplate">Import Template</button>
-                                            <input type="file" id="import-template-file" style="display: none" />
+                                            <button
+                                                class="dropdown-item"
+                                                type="button"
+                                                data-extension-function-name="importTemplate"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="left"
+                                                title="Select a JSON file to import as a new template"
+                                            >
+                                                Import Template
+                                            </button>
+                                            <input type="file" id="import-template-file" class="hidden" />
                                         </div>
                                     </div>
                                 </div>

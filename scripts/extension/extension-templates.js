@@ -40,6 +40,10 @@
 
         function applyCurrentTemplate() {
             const json = jsonEditor.get();
+            if (!json || Object.keys(json).length === 0){
+                EMC.Extension.Global.displayNotification({ success: false, text: "No template found to apply" });
+                return;
+            }
 
             EMC.Extension.Global.executeChromeScript("populateFieldsFromTemplate", category, json);
         }
@@ -71,6 +75,11 @@
         }
 
         async function deleteCurrentTemplate() {
+            if (!currentTemplateId) {
+                EMC.Extension.Global.displayNotification({ success: false, text: "No template selected" });
+                return;
+            }
+
             const storageKey = formatStorageKey(currentTemplateId);
             const syncStorageTemplate = await chrome.storage.sync.get(storageKey);
             const templateJson = syncStorageTemplate[storageKey];
@@ -92,6 +101,10 @@
 
         function exportCurrentTemplate() {
             const templateJson = generateTemplateJSON();
+            if (!templateJson || !templateJson.fields || Object.keys(templateJson.fields).length === 0){
+                EMC.Extension.Global.displayNotification({ success: false, text: "No template found to export" });
+                return;
+            }
 
             const jsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(templateJson));
             let $exportTemplateAnchor = $("#export-template-anchor");
