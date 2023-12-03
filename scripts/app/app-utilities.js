@@ -161,12 +161,39 @@
             EMC.App.Global.displayNotification(true);
         }
 
+        function toggleControlLogicalNames() {
+            const controls = Xrm.Page.getControl();
+            if (!controls || controls.length === 0) {
+                EMC.App.Global.displayNotification(false, "Could not find any controls on the form");
+                return;
+            }
+
+            const toggleSchema = controls[0].getLabel() === controls[0].controlDescriptor.Label;
+
+            controls.forEach((c) => {
+                try {
+                    const controlName = c.controlDescriptor.Name;
+                    const controlLabel = c.controlDescriptor.Label ?? c._defaultLabel ?? null;
+                    if (!controlName || !controlLabel) {
+                        return;
+                    }
+
+                    toggleSchema ? c.setLabel(controlName) : c.setLabel(controlLabel);
+                } catch (error) {
+                    console.error(error);
+                }
+            });
+
+            EMC.App.Global.displayNotification(true, `Successfully toggled control labels to display ${toggleSchema ? "logical names" : "control labels"}`);
+        }
+
         return {
             refreshCommandBar: refreshCommandBar,
             generateFetchXml: generateFetchXml,
             generateUrls: generateUrls,
             openUrlNewTab: openUrlNewTab,
             openWebApiUrl: openWebApiUrl,
+            toggleControlLogicalNames: toggleControlLogicalNames,
         };
     })();
 })(this);
