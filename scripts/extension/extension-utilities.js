@@ -20,7 +20,7 @@
         }
 
         function attachHandlers() {
-            $("#utilities-content button[data-function-name]").click(function () {
+            $("[data-category='utilities'] button[data-function-name]").click(function () {
                 EMC.Extension.Global.executeChromeScript($(this).attr("data-function-name"), category);
             });
 

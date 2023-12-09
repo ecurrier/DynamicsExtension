@@ -204,10 +204,25 @@
                             </div>
                             <div class="offcanvas-body">
                                 <ul class="navbar-nav justify-content-end flex-grow-1 pe-3 nav nav-pills nav-fill">
-                                    <li class="nav-item">
-                                        <a class="nav-link active" aria-current="page" data-bs-toggle="pill" data-bs-target="#utilities-content" href="#"
-                                            >Utilities</a
+                                    <li class="nav-item dropdown">
+                                        <a
+                                            class="nav-link dropdown-toggle active"
+                                            href="#"
+                                            id="offcanvas-utilities-dropdown"
+                                            role="button"
+                                            data-bs-toggle="dropdown"
+                                            aria-expanded="false"
                                         >
+                                            Utilities
+                                        </a>
+                                        <ul class="dropdown-menu" aria-labelledby="offcanvas-utilities-dropdown">
+                                            <li>
+                                                <a class="nav-link" href="#" data-bs-toggle="pill" data-bs-target="#utilities-admin-content">Admin</a>
+                                            </li>
+                                            <li>
+                                                <a class="nav-link" href="#" data-bs-toggle="pill" data-bs-target="#utilities-developer-content">Developer</a>
+                                            </li>
+                                        </ul>
                                     </li>
                                     <li class="nav-item dropdown">
                                         <a
@@ -263,32 +278,32 @@
                 <!-- END OFFCANVAS NAVIGATION -->
                 <!-- PAGE CONTENT -->
                 <div class="tab-content" id="pills-tabContent">
-                    <!-- UTILTIES -->
-                    <div class="tab-pane fade show active" id="utilities-content" role="tabpanel" aria-labelledby="utilities-tab">
+                    <!-- UTILTIES - ADMIN -->
+                    <div class="tab-pane fade show active" id="utilities-admin-content" role="tabpanel" data-category="utilities">
                         <div class="container">
                             <div class="row text-center button-grid-row">
                                 <div class="col d-grid">
                                     <button
                                         type="button"
                                         class="btn btn-outline-primary"
-                                        data-function-name="refreshCommandBar"
+                                        data-function-name="enableAdminMode"
                                         data-bs-toggle="tooltip"
                                         data-bs-placement="top"
-                                        title="Refreshes the main command bar of the current record/view"
+                                        title="Displays and enables all form controls (fields, tabs, sections) and removes all field requirements"
                                     >
-                                        Refresh Command Bar
+                                        Enable Admin Mode
                                     </button>
                                 </div>
                                 <div class="col d-grid">
                                     <button
                                         type="button"
                                         class="btn btn-outline-primary"
-                                        data-function-name="generateFetchXml"
+                                        data-function-name="toggleControlLogicalNames"
                                         data-bs-toggle="tooltip"
                                         data-bs-placement="top"
-                                        title="Generates fetch xml queries based on the current form/view"
+                                        title="Toggles the display of logical names on all form controls"
                                     >
-                                        Generate Fetch XML
+                                        Toggle Logical Names
                                     </button>
                                 </div>
                             </div>
@@ -303,6 +318,38 @@
                                         title="Generates record urls/links based on the current form/view"
                                     >
                                         Generate Record URL
+                                    </button>
+                                </div>
+                                <div class="col d-grid">
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-primary"
+                                        data-function-name="refreshCommandBar"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="Refreshes the main command bar of the current record/view"
+                                    >
+                                        Refresh Command Bar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- END UTILITIES - ADMIN -->
+                    <!-- UTILTIES - DEVELOPER -->
+                    <div class="tab-pane fade show" id="utilities-developer-content" role="tabpanel" data-category="utilities">
+                        <div class="container">
+                            <div class="row text-center button-grid-row">
+                                <div class="col d-grid">
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-primary"
+                                        data-function-name="generateFetchXml"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="Generates fetch xml queries based on the current form/view"
+                                    >
+                                        Generate Fetch XML
                                     </button>
                                 </div>
                                 <div class="col d-grid">
@@ -334,35 +381,9 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="row text-center button-grid-row">
-                                <div class="col d-grid">
-                                    <button
-                                        type="button"
-                                        class="btn btn-outline-primary"
-                                        data-function-name="toggleControlLogicalNames"
-                                        data-bs-toggle="tooltip"
-                                        data-bs-placement="top"
-                                        title="Toggles the display of logical names on all form controls"
-                                    >
-                                        Toggle Logical Names
-                                    </button>
-                                </div>
-                                <div class="col d-grid">
-                                    <button
-                                        type="button"
-                                        class="btn btn-outline-primary"
-                                        data-function-name="enableAdminMode"
-                                        data-bs-toggle="tooltip"
-                                        data-bs-placement="top"
-                                        title="Displays and enables all form controls (fields, tabs, sections) and removes all field requirements"
-                                    >
-                                        Enable Admin Mode
-                                    </button>
-                                </div>
-                            </div>
                         </div>
                     </div>
-                    <!-- END UTILITIES -->
+                    <!-- END UTILITIES - DEVELOPER -->
                     <!-- TEMPLATES -->
                     <div class="tab-pane fade" id="templates-content" role="tabpanel" aria-labelledby="templates-tab">
                         <div class="container">
@@ -545,7 +566,12 @@
                                                             </div>
                                                             <div class="mb-3 field-input field-input-multiselect-choice">
                                                                 <label for="update-field-multiselect-choice" class="form-label">Choices</label>
-                                                                <select class="form-select" id="update-field-multiselect-choice" aria-label="Select a choice" multiple>
+                                                                <select
+                                                                    class="form-select"
+                                                                    id="update-field-multiselect-choice"
+                                                                    aria-label="Select a choice"
+                                                                    multiple
+                                                                >
                                                                     <option disabled>Select choices...</option>
                                                                 </select>
                                                             </div>
