@@ -13,13 +13,13 @@
         }
 
         async function generateFetchXml() {
-            const queries = Xrm.Page.data === null ? await parseForSavedQuery() : generateRecordFetchXml();
+            const queries = Xrm.Page.data === null ? await retrieveSavedQueries() : generateRecordFetchXml();
 
             EMC.App.Global.sendExtensionMessage("handleFetchXmlResult", queries, category);
         }
 
-        async function parseForSavedQuery() {
-            const savedQueryId = retrieveSavedQueryId();
+        async function parseForSavedQueries() {
+            const savedQueryId = retrieveSavedQueryIds();
             if (savedQueryId === null) {
                 EMC.App.Global.displayNotification(false, "Could not obtain Fetch XML from record/view");
                 return;
@@ -34,24 +34,30 @@
             return [{ name: response.name, fetchXml: response.fetchxml }];
         }
 
-        function retrieveSavedQueryId() {
-            const viewSelectorComponent = EMC.App.Global.parseDOM("[data-id*='ViewSelector']");
-            if (!viewSelectorComponent || viewSelectorComponent.length === 0) {
-                return null;
-            }
+        async function retrieveSavedQueries() {
+            const queryParamRegex = /(?:&|\?)etn=([^&]+)/;
+            const match = window.location.search.match(queryParamRegex);
 
-            const dataId = viewSelectorComponent.attr("data-id");
-            const viewRegex = /ViewSelector_([A-Za-z0-9]+(-[A-Za-z0-9]+)+)/;
-            const match = dataId.match(viewRegex);
-
-            let savedQueryId = null;
+            let entityName = null;
             if (match && match.length > 1) {
-                savedQueryId = match[1];
+                entityName = match[1];
             } else {
                 return null;
             }
 
-            return savedQueryId;
+            const query = `?$filter=returnedtypecode eq '${entityName}' and fetchxml ne null&$select=fetchxml,name&$orderby=name asc`;
+            const response = await Xrm.WebApi.retrieveMultipleRecords("savedquery", query);
+            if (!response || !response.entities || response.entities.length === 0) {
+                EMC.App.Global.displayNotification(false, "No saved queries found");
+                return;
+            }
+
+            return response.entities.map((e) => {
+                return {
+                    name: e.name,
+                    fetchXml: e.fetchxml,
+                };
+            });
         }
 
         function generateRecordFetchXml() {
@@ -188,12 +194,17 @@
         }
 
         function enableAdminMode() {
-            setAttributesOptional();
-            showAndEnableControls();
+            try {
+                setAttributesOptional();
+                showAndEnableControls();
 
-            const selectedTab = getSelectedTab();
-            showTabsAndSections();
-            focusAndExpandTab(selectedTab);
+                const selectedTab = getSelectedTab();
+                showTabsAndSections();
+                focusAndExpandTab(selectedTab);
+            } catch (error) {
+                EMC.App.Global.displayNotification(false, `Error encountered: ${error.message}`);
+                return;
+            }
 
             EMC.App.Global.displayNotification(true, "Successfully enabled admin mode");
         }
