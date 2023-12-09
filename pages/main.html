@@ -169,6 +169,57 @@
             </div>
         </div>
         <!-- END URL DISPLAY MODAL -->
+        <!-- CHOICE CODE SNIPPET DISPLAY MODAL -->
+        <div
+            class="modal fade"
+            id="choice-code-snippet-modal"
+            data-bs-backdrop="static"
+            data-bs-keyboard="false"
+            tabindex="-1"
+            aria-labelledby="choice-code-snippet-modal-label"
+            aria-hidden="true"
+            data-category="utilities"
+        >
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="choice-code-snippet-modal-label">Generated Choice Code Snippets</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body choice-code-snippet-modal-body">
+                        <div class="row">
+                            <div class="col-6 d-grid d-select-container">
+                                <div class="mb-3 field-input">
+                                    <label for="choice-code-snippet-selector" class="form-label">Choices</label>
+                                    <select class="form-select" id="choice-code-snippet-selector" aria-label="Choice Selector">
+                                        <option value="" selected disabled>Select a choice...</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-6 d-grid d-select-container">
+                                <div class="mb-3 field-input">
+                                    <label for="choice-code-language-selector" class="form-label">Languages</label>
+                                    <select class="form-select" id="choice-code-language-selector" aria-label="Code Language Selector">
+                                        <option value="" selected disabled>Select a language...</option>
+                                        <option value="csharp">C#</option>
+                                        <option value="javascript">JavaScript</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <pre>
+                            <code class="language-csharp">
+                                <div class="choice-code-snippet-modal-body-content"></div>
+                            </code>
+                        </pre>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-extension-function-name="copyChoiceCodeSnippetToClipboard">Copy to Clipboard</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END CHOICE CODE SNIPPET DISPLAY MODAL -->
         <!-- END MODALS -->
         <!-- TOASTS -->
         <div class="toast-container position-absolute p-3 top-0 end-0">
@@ -380,6 +431,21 @@
                                         </svg>
                                     </button>
                                 </div>
+                            </div>
+                            <div class="row text-center button-grid-row">
+                                <div class="col d-grid">
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-primary"
+                                        data-function-name="generateChoiceCodeSnippets"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="Generates C# and JS code snippets for Choices"
+                                    >
+                                        Generate Choice Code Snippet
+                                    </button>
+                                </div>
+                                <div class="col d-grid"></div>
                             </div>
                         </div>
                     </div>

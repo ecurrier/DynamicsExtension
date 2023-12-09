@@ -118,6 +118,7 @@
         }
 
         return {
+            fetchChildAttributeMetadata: fetchChildAttributeMetadata,
             loadAttributeMetadata: loadAttributeMetadata,
             updateField: updateField,
             executeFetchXml: executeFetchXml,

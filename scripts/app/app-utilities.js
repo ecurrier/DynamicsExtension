@@ -238,6 +238,58 @@
             tab?.setFocus?.();
         }
 
+        async function generateChoiceCodeSnippets() {
+            try {
+                const globalOptionSetMetadataResponse = await fetch(`${EMC.App.Constants.WebApiEndpoint}GlobalOptionSetDefinitions`);
+                const globalOptionSetMetadata = await globalOptionSetMetadataResponse.json();
+
+                const data = {
+                    GlobalOptionSetMetadata: globalOptionSetMetadata.value
+                        .filter((g) => g.OptionSetType === "Picklist")
+                        .map((g) => {
+                            return {
+                                name: g?.DisplayName?.LocalizedLabels[0]?.Label,
+                                options: g?.Options,
+                            };
+                        }),
+                };
+
+                if (Xrm.Page) {
+                    const entityName = Xrm.Page.data.entity.getEntityName();
+                    const [picklistMetadata, multiselectPicklistMetadata, booleanMetadata, stateMetadata, statusMetadata] = await Promise.all([
+                        EMC.App.WebAPI.fetchChildAttributeMetadata(entityName, "Picklist"),
+                        EMC.App.WebAPI.fetchChildAttributeMetadata(entityName, "MultiSelectPicklist"),
+                        EMC.App.WebAPI.fetchChildAttributeMetadata(entityName, "Boolean"),
+                        EMC.App.WebAPI.fetchChildAttributeMetadata(entityName, "State"),
+                        EMC.App.WebAPI.fetchChildAttributeMetadata(entityName, "Status"),
+                    ]);
+
+                    data.PicklistMetadata = picklistMetadata.value
+                        .concat(multiselectPicklistMetadata.value)
+                        .concat(stateMetadata.value)
+                        .concat(statusMetadata.value)
+                        .map((p) => {
+                            return {
+                                name: p?.DisplayName?.LocalizedLabels[0]?.Label,
+                                options: p?.OptionSet?.Options,
+                            };
+                        });
+                    data.BooleanMetadata = booleanMetadata.value.map((b) => {
+                        return {
+                            name: b?.DisplayName?.LocalizedLabels[0]?.Label,
+                            options: [b?.OptionSet?.FalseOption, b?.OptionSet?.TrueOption],
+                        };
+                    });
+                    data.EntityName = entityName;
+                }
+
+                EMC.App.Global.sendExtensionMessage("handleChoiceCodeSnippetsResult", data, category);
+            } catch (error) {
+                EMC.App.Global.displayNotification(false, `Error encountered: ${error.message}`);
+                return;
+            }
+        }
+
         return {
             refreshCommandBar: refreshCommandBar,
             generateFetchXml: generateFetchXml,
@@ -246,6 +298,7 @@
             openWebApiUrl: openWebApiUrl,
             toggleControlLogicalNames: toggleControlLogicalNames,
             enableAdminMode: enableAdminMode,
+            generateChoiceCodeSnippets: generateChoiceCodeSnippets,
         };
     })();
 })(this);

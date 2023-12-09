@@ -120,7 +120,7 @@
             $("#confirmation-modal").modal("show");
         }
 
-        function getEntitySetName(logicalName) {
+        function getPluralName(logicalName) {
             if (!logicalName) {
                 return logicalName;
             }
@@ -128,7 +128,7 @@
                 return `${logicalName}es`;
             }
             if (logicalName.endsWith("y")) {
-                return `${logicalName}ies`;
+                return `${logicalName.slice(0, -1)}ies`;
             }
             return `${logicalName}s`;
         }
@@ -144,7 +144,7 @@
             executeChromeScript: executeChromeScript,
             handlePageContext: handlePageContext,
             generateGuid: generateGuid,
-            getEntitySetName: getEntitySetName,
+            getPluralName: getPluralName,
             showLoadingIndicator: showLoadingIndicator,
             displayNotification: displayNotification,
             getPageContext: getPageContext,

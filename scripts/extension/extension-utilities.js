@@ -7,13 +7,17 @@
         const category = "Utilities";
         let currentQueries = {};
         let currentUrls = {};
+        let currentChoiceCodeSnippets = {};
 
         let selectedQuery = null;
         let selectedUrl = null;
         let appBaseUrl = null;
+        let selectedChoiceCodeSnippet = null;
 
         const $fetchXmlSelector = "#fetch-xml-selector";
         const $urlSelector = "#url-selector";
+        const $choiceCodeSnippetSelector = "#choice-code-snippet-selector";
+        const $choiceCodeLanguageSelector = "#choice-code-language-selector";
 
         function executeOnLoad() {
             attachHandlers();
@@ -30,6 +34,8 @@
 
             $(`${$fetchXmlSelector}`).change(loadSelectedQuery);
             $(`${$urlSelector}`).change(loadSelectedUrl);
+            $(`${$choiceCodeSnippetSelector}`).change(loadSelectedChoiceCodeSnippet);
+            $(`${$choiceCodeLanguageSelector}`).change(loadSelectedChoiceCodeSnippet);
             $(".url-modal-form-manual-entry input").on("input", updateRecordUrlInput);
         }
 
@@ -88,7 +94,7 @@
 
             $("#url-modal button.btn-submit").prop("disabled", false);
             $(".url-modal-form-link").removeClass("hidden");
-            
+
             if (urlId === "1") {
                 $(".url-modal-form-manual-entry").removeClass("hidden");
                 $(".url-modal-form-link input").val(`${appBaseUrl}&pagetype=entityrecord&etn=&id=`);
@@ -97,7 +103,7 @@
 
             $(".url-modal-form-manual-entry").addClass("hidden");
 
-            selectedUrl = currentUrls[urlId]
+            selectedUrl = currentUrls[urlId];
             $(".url-modal-form-link input").val(selectedUrl);
         }
 
@@ -206,6 +212,101 @@
             EMC.Extension.Global.executeChromeScript("openUrlNewTab", category, selectedUrl);
         }
 
+        function loadSelectedChoiceCodeSnippet() {
+            const choiceId = $(`${$choiceCodeSnippetSelector}`).val(),
+                language = $(`${$choiceCodeLanguageSelector}`).val();
+            if (!choiceId || !language) {
+                return;
+            }
+
+            const choice = currentChoiceCodeSnippets[choiceId];
+            const choiceCode = generateChoiceCode(choice, language);
+
+            selectedChoiceCodeSnippet = choiceCode;
+            const highlightedCode = hljs.highlight(choiceCode, { language: language }).value;
+            $(".choice-code-snippet-modal-body-content").html(highlightedCode);
+        }
+
+        function generateChoiceCode(choice, language) {
+            switch (language) {
+                case "csharp":
+                    let csharp = `public enum ${sanitizeContent(choice.name?.trim(), "")}\n{\n`;
+                    choice.options.forEach(o => {
+                        csharp = `${csharp}\t${sanitizeContent(o?.Label?.LocalizedLabels[0]?.Label?.trim(), "_")} = ${o?.Value},\n`;
+                    });
+                    csharp = `${csharp}}`;
+                    return csharp;
+                case "javascript":
+                    let javascript = `const ${EMC.Extension.Global.getPluralName(sanitizeContent(choice.name?.trim(), ""))} = {\n`;
+                    choice.options.forEach(o => {
+                        javascript = `${javascript}\t${sanitizeContent(o?.Label?.LocalizedLabels[0]?.Label?.trim(), "")}: ${o?.Value},\n`;
+                    });
+                    javascript = `${javascript}};`;
+                    return javascript;
+                default:
+                    return;
+            }
+        }
+
+        function sanitizeContent(content, replacer = null) {
+            const specialCharacterPattern = /[&\/\\#,+()$~%.'":*?<>{}-]/g;
+
+            const sanitizedContent = content.replace(specialCharacterPattern, "");
+            return replacer !== null ? replaceWhitespaces(sanitizedContent, replacer) : sanitizedContent;
+        }
+
+        function replaceWhitespaces(content, replacer) {
+            const whitespacePattern = /\s+/g;
+
+            return content.replace(whitespacePattern, replacer)
+        }
+
+        function handleChoiceCodeSnippetsResult(choices) {
+            resetChoiceCodeSnippetSelector();
+            appendChoiceCodeSnippets(choices);
+            $("#choice-code-snippet-modal").modal("show");
+        }
+
+        function resetChoiceCodeSnippetSelector() {
+            currentChoiceCodeSnippets = {};
+            selectedChoiceCodeSnippet = null;
+            $(`${$choiceCodeSnippetSelector} option:not(:first)`).remove();
+            $(`${$choiceCodeSnippetSelector} option:first`).prop("selected", true);
+            $(`${$choiceCodeLanguageSelector} option:first`).prop("selected", true);
+            $(".choice-code-snippet-modal-body-content").children().remove();
+            $(".choice-code-snippet-modal-body-content").text(null);
+        }
+
+        function appendChoiceCodeSnippets(choices) {
+            choices.GlobalOptionSetMetadata.forEach((c) => {
+                appendChoiceCodeSnippet(c, "global");
+            });
+            choices.BooleanMetadata.forEach((c) => {
+                appendChoiceCodeSnippet(c, choices.EntityName);
+            });
+            choices.PicklistMetadata.forEach((c) => {
+                appendChoiceCodeSnippet(c, choices.EntityName);
+            });
+        }
+
+        function appendChoiceCodeSnippet(choice, descriptor) {
+            const choiceId = EMC.Extension.Global.generateGuid();
+            currentChoiceCodeSnippets[choiceId] = choice;
+
+
+            $(`${$choiceCodeSnippetSelector} option:first`).after(
+                $("<option>", {
+                    value: choiceId,
+                    text: `${choice.name} (${descriptor})`,
+                })
+            );
+        }
+
+        function copyChoiceCodeSnippetToClipboard() {
+            navigator.clipboard.writeText(selectedChoiceCodeSnippet);
+            EMC.Extension.Global.displayNotification({ success: true, text: "Copied Code to clipboard" });
+        }
+
         return {
             executeOnLoad: executeOnLoad,
             handleFetchXmlResult: handleFetchXmlResult,
@@ -214,6 +315,8 @@
             sendContentToWebAPI: sendContentToWebAPI,
             copyUrlToClipboard: copyUrlToClipboard,
             navigateToUrl: navigateToUrl,
+            handleChoiceCodeSnippetsResult: handleChoiceCodeSnippetsResult,
+            copyChoiceCodeSnippetToClipboard: copyChoiceCodeSnippetToClipboard,
         };
     })();
 })(this);

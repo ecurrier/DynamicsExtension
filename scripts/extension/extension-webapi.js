@@ -312,7 +312,7 @@
                     const entityTarget = fieldAttributeMetadata.Targets.length > 1 ? `_${selectEntityValue}` : null;
                     payload[`${clearField ? `_${fieldLogicalName}_value` : `${fieldLogicalName}${entityTarget}@odata.bind`}`] = clearField
                         ? "null"
-                        : `/${EMC.Extension.Global.getEntitySetName(selectEntityValue)}(${guidValue})`;
+                        : `/${EMC.Extension.Global.getPluralName(selectEntityValue)}(${guidValue})`;
                     break;
                 case "Picklist":
                 case "State":
