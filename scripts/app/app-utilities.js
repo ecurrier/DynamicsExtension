@@ -254,7 +254,7 @@
                         }),
                 };
 
-                if (Xrm.Page) {
+                if (Xrm.Page.data) {
                     const entityName = Xrm.Page.data.entity.getEntityName();
                     const [picklistMetadata, multiselectPicklistMetadata, booleanMetadata, stateMetadata, statusMetadata] = await Promise.all([
                         EMC.App.WebAPI.fetchChildAttributeMetadata(entityName, "Picklist"),

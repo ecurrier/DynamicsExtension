@@ -231,14 +231,14 @@
             switch (language) {
                 case "csharp":
                     let csharp = `public enum ${sanitizeContent(choice.name?.trim(), "")}\n{\n`;
-                    choice.options.forEach(o => {
+                    choice.options.forEach((o) => {
                         csharp = `${csharp}\t${sanitizeContent(o?.Label?.LocalizedLabels[0]?.Label?.trim(), "_")} = ${o?.Value},\n`;
                     });
                     csharp = `${csharp}}`;
                     return csharp;
                 case "javascript":
                     let javascript = `const ${EMC.Extension.Global.getPluralName(sanitizeContent(choice.name?.trim(), ""))} = {\n`;
-                    choice.options.forEach(o => {
+                    choice.options.forEach((o) => {
                         javascript = `${javascript}\t${sanitizeContent(o?.Label?.LocalizedLabels[0]?.Label?.trim(), "")}: ${o?.Value},\n`;
                     });
                     javascript = `${javascript}};`;
@@ -258,7 +258,7 @@
         function replaceWhitespaces(content, replacer) {
             const whitespacePattern = /\s+/g;
 
-            return content.replace(whitespacePattern, replacer)
+            return content.replace(whitespacePattern, replacer);
         }
 
         function handleChoiceCodeSnippetsResult(choices) {
@@ -281,10 +281,10 @@
             choices.GlobalOptionSetMetadata.forEach((c) => {
                 appendChoiceCodeSnippet(c, "global");
             });
-            choices.BooleanMetadata.forEach((c) => {
+            choices?.BooleanMetadata?.forEach((c) => {
                 appendChoiceCodeSnippet(c, choices.EntityName);
             });
-            choices.PicklistMetadata.forEach((c) => {
+            choices?.PicklistMetadata?.forEach((c) => {
                 appendChoiceCodeSnippet(c, choices.EntityName);
             });
         }
@@ -292,7 +292,6 @@
         function appendChoiceCodeSnippet(choice, descriptor) {
             const choiceId = EMC.Extension.Global.generateGuid();
             currentChoiceCodeSnippets[choiceId] = choice;
-
 
             $(`${$choiceCodeSnippetSelector} option:first`).after(
                 $("<option>", {

@@ -265,3 +265,11 @@ code textarea {
 .url-modal-form {
     padding-top: 20px;
 }
+
+.choice-code-snippet-container {
+    border: 1px solid #ced4da;
+}
+
+.choice-code-snippet-modal-body-content {
+    margin-left: 5%;
+}
