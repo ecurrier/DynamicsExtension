@@ -247,7 +247,26 @@
                         >
                             <span class="navbar-toggler-icon"></span>
                         </button>
-                        <a class="navbar-brand nav-landmark">Utilties > Admin</a>
+                        <span>
+                            <a class="navbar-brand nav-landmark">
+                                <span class="nav-landmark-path"></span>
+                                <span class="nav-landmark-tooltip" data-bs-toggle="tooltip" data-bs-placement="top" title="">
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="16"
+                                        height="16"
+                                        fill="currentColor"
+                                        class="bi bi-info-circle"
+                                        viewBox="0 0 16 16"
+                                    >
+                                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+                                        <path
+                                            d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"
+                                        />
+                                    </svg>
+                                </span>
+                            </a>
+                        </span>
                         <a class="navbar-brand">Power Tools for Power Platform</a>
                         <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
                             <div class="offcanvas-header">
@@ -274,7 +293,8 @@
                                                     href="#"
                                                     data-bs-toggle="pill"
                                                     data-bs-target="#utilities-admin-content"
-                                                    data-nav-landmark="Utilties > Admin"
+                                                    data-nav-landmark-path="Utilities > Admin"
+                                                    data-nav-landmark-tooltip="Advanced utilities pertaining to administrator functionality<br><br>Hover over individual utilities to see specific descriptions"
                                                     >Admin</a
                                                 >
                                             </li>
@@ -284,7 +304,8 @@
                                                     href="#"
                                                     data-bs-toggle="pill"
                                                     data-bs-target="#utilities-developer-content"
-                                                    data-nav-landmark="Utilties > Developer"
+                                                    data-nav-landmark-path="Utilities > Developer"
+                                                    data-nav-landmark-tooltip="Advanced utilities pertaining to developer functionality<br><br>Hover over individual utilities to see specific descriptions"
                                                     >Developer</a
                                                 >
                                             </li>
@@ -308,7 +329,8 @@
                                                     href="#"
                                                     data-bs-toggle="pill"
                                                     data-bs-target="#templates-content"
-                                                    data-nav-landmark="Templates > Pre-populate"
+                                                    data-nav-landmark-path="Templates > Pre-populate"
+                                                    data-nav-landmark-tooltip="Allows the user to generate a template of pre-populated data from an existing record<br><br>The template can then be applied to any record in order to quickly pre-populated a form with specific data"
                                                     >Pre-populate Forms</a
                                                 >
                                             </li>
@@ -332,7 +354,8 @@
                                                     href="#"
                                                     data-bs-toggle="pill"
                                                     data-bs-target="#webapi-update-fields-content"
-                                                    data-nav-landmark="Web API > Update"
+                                                    data-nav-landmark-path="Web API > Update"
+                                                    data-nav-landmark-tooltip="Allows the user to update any field for a record using the Web API<br><br>To begin, navigate to a record and click Load Attribute Metadata"
                                                     >Update Fields</a
                                                 >
                                             </li>
@@ -342,7 +365,8 @@
                                                     href="#"
                                                     data-bs-toggle="pill"
                                                     data-bs-target="#webapi-retrieve-records-content"
-                                                    data-nav-landmark="Web API > Retrieve"
+                                                    data-nav-landmark-path="Web API > Retrieve"
+                                                    data-nav-landmark-tooltip="Allows the user to write and execute Fetch XML queries<br><br>To automatically generate Fetch XML, please navigate to Utilities > Developer"
                                                     >Retrieve Records</a
                                                 >
                                             </li>
@@ -354,7 +378,8 @@
                                             aria-current="page"
                                             data-bs-toggle="pill"
                                             data-bs-target="#security-content"
-                                            data-nav-landmark="Security Management"
+                                            data-nav-landmark-path="Security Management"
+                                            data-nav-landmark-tooltip="Allows the user to apply and remove security roles from other system users in the environment<br><br>In order to apply and remove security roles, your user will need the necessary privileges"
                                             href="#"
                                             >Security Management</a
                                         >
@@ -436,7 +461,7 @@
                                         data-function-name="generateFetchXml"
                                         data-bs-toggle="tooltip"
                                         data-bs-placement="top"
-                                        title="Generates fetch xml queries based on the current form/view"
+                                        title="Generates Fetch XML queries based on the current form/view"
                                     >
                                         Generate Fetch XML
                                     </button>
@@ -478,7 +503,7 @@
                                         data-function-name="generateChoiceCodeSnippets"
                                         data-bs-toggle="tooltip"
                                         data-bs-placement="top"
-                                        title="Generates C# and JS code snippets for Choices"
+                                        title="Generates C# and JavaScript code snippets for Global and Local Choices"
                                     >
                                         Generate Choice Code Snippet
                                     </button>

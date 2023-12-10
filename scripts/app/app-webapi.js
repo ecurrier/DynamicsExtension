@@ -25,7 +25,10 @@
             const recordValues = await retrieveRecordValues(entityName);
             const data = {
                 AttributeMetadata: attributeMetadata.Attributes.filter((a) => {
-                    return a.AttributeType !== "Virtual" || (a.AttributeType === "Virtual" && a?.AttributeTypeName?.Value === "MultiSelectPicklistType");
+                    return (
+                        a.AttributeOf == null &&
+                        (a.AttributeType !== "Virtual" || (a.AttributeType === "Virtual" && a?.AttributeTypeName?.Value === "MultiSelectPicklistType"))
+                    );
                 }),
                 PicklistMetadata: picklistMetadata.value.concat(multiselectPicklistMetadata.value).concat(stateMetadata.value).concat(statusMetadata.value),
                 BooleanMetadata: booleanMetadata.value,

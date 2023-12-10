@@ -36,7 +36,9 @@
             await initializeTabId();
             initializeListener();
             initializePageContext();
-            initializeTooltips();
+            refreshTooltips('[data-bs-toggle="tooltip"]');
+
+            $("[data-bs-target='#utilities-admin-content']").click();
         }
 
         function attachHandlers() {
@@ -45,8 +47,10 @@
             });
 
             $("[data-bs-toggle='pill'][data-bs-target]").click(function () {
-                const navLandmark = $(this).attr("data-nav-landmark");
-                updateNavigationLandmark(navLandmark);
+                const navLandmarkPath = $(this).attr("data-nav-landmark-path");
+                const navLandmarkTooltip = $(this).attr("data-nav-landmark-tooltip");
+
+                updateNavigationLandmark(navLandmarkPath, navLandmarkTooltip);
             });
         }
 
@@ -66,10 +70,14 @@
             executeChromeScript("initializePageContext", category, null, false);
         }
 
-        function initializeTooltips() {
-            const tooltipTriggerList = [].slice.call($('[data-bs-toggle="tooltip"]'));
+        function refreshTooltips(selector) {
+            const options = {
+                html: true,
+            };
+            
+            const tooltipTriggerList = [].slice.call($(selector));
             tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
+                return new bootstrap.Tooltip(tooltipTriggerEl, options);
             });
         }
 
@@ -125,8 +133,10 @@
             $("#confirmation-modal").modal("show");
         }
 
-        function updateNavigationLandmark(content) {
-            $(".nav-landmark").text(content);
+        function updateNavigationLandmark(path, tooltip) {
+            $(".nav-landmark-path").text(path);
+            $(".nav-landmark-tooltip").attr("title", tooltip);
+            refreshTooltips(".nav-landmark-tooltip");
         }
 
         function getPluralName(logicalName) {

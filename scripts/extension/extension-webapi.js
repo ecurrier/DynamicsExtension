@@ -255,13 +255,15 @@
                 case "Lookup":
                 case "Owner":
                 case "Customer":
-                    let value = recordValues[`_${fieldLogicalName}_value`];
+                    const fieldLogicalNameOData = `_${fieldLogicalName}_value`;
+
+                    let value = recordValues[fieldLogicalNameOData];
                     if (value == null) {
                         return null;
                     }
 
-                    return `${recordValues[`${fieldLogicalName}${EMC.Extension.Global.ODataFormattedValueKeys.DisplayValue}`]} (${
-                        recordValues[`${fieldLogicalName}${EMC.Extension.Global.ODataFormattedValueKeys.LogicalName}`]
+                    return `${recordValues[`${fieldLogicalNameOData}${EMC.Extension.Global.ODataFormattedValueKeys.DisplayValue}`]} (${
+                        recordValues[`${fieldLogicalNameOData}${EMC.Extension.Global.ODataFormattedValueKeys.LogicalName}`]
                     })`;
                 case "Boolean":
                 case "Picklist":
