@@ -143,10 +143,14 @@
             loadUserSecurity(selectedUserId, selectedBusinessUnitId);
         }
 
-        function loadUserSecurity(systemUserId, selectedBusinessUnitId) {
+        function loadUserSecurity(systemUserId, businessUnitId) {
+            if (!systemUserId || !businessUnitId) {
+                return;
+            }
+
             EMC.Extension.Global.executeChromeScript("retrieveUserSecurityRoles", category, {
                 systemuserid: systemUserId,
-                businessunitid: selectedBusinessUnitId,
+                businessunitid: businessUnitId,
             });
         }
 
