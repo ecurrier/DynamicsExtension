@@ -43,6 +43,11 @@
             $(".offcanvas a:not(.dropdown-toggle)").click(function () {
                 $(".offcanvas").offcanvas("hide");
             });
+
+            $("[data-bs-toggle='pill'][data-bs-target]").click(function () {
+                const navLandmark = $(this).attr("data-nav-landmark");
+                updateNavigationLandmark(navLandmark);
+            });
         }
 
         async function initializeTabId() {
@@ -118,6 +123,10 @@
             htmlContent ? $(".confirmation-modal-body-label").html(content) : $(".confirmation-modal-body-label").text(content);
             $("#confirmation-modal button.btn-primary").off("click").on("click", handler);
             $("#confirmation-modal").modal("show");
+        }
+
+        function updateNavigationLandmark(content) {
+            $(".nav-landmark").text(content);
         }
 
         function getPluralName(logicalName) {

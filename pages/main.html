@@ -247,7 +247,8 @@
                         >
                             <span class="navbar-toggler-icon"></span>
                         </button>
-                        <a class="navbar-brand">Power Tools For Power Platform/Power Pages</a>
+                        <a class="navbar-brand nav-landmark">Utilties > Admin</a>
+                        <a class="navbar-brand">Power Tools for Power Platform</a>
                         <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
                             <div class="offcanvas-header">
                                 <h5 class="offcanvas-title" id="offcanvasNavbarLabel">Navigation</h5>
@@ -268,10 +269,24 @@
                                         </a>
                                         <ul class="dropdown-menu" aria-labelledby="offcanvas-utilities-dropdown">
                                             <li>
-                                                <a class="nav-link" href="#" data-bs-toggle="pill" data-bs-target="#utilities-admin-content">Admin</a>
+                                                <a
+                                                    class="nav-link"
+                                                    href="#"
+                                                    data-bs-toggle="pill"
+                                                    data-bs-target="#utilities-admin-content"
+                                                    data-nav-landmark="Utilties > Admin"
+                                                    >Admin</a
+                                                >
                                             </li>
                                             <li>
-                                                <a class="nav-link" href="#" data-bs-toggle="pill" data-bs-target="#utilities-developer-content">Developer</a>
+                                                <a
+                                                    class="nav-link"
+                                                    href="#"
+                                                    data-bs-toggle="pill"
+                                                    data-bs-target="#utilities-developer-content"
+                                                    data-nav-landmark="Utilties > Developer"
+                                                    >Developer</a
+                                                >
                                             </li>
                                         </ul>
                                     </li>
@@ -288,7 +303,14 @@
                                         </a>
                                         <ul class="dropdown-menu" aria-labelledby="offcanvas-templates-dropdown">
                                             <li>
-                                                <a class="nav-link" href="#" data-bs-toggle="pill" data-bs-target="#templates-content">Pre-populate Forms</a>
+                                                <a
+                                                    class="nav-link"
+                                                    href="#"
+                                                    data-bs-toggle="pill"
+                                                    data-bs-target="#templates-content"
+                                                    data-nav-landmark="Templates > Pre-populate"
+                                                    >Pre-populate Forms</a
+                                                >
                                             </li>
                                         </ul>
                                     </li>
@@ -305,19 +327,35 @@
                                         </a>
                                         <ul class="dropdown-menu" aria-labelledby="offcanvas-webapi-dropdown">
                                             <li>
-                                                <a class="nav-link" href="#" data-bs-toggle="pill" data-bs-target="#webapi-update-fields-content"
+                                                <a
+                                                    class="nav-link"
+                                                    href="#"
+                                                    data-bs-toggle="pill"
+                                                    data-bs-target="#webapi-update-fields-content"
+                                                    data-nav-landmark="Web API > Update"
                                                     >Update Fields</a
                                                 >
                                             </li>
                                             <li>
-                                                <a class="nav-link" href="#" data-bs-toggle="pill" data-bs-target="#webapi-retrieve-records-content"
+                                                <a
+                                                    class="nav-link"
+                                                    href="#"
+                                                    data-bs-toggle="pill"
+                                                    data-bs-target="#webapi-retrieve-records-content"
+                                                    data-nav-landmark="Web API > Retrieve"
                                                     >Retrieve Records</a
                                                 >
                                             </li>
                                         </ul>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" aria-current="page" data-bs-toggle="pill" data-bs-target="#security-content" href="#"
+                                        <a
+                                            class="nav-link"
+                                            aria-current="page"
+                                            data-bs-toggle="pill"
+                                            data-bs-target="#security-content"
+                                            data-nav-landmark="Security Management"
+                                            href="#"
                                             >Security Management</a
                                         >
                                     </li>
@@ -780,7 +818,7 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div class="col-6 d-grid d-select-container" style="padding-right: 30px;">
+                                <div class="col-6 d-grid d-select-container" style="padding-right: 30px">
                                     <label for="security-user-selector" class="form-label">System Users</label>
                                     <select class="form-select" id="security-user-selector" aria-label="System User Selector">
                                         <option value="" selected disabled>Select a user...</option>

@@ -273,3 +273,8 @@ code textarea {
 .choice-code-snippet-modal-body-content {
     margin-left: 5%;
 }
+
+.nav-landmark {
+    font-size: medium;
+    text-decoration: underline;
+}
