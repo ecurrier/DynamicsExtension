@@ -15,12 +15,17 @@
         let allSecurityRoles = [];
         let selectedUserId = null;
 
+        let allBusinessUnits = [];
+        let selectedBusinessUnitId = null;
+
         const $systemUserSelectSelector = "#security-user-selector";
+        const $businessUnitSelectSelector = "#security-business-unit-select";
         const tableRowCheckboxComponent = '<input class="form-check-input security-role-checkbox" type="checkbox" value="" />';
 
         function executeOnLoad() {
             retrieveCurrentUserDetails();
             retrieveAllSecurityRoleDetails();
+            retrieveBusinessUnits();
 
             attachHandlers();
         }
@@ -45,6 +50,7 @@
             $("#security-table-search").on("keyup", filterSecurityTable);
 
             $($systemUserSelectSelector).change(loadSelectedUserSecurity);
+            $($businessUnitSelectSelector).change(loadSelectedBusinessUnit);
 
             $("#security-table-container table").on("change", ".security-role-checkbox", handleRowSelect);
         }
@@ -61,8 +67,33 @@
             EMC.Extension.Global.executeChromeScript("retrieveAllSecurityRoleDetails", category, null, false);
         }
 
+        function retrieveBusinessUnits() {
+            EMC.Extension.Global.executeChromeScript("retrieveBusinessUnits", category, null, false);
+        }
+
         function initializeSecurityRoleDetails(data) {
             allSecurityRoles = data;
+        }
+
+        function initializeBusinessUnits(businessUnits) {
+            allBusinessUnits = businessUnits;
+
+            $.each(businessUnits, function (index, businessUnit) {
+                $($businessUnitSelectSelector).append(
+                    $("<option>", {
+                        value: businessUnit.businessunitid,
+                        text: businessUnit.name,
+                    })
+                );
+            });
+
+            if (businessUnits.length !== 1) {
+                return;
+            }
+
+            $(`${$businessUnitSelectSelector} option:last-child`).prop("selected", true);
+            $(`${$businessUnitSelectSelector}`).prop("disabled", true);
+            selectedBusinessUnitId = businessUnits[0].businessunitid;
             initializeTable(allSecurityRoles);
         }
 
@@ -77,6 +108,7 @@
 
         function populateSystemUserSelect(systemUsers) {
             resetSystemUserSelect();
+            refreshSecurityTable();
 
             $.each(systemUsers, function (index, systemUser) {
                 $($systemUserSelectSelector).append(
@@ -90,6 +122,7 @@
 
         function resetSystemUserSelect() {
             $(`${$systemUserSelectSelector} option:not(:first)`).remove();
+            $(`${$systemUserSelectSelector} option:first`).prop("selected", true);
         }
 
         function loadCurrentUserSecurity() {
@@ -98,21 +131,23 @@
             populateSystemUserSelect([{ systemuserid: selectedUserId, fullname: currentUserDetails.userName }]);
             $(`${$systemUserSelectSelector} option:last`).prop("selected", true);
 
-            loadUserSecurity(selectedUserId);
+            loadUserSecurity(selectedUserId, selectedBusinessUnitId);
         }
 
         function loadSelectedUserSecurity() {
             selectedUserId = $($systemUserSelectSelector).val();
             if (!selectedUserId) {
-                EMC.Extension.Global.displayNotification({ success: false, text: "Please select a user from the list" });
                 return;
             }
 
-            loadUserSecurity(selectedUserId);
+            loadUserSecurity(selectedUserId, selectedBusinessUnitId);
         }
 
-        function loadUserSecurity(systemUserId) {
-            EMC.Extension.Global.executeChromeScript("retrieveUserSecurityRoles", category, systemUserId);
+        function loadUserSecurity(systemUserId, selectedBusinessUnitId) {
+            EMC.Extension.Global.executeChromeScript("retrieveUserSecurityRoles", category, {
+                systemuserid: systemUserId,
+                businessunitid: selectedBusinessUnitId,
+            });
         }
 
         function setSecurityRolesData(securityRoles) {
@@ -122,7 +157,7 @@
         }
 
         function refreshSecurityRolesData() {
-            loadUserSecurity(selectedUserId);
+            loadUserSecurity(selectedUserId, selectedBusinessUnitId);
         }
 
         function resetTable() {
@@ -182,7 +217,30 @@
             });
         }
 
+        function loadSelectedBusinessUnit() {
+            selectedBusinessUnitId = $($businessUnitSelectSelector).val();
+
+            refreshSecurityTable();
+            loadSelectedUserSecurity();
+        }
+
+        function refreshSecurityTable() {
+            resetSecurityTable();
+            resetList();
+
+            const filteredSecurityRoles = allSecurityRoles.filter((s) => s._businessunitid_value === selectedBusinessUnitId);
+            initializeTable(filteredSecurityRoles);
+        }
+
+        function resetSecurityTable() {
+            $("#security-table-container table tbody tr").remove();
+        }
+
         function initializeTable(securityRoles) {
+            if (!securityRoles) {
+                return;
+            }
+
             $.each(securityRoles, function (index, securityRole) {
                 const html = `
                     <tr class="table-important" data-attribute-id="${securityRole.roleid}" data-attribute-name="${securityRole.name}">
@@ -233,6 +291,7 @@
             executeOnLoad: executeOnLoad,
             initializeCurrentUserDetails: initializeCurrentUserDetails,
             initializeSecurityRoleDetails: initializeSecurityRoleDetails,
+            initializeBusinessUnits: initializeBusinessUnits,
             retrieveSystemUsers: retrieveSystemUsers,
             populateSystemUserSelect: populateSystemUserSelect,
             loadCurrentUserSecurity: loadCurrentUserSecurity,

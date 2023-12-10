@@ -741,21 +741,13 @@
                     <div class="tab-pane fade" id="security-content" role="tabpanel" aria-labelledby="security-tab">
                         <div class="container">
                             <div class="row align-items-end">
-                                <div class="col-5 d-grid">
-                                    <label for="security-user-search-input" class="form-label">Username/Email Address</label>
-                                    <div class="input-group">
-                                        <input class="form-control" type="text" placeholder="Enter..." id="security-user-search-input" />
-                                        <button class="btn btn-outline-secondary" type="button" data-extension-function-name="retrieveSystemUsers">
-                                            Search
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="col-4 d-grid d-select-container">
-                                    <select class="form-select" id="security-user-selector" aria-label="System User Selector">
-                                        <option value="" selected disabled>Select a user...</option>
+                                <div class="col-8 d-grid d-select-container">
+                                    <label for="security-business-unit-select" class="form-label">Business Units</label>
+                                    <select class="form-select" id="security-business-unit-select" aria-label="Select a business unit">
+                                        <option disabled selected>Select a business unit...</option>
                                     </select>
                                 </div>
-                                <div class="col-3">
+                                <div class="col-4 d-grid">
                                     <div class="dropdown">
                                         <button
                                             class="btn btn-primary dropdown-toggle"
@@ -776,6 +768,23 @@
                                             </button>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                            <div class="row align-items-end">
+                                <div class="col-6 d-grid">
+                                    <label for="security-user-search-input" class="form-label">Username/Email Address</label>
+                                    <div class="input-group">
+                                        <input class="form-control" type="text" placeholder="Enter..." id="security-user-search-input" />
+                                        <button class="btn btn-outline-secondary" type="button" data-extension-function-name="retrieveSystemUsers">
+                                            Search
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-6 d-grid d-select-container" style="padding-right: 30px;">
+                                    <label for="security-user-selector" class="form-label">System Users</label>
+                                    <select class="form-select" id="security-user-selector" aria-label="System User Selector">
+                                        <option value="" selected disabled>Select a user...</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="row">
