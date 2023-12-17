@@ -9,6 +9,7 @@
         <script type="text/javascript" src="../scripts/extension/extension-templates.js"></script>
         <script type="text/javascript" src="../scripts/extension/extension-webapi.js"></script>
         <script type="text/javascript" src="../scripts/extension/extension-security.js"></script>
+        <script type="text/javascript" src="../scripts/extension/extension-settings.js"></script>
         <link rel="stylesheet" href="../styles/bootstrap.min.css" />
         <link rel="stylesheet" href="../styles/jsoneditor.min.css" />
         <link rel="stylesheet" href="../styles/highlight.min.css" />
@@ -383,6 +384,42 @@
                                             href="#"
                                             >Security Management</a
                                         >
+                                    </li>
+                                    <li class="nav-item dropdown">
+                                        <a
+                                            class="nav-link dropdown-toggle"
+                                            href="#"
+                                            id="offcanvas-settings-dropdown"
+                                            role="button"
+                                            data-bs-toggle="dropdown"
+                                            aria-expanded="false"
+                                        >
+                                            Settings
+                                        </a>
+                                        <ul class="dropdown-menu" aria-labelledby="offcanvas-settings-dropdown">
+                                            <li>
+                                                <a
+                                                    class="nav-link"
+                                                    href="#"
+                                                    data-bs-toggle="pill"
+                                                    data-bs-target="#settings-environments-content"
+                                                    data-nav-landmark-path="Settings > Environments"
+                                                    data-nav-landmark-tooltip="Allows the user to configure and save environment urls for easy access<br><br>Setting up environments will also enable certain utilities that require a Power Apps Maker Portal url"
+                                                    >Environments</a
+                                                >
+                                            </li>
+                                            <li>
+                                                <a
+                                                    class="nav-link"
+                                                    href="#"
+                                                    data-bs-toggle="pill"
+                                                    data-bs-target="#settings-user-settings-content"
+                                                    data-nav-landmark-path="Settings > User Settings"
+                                                    data-nav-landmark-tooltip="Allows the user to write and execute Fetch XML queries<br><br>To automatically generate Fetch XML, please navigate to Utilities > Developer"
+                                                    >User Settings</a
+                                                >
+                                            </li>
+                                        </ul>
                                     </li>
                                 </ul>
                             </div>
@@ -879,6 +916,151 @@
                         </div>
                     </div>
                     <!-- END SECURITY MANAGEMENT -->
+                    <!-- SETTINGS - ENVIRONMENTS -->
+                    <div class="tab-pane fade" id="settings-environments-content" role="tabpanel" aria-labelledby="settings-tab" data-category="settings">
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-8 d-grid d-select-container environment-selector">
+                                    <select class="form-select" id="settings-environment-selector" aria-label="Environment Selector">
+                                        <option value="" selected disabled>Select an environment...</option>
+                                    </select>
+                                </div>
+                                <div class="col-4 content-center">
+                                    <div class="dropdown">
+                                        <button
+                                            class="btn btn-primary dropdown-toggle"
+                                            type="button"
+                                            id="settings-actions-dropdown"
+                                            data-bs-toggle="dropdown"
+                                            aria-haspopup="true"
+                                            aria-expanded="false"
+                                        >
+                                            Actions
+                                        </button>
+                                        <div class="dropdown-menu" aria-labelledby="settings-actions-dropdown">
+                                            <button
+                                                class="dropdown-item"
+                                                type="button"
+                                                data-extension-function-name="addNewEnvironment"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="left"
+                                                title="Generates a JSON template of input/value data from the current form"
+                                            >
+                                                Add New Environment
+                                            </button>
+                                            <hr class="dropdown-divider" />
+                                            <button class="dropdown-item" type="button" data-extension-function-name="saveCurrentEnvironment">
+                                                Save Changes
+                                            </button>
+                                            <button class="dropdown-item" type="button" data-extension-function-name="removeCurrentEnvironment">
+                                                Remove Environment
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="settings-environments-inputs-container">
+                                <div class="row">
+                                    <div class="col-10">
+                                        <label for="settings-environment-name-input" class="form-label">Environment Name</label>
+                                        <div class="input-group">
+                                            <input
+                                                class="form-control"
+                                                type="text"
+                                                placeholder="Enter an environment name..."
+                                                id="settings-environment-name-input"
+                                            />
+                                        </div>
+                                        <label for="settings-environment-mda-url-input" class="form-label">Model-Driven Base URL</label>
+                                        <div class="input-group">
+                                            <input
+                                                class="form-control"
+                                                type="text"
+                                                placeholder="https://xxxxxxxxx.crm.dynamics.com/"
+                                                id="settings-environment-mda-url-input"
+                                            />
+                                            <button class="btn btn-outline-secondary" type="button" data-extension-function-name="openUrlNewTab">
+                                                Open<svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    width="16"
+                                                    height="16"
+                                                    fill="currentColor"
+                                                    class="bi bi-box-arrow-up-right icon-button"
+                                                    viewBox="0 0 16 16"
+                                                >
+                                                    <path
+                                                        fill-rule="evenodd"
+                                                        d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"
+                                                    />
+                                                    <path
+                                                        fill-rule="evenodd"
+                                                        d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"
+                                                    />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <label for="settings-environment-maker-url-input" class="form-label">Power Apps Maker Portal URL</label>
+                                        <div class="input-group">
+                                            <input
+                                                class="form-control"
+                                                type="text"
+                                                placeholder="https://make.powerapps.com/environments/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/"
+                                                id="settings-environment-maker-url-input"
+                                            />
+                                            <button class="btn btn-outline-secondary" type="button" data-extension-function-name="openUrlNewTab">
+                                                Open<svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    width="16"
+                                                    height="16"
+                                                    fill="currentColor"
+                                                    class="bi bi-box-arrow-up-right icon-button"
+                                                    viewBox="0 0 16 16"
+                                                >
+                                                    <path
+                                                        fill-rule="evenodd"
+                                                        d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"
+                                                    />
+                                                    <path
+                                                        fill-rule="evenodd"
+                                                        d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"
+                                                    />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <label for="settings-environment-portal-url-input" class="form-label">Power Pages Base URL</label>
+                                        <div class="input-group">
+                                            <input
+                                                class="form-control"
+                                                type="text"
+                                                placeholder="https://xxxxxxxxx.powerappsportals.com/"
+                                                id="settings-environment-portal-url-input"
+                                            />
+                                            <button class="btn btn-outline-secondary" type="button" data-extension-function-name="openUrlNewTab">
+                                                Open<svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    width="16"
+                                                    height="16"
+                                                    fill="currentColor"
+                                                    class="bi bi-box-arrow-up-right icon-button"
+                                                    viewBox="0 0 16 16"
+                                                >
+                                                    <path
+                                                        fill-rule="evenodd"
+                                                        d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"
+                                                    />
+                                                    <path
+                                                        fill-rule="evenodd"
+                                                        d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"
+                                                    />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- END SETTINGS - ENVIRONMENTS -->
                 </div>
             </div>
         </main>

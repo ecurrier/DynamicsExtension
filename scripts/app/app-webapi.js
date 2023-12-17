@@ -96,7 +96,7 @@
         }
 
         async function executeFetchXml(fetchXml) {
-            const regex = /<entity[^>]*name="([^"]*)"/;
+            const regex = /<entity[^>]*name=['"]([^'"]*)['"]/;
             const match = fetchXml.match(regex);
 
             let entityName = null;

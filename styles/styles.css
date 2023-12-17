@@ -278,3 +278,11 @@ code textarea {
     font-size: medium;
     text-decoration: underline;
 }
+
+.settings-environments-inputs-container {
+    display: none;
+}
+
+.settings-environments-inputs-container .form-label:not(:first-child) {
+    padding-top: 20px;
+}

@@ -74,7 +74,7 @@
             const options = {
                 html: true,
             };
-            
+
             const tooltipTriggerList = [].slice.call($(selector));
             tooltipTriggerList.map(function (tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl, options);
@@ -88,6 +88,37 @@
             EMC.Extension.Templates.executeOnLoad();
             EMC.Extension.WebAPI.executeOnLoad();
             EMC.Extension.Security.executeOnLoad();
+        }
+
+        async function upsertSetting(setting) {
+            chrome.storage.sync.set(setting);
+        }
+
+        async function retrieveSetting(setting = null, filter = null) {
+            try {
+                const syncStorage = await chrome.storage.sync.get();
+
+                if (filter) {
+                    return Object.keys(syncStorage)
+                        .filter((key) => key.startsWith(filter))
+                        .reduce((obj, key) => {
+                            obj[key] = syncStorage[key];
+                            return obj;
+                        }, {});
+                }
+
+                return !setting ? syncStorage : syncStorage[setting];
+            } catch (error) {
+                console.error(`Error retrieving setting: ${error}`);
+            }
+        }
+
+        function formatStorageKey(settingsKey, guid) {
+            return `${settingsKey}.${guid}`;
+        }
+
+        function parseStorageKey(storageKey, settingsKey) {
+            return storageKey.split(`${settingsKey}.`)[1];
         }
 
         function executeChromeScript(command, category, additionalArgs = null, showIndicator = true) {
@@ -162,6 +193,10 @@
             KeyCodes: KeyCodes,
             executeChromeScript: executeChromeScript,
             handlePageContext: handlePageContext,
+            upsertSetting: upsertSetting,
+            retrieveSetting: retrieveSetting,
+            formatStorageKey: formatStorageKey,
+            parseStorageKey: parseStorageKey,
             generateGuid: generateGuid,
             getPluralName: getPluralName,
             showLoadingIndicator: showLoadingIndicator,

@@ -1,4 +1,4 @@
-const AppNamespaces = ["Global", "Utilities", "Templates", "WebAPI", "Security"];
+const AppNamespaces = ["Global", "Utilities", "Templates", "WebAPI", "Security", "Settings"];
 
 chrome.runtime.onMessageExternal.addListener(function (
     request,

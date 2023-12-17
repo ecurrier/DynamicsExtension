@@ -154,17 +154,9 @@
             }, []);
         }
 
-        function openUrlNewTab(url) {
-            Xrm.Navigation.openUrl(url);
-
-            EMC.App.Global.displayNotification(true);
-        }
-
         function openWebApiUrl() {
             const clientUrl = Xrm.Utility.getGlobalContext().getClientUrl();
-            Xrm.Navigation.openUrl(`${clientUrl}${EMC.App.Constants.WebApiEndpoint}`);
-
-            EMC.App.Global.displayNotification(true);
+            EMC.App.Global.openUrlNewTab(`${clientUrl}${EMC.App.Constants.WebApiEndpoint}`);
         }
 
         function toggleControlLogicalNames() {
@@ -294,7 +286,6 @@
             refreshCommandBar: refreshCommandBar,
             generateFetchXml: generateFetchXml,
             generateUrls: generateUrls,
-            openUrlNewTab: openUrlNewTab,
             openWebApiUrl: openWebApiUrl,
             toggleControlLogicalNames: toggleControlLogicalNames,
             enableAdminMode: enableAdminMode,

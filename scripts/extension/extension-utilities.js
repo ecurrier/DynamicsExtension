@@ -50,6 +50,11 @@
         }
 
         function handleFetchXmlResult(queries) {
+            if (!queries) {
+                EMC.Extension.Global.displayNotification({ success: false, text: "Unable to retrieve any queries" });
+                return;
+            }
+
             resetQuerySelector();
             appendQueries(queries);
             $("#fetch-xml-modal").modal("show");
@@ -209,7 +214,7 @@
         }
 
         function navigateToUrl() {
-            EMC.Extension.Global.executeChromeScript("openUrlNewTab", category, selectedUrl);
+            EMC.Extension.Global.executeChromeScript("openUrlNewTab", "Global", selectedUrl);
         }
 
         function loadSelectedChoiceCodeSnippet() {

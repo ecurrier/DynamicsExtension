@@ -32,12 +32,19 @@
             return pageContext;
         }
 
+        function openUrlNewTab(url) {
+            Xrm.Navigation.openUrl(url);
+
+            EMC.App.Global.displayNotification(true);
+        }
+
         return {
             sendExtensionMessage: sendExtensionMessage,
             displayNotification: displayNotification,
             initializePageContext: initializePageContext,
             parseDOM: parseDOM,
             getPageContext: getPageContext,
+            openUrlNewTab: openUrlNewTab,
         };
     })();
 })(this);

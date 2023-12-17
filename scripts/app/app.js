@@ -18,6 +18,7 @@ injectScript("scripts/app/app-utilities.js");
 injectScript("scripts/app/app-templates.js");
 injectScript("scripts/app/app-webapi.js");
 injectScript("scripts/app/app-security.js");
+injectScript("scripts/app/app-settings.js");
 
 function injectHiddenAttribute(id, val) {
     const inputElement = document.createElement('input');

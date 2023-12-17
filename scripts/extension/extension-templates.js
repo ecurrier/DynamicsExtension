@@ -40,7 +40,7 @@
 
         function applyCurrentTemplate() {
             const json = jsonEditor.get();
-            if (!json || Object.keys(json).length === 0){
+            if (!json || Object.keys(json).length === 0) {
                 EMC.Extension.Global.displayNotification({ success: false, text: "No template found to apply" });
                 return;
             }
@@ -101,7 +101,7 @@
 
         function exportCurrentTemplate() {
             const templateJson = generateTemplateJSON();
-            if (!templateJson || !templateJson.fields || Object.keys(templateJson.fields).length === 0){
+            if (!templateJson || !templateJson.fields || Object.keys(templateJson.fields).length === 0) {
                 EMC.Extension.Global.displayNotification({ success: false, text: "No template found to export" });
                 return;
             }
@@ -164,17 +164,14 @@
         }
 
         async function retrieveSavedTemplates() {
-            const syncStorageCache = await chrome.storage.sync.get();
-
             const pageContext = EMC.Extension.Global.getPageContext();
-            const syncStoragekeys = Object.keys(syncStorageCache).filter(function (key) {
-                return key.startsWith(`${category}.${pageContext}`);
-            });
-            let options = syncStoragekeys.map((key) => {
+            const templates = await EMC.Extension.Global.retrieveSetting(null, `${category}.${pageContext}`);
+
+            let options = Object.keys(templates).map((key) => {
                 const templateId = parseStorageKey(key);
                 return {
                     value: templateId,
-                    text: syncStorageCache[key].templateName,
+                    text: templates[key].templateName,
                 };
             });
 
