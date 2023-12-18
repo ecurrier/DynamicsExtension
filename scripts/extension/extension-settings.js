@@ -6,8 +6,12 @@
     global.EMC.Extension.Settings = (function () {
         const category = "Settings";
         const environmentsSettingsKey = "Settings.environments";
+        const extensionSettingsKey = "Settings.extension";
+
         let storedEnvironments = {};
         let currentEnvironmentId = null;
+
+        let globalExtensionSettings = null;
 
         const inputsContainerSelector = ".settings-environments-inputs-container";
         const environmentSelectSelector = "#settings-environment-selector";
@@ -15,6 +19,7 @@
         function executeOnLoad() {
             attachHandlers();
             refreshEnvironmentForm();
+            loadExtensionSettings();
         }
 
         function attachHandlers() {
@@ -166,7 +171,7 @@
                 $("#settings-environment-mda-url-input").val(null);
                 $("#settings-environment-maker-url-input").val(null);
                 $("#settings-environment-portal-url-input").val(null);
-                
+
                 $(inputsContainerSelector).hide();
                 return;
             }
@@ -189,6 +194,62 @@
             EMC.Extension.Global.executeChromeScript("openUrlNewTab", "Global", selectedUrl);
         }
 
+        async function loadExtensionSettings() {
+            const extensionSettings = await EMC.Extension.Global.retrieveSetting(extensionSettingsKey);
+            if (!extensionSettings) {
+                const defaultSettings = refreshExtensionSettings();
+
+                globalExtensionSettings = defaultSettings;
+                return;
+            }
+
+            globalExtensionSettings = extensionSettings;
+        }
+
+        function buildDefaultSettings() {
+            return $("[data-setting-parent]")
+                .toArray()
+                .reduce((obj, parent) => {
+                    const parentKey = $(parent).attr("data-setting-parent");
+                    obj[parentKey] = {};
+
+                    $(parent)
+                        .find("[data-setting-group]")
+                        .each((index, group) => {
+                            const groupKey = $(group).attr("data-setting-group");
+                            obj[parentKey][groupKey] = {};
+
+                            $(group)
+                                .find("[data-setting-key]")
+                                .each((index, key) => {
+                                    const keyKey = $(key).attr("data-setting-key");
+                                    const defaultValue = $(key).attr("data-setting-default") === "true";
+                                    obj[parentKey][groupKey][keyKey] = defaultValue;
+                                });
+                        });
+
+                    return obj;
+                }, {});
+        }
+
+        function getExtensionSettings(setting = null) {
+            if (!setting) {
+                return globalExtensionSettings;
+            }
+
+            return globalExtensionSettings[setting.Parent][setting.Group][setting.Key];
+        }
+
+        function refreshExtensionSettings() {
+            const defaultSettings = buildDefaultSettings();
+
+            const storageObject = {};
+            storageObject[extensionSettingsKey] = defaultSettings;
+            EMC.Extension.Global.upsertSetting(storageObject);
+
+            return defaultSettings;
+        }
+
         return {
             executeOnLoad: executeOnLoad,
             getStoredEnvironments: getStoredEnvironments,
@@ -196,6 +257,8 @@
             saveCurrentEnvironment: saveCurrentEnvironment,
             removeCurrentEnvironment: removeCurrentEnvironment,
             openUrlNewTab: openUrlNewTab,
+            getExtensionSettings: getExtensionSettings,
+            refreshExtensionSettings: refreshExtensionSettings,
         };
     })();
 })(this);

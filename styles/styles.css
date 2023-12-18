@@ -286,3 +286,15 @@ code textarea {
 .settings-environments-inputs-container .form-label:not(:first-child) {
     padding-top: 20px;
 }
+
+.extension-setting-group {
+}
+
+.extension-setting-group p {
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.extension-setting-group:not(:first-child) {
+    margin-top: 10px;
+}

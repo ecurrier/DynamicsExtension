@@ -16,6 +16,31 @@
         <link rel="stylesheet" href="../styles/styles.css" />
     </head>
     <body>
+        <!-- SVG ICONS -->
+        <svg
+            style="display: none"
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            fill="currentColor"
+            class="bi bi-box-arrow-up-right icon-button"
+            viewBox="0 0 16 16"
+        >
+            <defs>
+                <symbol>
+                    <path
+                        fill-rule="evenodd"
+                        d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"
+                    />
+                    <path
+                        fill-rule="evenodd"
+                        d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"
+                    />
+                </symbol>
+            </defs>
+            <use href="#open-new-tab-icon" />
+        </svg>
+        <!-- END SVG ICONS-->
         <!-- LOADING OVERLAY -->
         <div class="loading-container overlay">
             <div class="d-flex justify-content-center">
@@ -413,10 +438,10 @@
                                                     class="nav-link"
                                                     href="#"
                                                     data-bs-toggle="pill"
-                                                    data-bs-target="#settings-user-settings-content"
-                                                    data-nav-landmark-path="Settings > User Settings"
-                                                    data-nav-landmark-tooltip="Allows the user to write and execute Fetch XML queries<br><br>To automatically generate Fetch XML, please navigate to Utilities > Developer"
-                                                    >User Settings</a
+                                                    data-bs-target="#settings-extension-settings-content"
+                                                    data-nav-landmark-path="Settings > Extension Settings"
+                                                    data-nav-landmark-tooltip="Configure settings for various utilities used within this extension"
+                                                    >Extension Settings</a
                                                 >
                                             </li>
                                         </ul>
@@ -484,6 +509,66 @@
                                     </button>
                                 </div>
                             </div>
+                            <div class="row text-center button-grid-row">
+                                <div class="col d-grid">
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-primary"
+                                        data-extension-function-name="openMakerPortal"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="Opens the Maker Portal (make.powerapps.com) in a new tab"
+                                    >
+                                        Open Maker Portal
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="16"
+                                            height="16"
+                                            fill="currentColor"
+                                            class="bi bi-box-arrow-up-right icon-button"
+                                            viewBox="0 0 16 16"
+                                        >
+                                            <path
+                                                fill-rule="evenodd"
+                                                d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"
+                                            />
+                                            <path
+                                                fill-rule="evenodd"
+                                                d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"
+                                            />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="col d-grid">
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-primary"
+                                        data-function-name="openControlEditor"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="Opens the current form/view editor in the Maker Portal (make.powerapps.com)"
+                                    >
+                                        Open Form/View Editor
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="16"
+                                            height="16"
+                                            fill="currentColor"
+                                            class="bi bi-box-arrow-up-right icon-button"
+                                            viewBox="0 0 16 16"
+                                        >
+                                            <path
+                                                fill-rule="evenodd"
+                                                d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"
+                                            />
+                                            <path
+                                                fill-rule="evenodd"
+                                                d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"
+                                            />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <!-- END UTILITIES - ADMIN -->
@@ -512,7 +597,7 @@
                                         data-bs-placement="top"
                                         title="Opens the current environment's Web API in a new tab"
                                     >
-                                        Open Web API URL<svg
+                                        Open Web API URL <svg
                                             xmlns="http://www.w3.org/2000/svg"
                                             width="16"
                                             height="16"
@@ -1061,6 +1146,102 @@
                         </div>
                     </div>
                     <!-- END SETTINGS - ENVIRONMENTS -->
+                    <!-- SETTINGS - EXTENSION SETTINGS -->
+                    <div class="tab-pane fade" id="settings-extension-settings-content" role="tabpanel" aria-labelledby="settings-tab" data-category="settings">
+                        <div class="accordion accordion-flush" id="accordion-extension-settings">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="accordion-extension-settings-utilities">
+                                    <button
+                                        class="accordion-button collapsed"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#accordion-container-settings-utilities"
+                                        aria-expanded="false"
+                                        aria-controls="accordion-container-settings-utilities"
+                                    >
+                                        Utilities
+                                    </button>
+                                </h2>
+                                <div
+                                    id="accordion-container-settings-utilities"
+                                    class="accordion-collapse collapse"
+                                    aria-labelledby="accordion-header-settings-utilities"
+                                    data-bs-parent="#accordion-extension-settings-utilities"
+                                    data-setting-parent="Utilities"
+                                >
+                                    <div class="accordion-body">
+                                        <div class="row extension-setting-group" data-setting-group="OpenMakerUrl">
+                                            <p>Open Maker Portal</p>
+                                            <div class="form-check form-switch">
+                                                <input
+                                                    class="form-check-input"
+                                                    type="checkbox"
+                                                    id="extension-setting-open-maker-portal"
+                                                    data-setting-key="DefaultEnvironment"
+                                                    data-setting-default="false"
+                                                />
+                                                <label class="form-check-label" for="extension-setting-open-maker-portal"
+                                                    >Default to current environment when opening maker portal
+                                                    <span
+                                                        class="settings-tooltip"
+                                                        data-bs-toggle="tooltip"
+                                                        data-bs-placement="top"
+                                                        title="When enabled, the Maker Portal URL will be automatically selected based on your current environment<br><br>This will only work if an environment exists that matches the Model-Driven URL or Power Pages URL"
+                                                        ><img src="../images/tooltip-icon.svg" alt="Tooltip Icon" />
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="row extension-setting-group" data-setting-group="OpenControlEditor">
+                                            <p>Open Form/View Editor</p>
+                                            <div class="form-check form-switch">
+                                                <input
+                                                    class="form-check-input"
+                                                    type="checkbox"
+                                                    id="extension-setting-open-control-editor"
+                                                    data-setting-key="DefaultEnvironment"
+                                                    data-setting-default="false"
+                                                />
+                                                <label class="form-check-label" for="extension-setting-open-control-editor"
+                                                    >Default to current environment when opening editor
+                                                    <span
+                                                        class="settings-tooltip"
+                                                        data-bs-toggle="tooltip"
+                                                        data-bs-placement="top"
+                                                        title="When enabled, the Maker Portal URL used for editing will be automatically selected based on your current environment<br><br>This will only work if an environment exists with a populated Model-Driven URL that matches your current environment"
+                                                        ><img src="../images/tooltip-icon.svg" alt="Tooltip Icon" />
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="accordion-extension-settings-templates">
+                                    <button
+                                        class="accordion-button collapsed"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#accordion-container-settings-templates"
+                                        aria-expanded="false"
+                                        aria-controls="accordion-container-settings-templates"
+                                    >
+                                        Templates
+                                    </button>
+                                </h2>
+                                <div
+                                    id="accordion-container-settings-templates"
+                                    class="accordion-collapse collapse"
+                                    aria-labelledby="accordion-header-settings-templates"
+                                    data-bs-parent="#accordion-extension-settings-templates"
+                                >
+                                    <div class="accordion-body"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- END SETTINGS - EXTENSION SETTINGS -->
                 </div>
             </div>
         </main>

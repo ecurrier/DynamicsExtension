@@ -6,6 +6,7 @@
     global.EMC.Extension.Global = (function () {
         const category = "Global";
         let pageContext = null;
+        let globalSolutions = null;
 
         const ODataFormattedValueKeys = {
             DisplayValue: "@OData.Community.Display.V1.FormattedValue",
@@ -36,6 +37,7 @@
             await initializeTabId();
             initializeListener();
             initializePageContext();
+            initializeSolutions();
             refreshTooltips('[data-bs-toggle="tooltip"]');
 
             $("[data-bs-target='#utilities-admin-content']").click();
@@ -70,6 +72,49 @@
             executeChromeScript("initializePageContext", category, null, false);
         }
 
+        function handlePageContext(context) {
+            pageContext = context;
+
+            EMC.Extension.Utilities.executeOnLoad();
+            EMC.Extension.Templates.executeOnLoad();
+            EMC.Extension.WebAPI.executeOnLoad();
+            EMC.Extension.Security.executeOnLoad();
+        }
+
+        function initializeSolutions() {
+            executeChromeScript("initializeSolutions", category, null, false);
+        }
+
+        function handleSolutions(solutions) {
+            globalSolutions = solutions.map((s) => {
+                return {
+                    id: s.solutionid,
+                    name: s.friendlyname,
+                };
+            });
+
+            /* NEXT STEPS:
+            
+            FINISH FUNCTION TO RETRIEVE SOLUTIONS
+            CREATE MODAL FOR SOLUTION SELECTOR
+            ADD FAVORITE SOLUTION ID INPUT TO ENVIRONMENT SETTINGS?
+            ADD EXTENSION SETTINGS TO ALLOW USER TO DEFAULT TO THEIR FAVORITE SOLUTION ID
+                WHEN USING OPEN FORM/VIEW EDITOR
+
+            ADD SETTING TO ENVIRONMENT SETTINGS TO ALLOW USERS TO MARK THEIR ENVIRONMENT AS GCC, GCC-HIGH, OR DOD
+                THEN WE CAN REMOVE MAKER PORTAL URL AND REPLACE WITH ENVIRONMENT ID
+            */
+        }
+
+        function getSolutions(solutionId = null) {
+            if (!solutionId) {
+                return globalSolutions;
+            }
+
+            const solution = globalSolutions.find((s) => s.id === solutionId);
+            return solution || null;
+        }
+
         function refreshTooltips(selector) {
             const options = {
                 html: true,
@@ -79,15 +124,6 @@
             tooltipTriggerList.map(function (tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl, options);
             });
-        }
-
-        function handlePageContext(context) {
-            pageContext = context;
-
-            EMC.Extension.Utilities.executeOnLoad();
-            EMC.Extension.Templates.executeOnLoad();
-            EMC.Extension.WebAPI.executeOnLoad();
-            EMC.Extension.Security.executeOnLoad();
         }
 
         async function upsertSetting(setting) {
@@ -193,6 +229,7 @@
             KeyCodes: KeyCodes,
             executeChromeScript: executeChromeScript,
             handlePageContext: handlePageContext,
+            handleSolutions: handleSolutions,
             upsertSetting: upsertSetting,
             retrieveSetting: retrieveSetting,
             formatStorageKey: formatStorageKey,
@@ -202,6 +239,7 @@
             showLoadingIndicator: showLoadingIndicator,
             displayNotification: displayNotification,
             getPageContext: getPageContext,
+            getSolutions: getSolutions,
             confirmAction: confirmAction,
         };
     })();

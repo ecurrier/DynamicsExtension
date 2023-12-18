@@ -33,9 +33,37 @@
         }
 
         function openUrlNewTab(url) {
-            Xrm.Navigation.openUrl(url);
+            if (Xrm && Xrm.Navigation && Xrm.Navigation.openUrl) {
+                Xrm.Navigation.openUrl(url);
+            }
+            else {
+                window.open(url, "_blank");
+            }
 
             EMC.App.Global.displayNotification(true);
+        }
+
+        async function initializeSolutions() {
+            const fetchXml = `
+                <fetch>
+                    <entity name="solution">
+                        <attribute name="solutionid" />
+                        <attribute name="friendlyname" />
+                        <order attribute="friendlyname" descending="false" />
+                        <filter type="or">
+                            <condition attribute="ismanaged" operator="eq" value="0" />
+                        </filter>
+                    </entity>
+                </fetch>`;
+
+            const query = `?fetchXml=${fetchXml}`;
+            const response = await Xrm.WebApi.retrieveMultipleRecords("solution", query);
+            if (!response || !response.entities || response.entities.length === 0) {
+                EMC.App.Global.displayNotification(false, "No solutions found");
+                return;
+            }
+
+            EMC.App.Global.sendExtensionMessage("handleSolutions", response.entities, category);
         }
 
         return {
@@ -45,6 +73,7 @@
             parseDOM: parseDOM,
             getPageContext: getPageContext,
             openUrlNewTab: openUrlNewTab,
+            initializeSolutions: initializeSolutions,
         };
     })();
 })(this);
