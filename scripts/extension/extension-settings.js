@@ -42,8 +42,10 @@
             return storedEnvironments;
         }
 
-        function addNewEnvironment() {
+        async function addNewEnvironment() {
             currentEnvironmentId = null;
+
+            await refreshEnvironmentForm();
 
             if ($(`${environmentSelectSelector} option[value="1"]`).length === 0) {
                 $(environmentSelectSelector).append(
@@ -53,8 +55,8 @@
                     })
                 );
             }
-
             $(environmentSelectSelector).val(1);
+
             $(inputsContainerSelector).show();
         }
 
@@ -73,6 +75,7 @@
             currentEnvironmentId = environmentGuid;
 
             refreshEnvironmentForm();
+            EMC.Extension.Global.displayNotification({ success: true, text: "Successfully saved environment settings" });
         }
 
         async function removeCurrentEnvironment() {
@@ -113,22 +116,24 @@
                 return null;
             }
 
+            const environmentType = $("#settings-environment-type-selector").val();
             const mdaUrl = $("#settings-environment-mda-url-input").val();
-            const makerUrl = $("#settings-environment-maker-url-input").val();
             const portalUrl = $("#settings-environment-portal-url-input").val();
+            const environmentId = $("#settings-environment-id-input").val();
 
             return {
                 environmentName: environmentName,
+                environmentType: environmentType,
                 mdaUrl: mdaUrl,
-                makerUrl: makerUrl,
                 portalUrl: portalUrl,
+                environmentId: environmentId,
             };
         }
 
         async function refreshEnvironmentForm() {
             await retrieveStoredEnvironments();
             refreshEnvironmentSelector();
-            refreshEnvironmentInputs();
+            await refreshEnvironmentInputs();
         }
 
         function refreshEnvironmentSelector() {
@@ -169,8 +174,9 @@
             if (!currentEnvironmentId) {
                 $("#settings-environment-name-input").val(null);
                 $("#settings-environment-mda-url-input").val(null);
-                $("#settings-environment-maker-url-input").val(null);
+                $("#settings-environment-type-selector option:first").prop("selected", true);
                 $("#settings-environment-portal-url-input").val(null);
+                $("#settings-environment-id-input").val(null);
 
                 $(inputsContainerSelector).hide();
                 return;
@@ -181,8 +187,9 @@
 
             $("#settings-environment-name-input").val(environment.environmentName);
             $("#settings-environment-mda-url-input").val(environment.mdaUrl);
-            $("#settings-environment-maker-url-input").val(environment.makerUrl);
+            $("#settings-environment-type-selector").val(environment.environmentType);
             $("#settings-environment-portal-url-input").val(environment.portalUrl);
+            $("#settings-environment-id-input").val(environment.environmentId);
 
             $(inputsContainerSelector).show();
         }

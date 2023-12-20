@@ -18,6 +18,14 @@
             Enter: 13,
         };
 
+        const MakerPortalUrls = {
+            Default: "https://make.powerapps.com/",
+            Commercial: "https://make.powerapps.com/",
+            GCC: "https://make.gov.powerapps.us/",
+            GCCHigh: "https://make.high.powerapps.us/",
+            DOD: "https://make.apps.appsplatform.us/",
+        };
+
         let activeTabId = null;
 
         const toastIconSuccessComponent = `
@@ -30,6 +38,8 @@
                 <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
                 <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
             </svg>`;
+
+        const solutionSelectSelector = "#solution-selector";
 
         async function executeOnLoad() {
             attachHandlers();
@@ -93,17 +103,31 @@
                 };
             });
 
+            initializeSolutionSelector();
             /* NEXT STEPS:
             
-            FINISH FUNCTION TO RETRIEVE SOLUTIONS
-            CREATE MODAL FOR SOLUTION SELECTOR
-            ADD FAVORITE SOLUTION ID INPUT TO ENVIRONMENT SETTINGS?
-            ADD EXTENSION SETTINGS TO ALLOW USER TO DEFAULT TO THEIR FAVORITE SOLUTION ID
+            DONE - FINISH FUNCTION TO RETRIEVE SOLUTIONS
+            DONE - CREATE MODAL FOR SOLUTION SELECTOR
+            MAYBE - ADD FAVORITE SOLUTION ID INPUT TO ENVIRONMENT SETTINGS?
+            MAYBE - ADD EXTENSION SETTINGS TO ALLOW USER TO DEFAULT TO THEIR FAVORITE SOLUTION ID
                 WHEN USING OPEN FORM/VIEW EDITOR
 
-            ADD SETTING TO ENVIRONMENT SETTINGS TO ALLOW USERS TO MARK THEIR ENVIRONMENT AS GCC, GCC-HIGH, OR DOD
+            DONE - ADD SETTING TO ENVIRONMENT SETTINGS TO ALLOW USERS TO MARK THEIR ENVIRONMENT AS GCC, GCC-HIGH, OR DOD
                 THEN WE CAN REMOVE MAKER PORTAL URL AND REPLACE WITH ENVIRONMENT ID
+
+            ADD UTILITY TO OPEN ADMIN.POWERPLATFORM.COM
             */
+        }
+
+        function initializeSolutionSelector() {
+            $.each(globalSolutions, function (index, globalSolution) {
+                $(solutionSelectSelector).append(
+                    $("<option>", {
+                        value: globalSolution.id,
+                        text: globalSolution.name,
+                    })
+                );
+            });
         }
 
         function getSolutions(solutionId = null) {
@@ -223,10 +247,32 @@
             return pageContext;
         }
 
+        async function getActiveTabUrl(baseUrlOnly = false) {
+            try {
+                const activeTabs = await chrome.tabs.query({ active: true });
+                if (!activeTabs || activeTabs.length === 0) {
+                    return null;
+                }
+
+                const activeTabUrl = activeTabs[0].url;
+
+                if (baseUrlOnly) {
+                    const baseUrlMatch = activeTabUrl.match(/^(https?:\/\/[^\/]+\/)/);
+                    return baseUrlMatch ? baseUrlMatch[1] : null;
+                }
+
+                return activeTabUrl;
+            } catch (error) {
+                EMC.Extension.Global.displayNotification({ success: false, text: `Error occurred retrieving current url: ${error}` });
+                return null;
+            }
+        }
+
         return {
             executeOnLoad: executeOnLoad,
             ODataFormattedValueKeys: ODataFormattedValueKeys,
             KeyCodes: KeyCodes,
+            MakerPortalUrls: MakerPortalUrls,
             executeChromeScript: executeChromeScript,
             handlePageContext: handlePageContext,
             handleSolutions: handleSolutions,
@@ -236,6 +282,7 @@
             parseStorageKey: parseStorageKey,
             generateGuid: generateGuid,
             getPluralName: getPluralName,
+            getActiveTabUrl: getActiveTabUrl,
             showLoadingIndicator: showLoadingIndicator,
             displayNotification: displayNotification,
             getPageContext: getPageContext,

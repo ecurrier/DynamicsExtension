@@ -16,31 +16,6 @@
         <link rel="stylesheet" href="../styles/styles.css" />
     </head>
     <body>
-        <!-- SVG ICONS -->
-        <svg
-            style="display: none"
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            fill="currentColor"
-            class="bi bi-box-arrow-up-right icon-button"
-            viewBox="0 0 16 16"
-        >
-            <defs>
-                <symbol>
-                    <path
-                        fill-rule="evenodd"
-                        d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"
-                    />
-                    <path
-                        fill-rule="evenodd"
-                        d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"
-                    />
-                </symbol>
-            </defs>
-            <use href="#open-new-tab-icon" />
-        </svg>
-        <!-- END SVG ICONS-->
         <!-- LOADING OVERLAY -->
         <div class="loading-container overlay">
             <div class="d-flex justify-content-center">
@@ -77,6 +52,45 @@
             </div>
         </div>
         <!-- END CONFIRMATION MODAL -->
+        <!-- SOLUTION SELECTOR MODAL -->
+        <div
+            class="modal fade"
+            id="solution-selector-modal"
+            data-bs-backdrop="static"
+            data-bs-keyboard="false"
+            tabindex="-1"
+            aria-labelledby="solution-selector-modal-label"
+            aria-hidden="true"
+            data-category="global"
+        >
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="solution-selector-modal-label">Select a solution</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body solution-selector-modal-body">
+                        <div class="row">
+                            <p class="solution-selector-modal-body-label">...</p>
+                        </div>
+                        <div class="row">
+                            <div class="col-1"></div>
+                            <div class="col-10 d-grid d-select-container">
+                                <select class="form-select" id="solution-selector" aria-label="Solution Selector">
+                                    <option value="" selected disabled>Select a solution...</option>
+                                </select>
+                            </div>
+                            <div class="col-1"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END SOLUTION SELECTOR MODAL -->
         <!-- FETCH XML DISPLAY MODAL -->
         <div
             class="modal fade"
@@ -597,7 +611,8 @@
                                         data-bs-placement="top"
                                         title="Opens the current environment's Web API in a new tab"
                                     >
-                                        Open Web API URL <svg
+                                        Open Web API URL
+                                        <svg
                                             xmlns="http://www.w3.org/2000/svg"
                                             width="16"
                                             height="16"
@@ -1056,6 +1071,15 @@
                                                 id="settings-environment-name-input"
                                             />
                                         </div>
+                                        <div class="mt-3">
+                                            <label for="settings-environment-type-selector" class="form-label">Environment Type</label>
+                                            <select class="form-select" id="settings-environment-type-selector" aria-label="Select a environment type">
+                                                <option value="Commercial" selected>Commercial</option>
+                                                <option value="GCC">GCC</option>
+                                                <option value="GCCHigh">GCC High</option>
+                                                <option value="DOD">DoD</option>
+                                            </select>
+                                        </div>
                                         <label for="settings-environment-mda-url-input" class="form-label">Model-Driven Base URL</label>
                                         <div class="input-group">
                                             <input
@@ -1063,34 +1087,6 @@
                                                 type="text"
                                                 placeholder="https://xxxxxxxxx.crm.dynamics.com/"
                                                 id="settings-environment-mda-url-input"
-                                            />
-                                            <button class="btn btn-outline-secondary" type="button" data-extension-function-name="openUrlNewTab">
-                                                Open<svg
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    width="16"
-                                                    height="16"
-                                                    fill="currentColor"
-                                                    class="bi bi-box-arrow-up-right icon-button"
-                                                    viewBox="0 0 16 16"
-                                                >
-                                                    <path
-                                                        fill-rule="evenodd"
-                                                        d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"
-                                                    />
-                                                    <path
-                                                        fill-rule="evenodd"
-                                                        d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                        <label for="settings-environment-maker-url-input" class="form-label">Power Apps Maker Portal URL</label>
-                                        <div class="input-group">
-                                            <input
-                                                class="form-control"
-                                                type="text"
-                                                placeholder="https://make.powerapps.com/environments/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/"
-                                                id="settings-environment-maker-url-input"
                                             />
                                             <button class="btn btn-outline-secondary" type="button" data-extension-function-name="openUrlNewTab">
                                                 Open<svg
@@ -1139,6 +1135,18 @@
                                                     />
                                                 </svg>
                                             </button>
+                                        </div>
+                                        <div class="mt-3">
+                                            <label for="settings-environment-id-input" class="form-label"
+                                                >Environment Id
+                                                <span
+                                                    class="settings-tooltip"
+                                                    data-bs-toggle="tooltip"
+                                                    data-bs-placement="top"
+                                                    title="Environment Id can be quickly found by navigating to your maker portal, selecting your environment, and copying it from the url"
+                                                    ><img src="../images/tooltip-icon.svg" alt="Tooltip Icon" /> </span
+                                            ></label>
+                                            <input class="form-control" type="text" placeholder="Enter an environment id" id="settings-environment-id-input" />
                                         </div>
                                     </div>
                                 </div>

@@ -311,6 +311,44 @@
             EMC.Extension.Global.displayNotification({ success: true, text: "Copied Code to clipboard" });
         }
 
+        async function openMakerPortal() {
+            const environments = EMC.Extension.Settings.getStoredEnvironments();
+            if (!environments || Object.keys(environments).length === 0) {
+                openMakerPortalUrl();
+                return;
+            }
+
+            const environmentKeys = Object.keys(environments);
+            if (environmentKeys.length === 1) {
+                const environment = environments[environmentKeys[0]];
+                openMakerPortalUrl(environment.environmentType, environment.environmentId);
+                return;
+            }
+
+            const defaultEnvironment = EMC.Extension.Settings.getExtensionSettings({ Parent: category, Group: "OpenMakerUrl", Key: "DefaultEnvironment" });
+            if (!defaultEnvironment) {
+                const activeTabUrl = await EMC.Extension.Global.getActiveTabUrl(true);
+                const filteredEnvironments = Object.fromEntries(Object.entries(environments).filter(([key, value]) => value.mdaUrl === activeTabUrl));
+                if (filteredEnvironments && Object.keys(filteredEnvironments).length === 1) {
+                    const environment = Object.values(filteredEnvironments)[0];
+                    openMakerPortalUrl(environment.environmentType, environment.environmentId);
+                    return;
+                }
+            }
+
+            // update confirmAction to use Promise?
+
+            // if DefaultEnvironment = false, open environment selector for user
+            // when user selects and confirms environment, open url based on that environment type and environment id
+        }
+
+        function openMakerPortalUrl(environmentType, environmentId = null) {
+            const baseUrl = EMC.Extension.Global.MakerPortalUrls[environmentType] || EMC.Extension.Global.MakerPortalUrls.Default;
+            const fullUrl = environmentId ? `${baseUrl}environments/${environmentId}` : baseUrl;
+
+            EMC.Extension.Global.executeChromeScript("openUrlNewTab", "Global", fullUrl, false);
+        }
+
         return {
             executeOnLoad: executeOnLoad,
             handleFetchXmlResult: handleFetchXmlResult,
@@ -321,6 +359,7 @@
             navigateToUrl: navigateToUrl,
             handleChoiceCodeSnippetsResult: handleChoiceCodeSnippetsResult,
             copyChoiceCodeSnippetToClipboard: copyChoiceCodeSnippetToClipboard,
+            openMakerPortal: openMakerPortal,
         };
     })();
 })(this);
