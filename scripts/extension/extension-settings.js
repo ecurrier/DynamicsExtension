@@ -15,11 +15,13 @@
 
         const inputsContainerSelector = ".settings-environments-inputs-container";
         const environmentSelectSelector = "#settings-environment-selector";
+        const extensionSettingsContentSelector = "#settings-extension-settings-content";
 
-        function executeOnLoad() {
+        async function executeOnLoad() {
             attachHandlers();
             refreshEnvironmentForm();
-            loadExtensionSettings();
+            await loadExtensionSettings();
+            initializeExtensionSettingsForm();
         }
 
         function attachHandlers() {
@@ -32,6 +34,10 @@
             });
 
             $(environmentSelectSelector).change(loadSelectedEnvironment);
+
+            $(`${extensionSettingsContentSelector} input[type="checkbox"]`).change(function () {
+                refreshExtensionSettings();
+            });
         }
 
         async function retrieveStoredEnvironments() {
@@ -39,7 +45,7 @@
         }
 
         function getStoredEnvironments() {
-            return storedEnvironments;
+            return Object.values(storedEnvironments);
         }
 
         async function addNewEnvironment() {
@@ -204,16 +210,30 @@
         async function loadExtensionSettings() {
             const extensionSettings = await EMC.Extension.Global.retrieveSetting(extensionSettingsKey);
             if (!extensionSettings) {
-                const defaultSettings = refreshExtensionSettings();
-
-                globalExtensionSettings = defaultSettings;
+                refreshExtensionSettings(true);
                 return;
             }
 
             globalExtensionSettings = extensionSettings;
         }
 
-        function buildDefaultSettings() {
+        function initializeExtensionSettingsForm() {
+            const parents = Object.keys(globalExtensionSettings);
+            parents.forEach((p) => {
+                const groups = Object.keys(globalExtensionSettings[p]);
+                groups.forEach((g) => {
+                    const keys = Object.keys(globalExtensionSettings[p][g]);
+                    keys.forEach((k) => {
+                        $(`[data-setting-parent="${p}"] [data-setting-group="${g}"] [data-setting-key="${k}"]`).prop(
+                            "checked",
+                            globalExtensionSettings[p][g][k]
+                        );
+                    });
+                });
+            });
+        }
+
+        function buildSettingsObject(useDefault = false) {
             return $("[data-setting-parent]")
                 .toArray()
                 .reduce((obj, parent) => {
@@ -230,8 +250,8 @@
                                 .find("[data-setting-key]")
                                 .each((index, key) => {
                                     const keyKey = $(key).attr("data-setting-key");
-                                    const defaultValue = $(key).attr("data-setting-default") === "true";
-                                    obj[parentKey][groupKey][keyKey] = defaultValue;
+                                    const value = !useDefault ? $(key).prop("checked") : $(key).attr("data-setting-default") === "true";
+                                    obj[parentKey][groupKey][keyKey] = value;
                                 });
                         });
 
@@ -247,14 +267,16 @@
             return globalExtensionSettings[setting.Parent][setting.Group][setting.Key];
         }
 
-        function refreshExtensionSettings() {
-            const defaultSettings = buildDefaultSettings();
+        function refreshExtensionSettings(useDefault = false) {
+            const extensionSettings = buildSettingsObject(useDefault);
 
             const storageObject = {};
-            storageObject[extensionSettingsKey] = defaultSettings;
+            storageObject[extensionSettingsKey] = extensionSettings;
             EMC.Extension.Global.upsertSetting(storageObject);
 
-            return defaultSettings;
+            globalExtensionSettings = extensionSettings;
+
+            return extensionSettings;
         }
 
         return {

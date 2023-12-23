@@ -313,38 +313,115 @@
 
         async function openMakerPortal() {
             const environments = EMC.Extension.Settings.getStoredEnvironments();
-            if (!environments || Object.keys(environments).length === 0) {
+            if (!environments || environments.length === 0) {
                 openMakerPortalUrl();
                 return;
             }
 
-            const environmentKeys = Object.keys(environments);
-            if (environmentKeys.length === 1) {
-                const environment = environments[environmentKeys[0]];
+            if (environments.length === 1) {
+                const environment = environments[0];
                 openMakerPortalUrl(environment.environmentType, environment.environmentId);
                 return;
             }
 
             const defaultEnvironment = EMC.Extension.Settings.getExtensionSettings({ Parent: category, Group: "OpenMakerUrl", Key: "DefaultEnvironment" });
-            if (!defaultEnvironment) {
+            if (defaultEnvironment) {
                 const activeTabUrl = await EMC.Extension.Global.getActiveTabUrl(true);
-                const filteredEnvironments = Object.fromEntries(Object.entries(environments).filter(([key, value]) => value.mdaUrl === activeTabUrl));
-                if (filteredEnvironments && Object.keys(filteredEnvironments).length === 1) {
-                    const environment = Object.values(filteredEnvironments)[0];
+                const filteredEnvironments = environments.filter((e) => e.mdaUrl === activeTabUrl);
+                if (filteredEnvironments && filteredEnvironments.length === 1) {
+                    const environment = filteredEnvironments[0];
                     openMakerPortalUrl(environment.environmentType, environment.environmentId);
                     return;
                 }
             }
 
-            // update confirmAction to use Promise?
+            const selectedEnvironment = await EMC.Extension.Global.selectEnvironment();
+            if (!selectedEnvironment) {
+                return;
+            }
 
-            // if DefaultEnvironment = false, open environment selector for user
-            // when user selects and confirms environment, open url based on that environment type and environment id
+            openMakerPortalUrl(selectedEnvironment.environmentType, selectedEnvironment.environmentId);
         }
 
         function openMakerPortalUrl(environmentType, environmentId = null) {
             const baseUrl = EMC.Extension.Global.MakerPortalUrls[environmentType] || EMC.Extension.Global.MakerPortalUrls.Default;
             const fullUrl = environmentId ? `${baseUrl}environments/${environmentId}` : baseUrl;
+
+            EMC.Extension.Global.executeChromeScript("openUrlNewTab", "Global", fullUrl, false);
+        }
+
+        function openControlEditor() {
+            EMC.Extension.Global.executeChromeScript("retrieveControlDetails", category);
+        }
+
+        async function handleControlDetails(controlDetails) {
+            const errorMessage =
+                "In order to use this utility, create a new environment setting under Settings -> Environments with the following values populated:<br/><br/>Model-Driven Base Url (must match current environment)<br/>Environment Id";
+
+            const environments = EMC.Extension.Settings.getStoredEnvironments();
+            if (!environments || environments.length === 0) {
+                EMC.Extension.Global.displayDetailedError("Setup Required", errorMessage, false);
+                return;
+            }
+
+            const activeTabUrl = await EMC.Extension.Global.getActiveTabUrl(true);
+            const filteredEnvironments = environments.filter((e) => e.mdaUrl === activeTabUrl);
+            if (!filteredEnvironments || filteredEnvironments.length === 0) {
+                EMC.Extension.Global.displayDetailedError("Setup Required", errorMessage, false);
+                return;
+            }
+
+            const environment = filteredEnvironments[0];
+
+            const useDefaultSolution = EMC.Extension.Settings.getExtensionSettings({ Parent: category, Group: "OpenControlEditor", Key: "UseDefaultSolution" });
+            const solutionId = !useDefaultSolution
+                ? await EMC.Extension.Global.selectSolution("Select a solution to open the control editor in")
+                : EMC.Extension.Global.getSolutions(null, "Default Solution").id;
+            if (!solutionId) {
+                return;
+            }
+
+            const baseUrl = EMC.Extension.Global.MakerPortalUrls[environment.environmentType] || EMC.Extension.Global.MakerPortalUrls.Default;
+            const fullUrl = `${baseUrl}e/${environment.environmentId}/s/${solutionId}/entity/${controlDetails.entityName}/${controlDetails.controlType}/${controlDetails.id}`;
+
+            EMC.Extension.Global.executeChromeScript("openUrlNewTab", "Global", fullUrl);
+        }
+
+        async function openAdminCenter() {
+            const environments = EMC.Extension.Settings.getStoredEnvironments();
+            if (!environments || environments.length === 0) {
+                openAdminCenterUrl();
+                return;
+            }
+
+            if (environments.length === 1) {
+                const environment = environments[0];
+                openAdminCenterUrl(environment.environmentType, environment.environmentId);
+                return;
+            }
+
+            const defaultEnvironment = EMC.Extension.Settings.getExtensionSettings({ Parent: category, Group: "OpenAdminCenter", Key: "DefaultEnvironment" });
+            if (defaultEnvironment) {
+                const activeTabUrl = await EMC.Extension.Global.getActiveTabUrl(true);
+                const filteredEnvironments = environments.filter((e) => e.mdaUrl === activeTabUrl);
+                if (filteredEnvironments && filteredEnvironments.length === 1) {
+                    const environment = filteredEnvironments[0];
+                    openAdminCenterUrl(environment.environmentType, environment.environmentId);
+                    return;
+                }
+            }
+
+            const selectedEnvironment = await EMC.Extension.Global.selectEnvironment();
+            if (!selectedEnvironment) {
+                return;
+            }
+
+            openAdminCenterUrl(selectedEnvironment.environmentType, selectedEnvironment.environmentId);
+        }
+
+        function openAdminCenterUrl(environmentType, environmentId = null) {
+            const baseUrl = EMC.Extension.Global.AdminCenterUrls[environmentType] || EMC.Extension.Global.AdminCenterUrls.Default;
+            const fullUrl = environmentId ? `${baseUrl}environments/environment/${environmentId}/hub` : baseUrl;
 
             EMC.Extension.Global.executeChromeScript("openUrlNewTab", "Global", fullUrl, false);
         }
@@ -360,6 +437,9 @@
             handleChoiceCodeSnippetsResult: handleChoiceCodeSnippetsResult,
             copyChoiceCodeSnippetToClipboard: copyChoiceCodeSnippetToClipboard,
             openMakerPortal: openMakerPortal,
+            openControlEditor: openControlEditor,
+            handleControlDetails: handleControlDetails,
+            openAdminCenter: openAdminCenter,
         };
     })();
 })(this);

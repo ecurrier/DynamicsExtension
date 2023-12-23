@@ -26,6 +26,14 @@
             DOD: "https://make.apps.appsplatform.us/",
         };
 
+        const AdminCenterUrls = {
+            Default: "https://admin.powerplatform.microsoft.com/",
+            Commercial: "https://admin.powerplatform.microsoft.com/",
+            GCC: "https://gcc.admin.powerplatform.microsoft.us/",
+            GCCHigh: "https://high.admin.powerplatform.microsoft.us/",
+            DOD: "https://admin.appsplatform.us/",
+        };
+
         let activeTabId = null;
 
         const toastIconSuccessComponent = `
@@ -40,6 +48,7 @@
             </svg>`;
 
         const solutionSelectSelector = "#solution-selector";
+        const environmentSelectSelector = "#environment-selector";
 
         async function executeOnLoad() {
             attachHandlers();
@@ -104,19 +113,30 @@
             });
 
             initializeSolutionSelector();
-            /* NEXT STEPS:
-            
-            DONE - FINISH FUNCTION TO RETRIEVE SOLUTIONS
-            DONE - CREATE MODAL FOR SOLUTION SELECTOR
-            MAYBE - ADD FAVORITE SOLUTION ID INPUT TO ENVIRONMENT SETTINGS?
-            MAYBE - ADD EXTENSION SETTINGS TO ALLOW USER TO DEFAULT TO THEIR FAVORITE SOLUTION ID
-                WHEN USING OPEN FORM/VIEW EDITOR
+        }
 
-            DONE - ADD SETTING TO ENVIRONMENT SETTINGS TO ALLOW USERS TO MARK THEIR ENVIRONMENT AS GCC, GCC-HIGH, OR DOD
-                THEN WE CAN REMOVE MAKER PORTAL URL AND REPLACE WITH ENVIRONMENT ID
+        async function selectSolution(description = null) {
+            $(".solution-selector-modal-body-label").toggle(!!description);
+            if (description) {
+                $(".solution-selector-modal-body-label").text(description);
+            }
 
-            ADD UTILITY TO OPEN ADMIN.POWERPLATFORM.COM
-            */
+            return new Promise(function (resolve, reject) {
+                const $modal = $("#solution-selector-modal");
+                const $confirmButton = $("#solution-selector-confirm");
+                const $cancelButton = $("#solution-selector-cancel");
+
+                $confirmButton.off("click").on("click", () => {
+                    const selectedSolutionId = $(solutionSelectSelector).val();
+                    resolve(selectedSolutionId);
+                });
+
+                $cancelButton.off("click").on("click", () => {
+                    resolve(null);
+                });
+
+                $modal.modal("show");
+            });
         }
 
         function initializeSolutionSelector() {
@@ -130,13 +150,64 @@
             });
         }
 
-        function getSolutions(solutionId = null) {
-            if (!solutionId) {
+        function getSolutions(solutionId = null, solutionName = null) {
+            if (!solutionId && !solutionName) {
                 return globalSolutions;
             }
 
-            const solution = globalSolutions.find((s) => s.id === solutionId);
+            const solution = globalSolutions.find((s) => s.id === solutionId || s.name === solutionName);
             return solution || null;
+        }
+
+        async function selectEnvironment() {
+            initializeEnvironmentSelector();
+
+            return new Promise(function (resolve, reject) {
+                const $modal = $("#environment-selector-modal");
+                const $confirmButton = $("#environment-selector-confirm");
+                const $cancelButton = $("#environment-selector-cancel");
+
+                $confirmButton.off("click").on("click", () => {
+                    const selectedOption = $(`${environmentSelectSelector} option:selected`);
+                    const selectedEnvironment = {
+                        environmentId: selectedOption.attr("data-environment-id"),
+                        environmentType: selectedOption.attr("data-environment-type"),
+                    };
+                    resolve(selectedEnvironment);
+                });
+
+                $cancelButton.off("click").on("click", () => {
+                    resolve(null);
+                });
+
+                $modal.modal("show");
+            });
+        }
+
+        function initializeEnvironmentSelector() {
+            clearEnvironmentSelector();
+
+            const storedEnvironments = EMC.Extension.Settings.getStoredEnvironments();
+            $.each(storedEnvironments, function (index, storedEnvironment) {
+                if (!storedEnvironment.environmentId) {
+                    return;
+                }
+
+                $(environmentSelectSelector).append(
+                    $(`<option>`, {
+                        value: index + 1,
+                        text: storedEnvironment.environmentName,
+                    }).attr({
+                        "data-environment-id": storedEnvironment.environmentId,
+                        "data-environment-type": storedEnvironment.environmentType,
+                    })
+                );
+            });
+        }
+
+        function clearEnvironmentSelector() {
+            $(`${environmentSelectSelector} option:not(:first)`).remove();
+            $(`${environmentSelectSelector} option:first`).prop("selected", true);
         }
 
         function refreshTooltips(selector) {
@@ -219,8 +290,18 @@
         }
 
         function confirmAction(handler, content, htmlContent = false) {
+            $("#confirmation-modal-label").text("Confirmation");
             htmlContent ? $(".confirmation-modal-body-label").html(content) : $(".confirmation-modal-body-label").text(content);
             $("#confirmation-modal button.btn-primary").off("click").on("click", handler);
+            $("#confirmation-modal-confirm").show();
+            $("#confirmation-modal").modal("show");
+        }
+
+        function displayDetailedError(label, content, htmlContent = false, handler = null) {
+            $("#confirmation-modal-label").text(label);
+            htmlContent ? $(".confirmation-modal-body-label").html(content) : $(".confirmation-modal-body-label").text(content);
+            $("#confirmation-modal button.btn-primary").off("click").on("click", handler);
+            $("#confirmation-modal-confirm").hide();
             $("#confirmation-modal").modal("show");
         }
 
@@ -273,6 +354,7 @@
             ODataFormattedValueKeys: ODataFormattedValueKeys,
             KeyCodes: KeyCodes,
             MakerPortalUrls: MakerPortalUrls,
+            AdminCenterUrls: AdminCenterUrls,
             executeChromeScript: executeChromeScript,
             handlePageContext: handlePageContext,
             handleSolutions: handleSolutions,
@@ -287,7 +369,10 @@
             displayNotification: displayNotification,
             getPageContext: getPageContext,
             getSolutions: getSolutions,
+            selectSolution: selectSolution,
+            selectEnvironment: selectEnvironment,
             confirmAction: confirmAction,
+            displayDetailedError: displayDetailedError,
         };
     })();
 })(this);

@@ -66,6 +66,20 @@
             EMC.App.Global.sendExtensionMessage("handleSolutions", response.entities, category);
         }
 
+        function parseUrlQueryParameters(queryParameter) {
+            const queryParamRegex = new RegExp(`(?:&|\\?)${queryParameter}=([^&]+)`);
+            const match = window.location.search.match(queryParamRegex);
+
+            let queryParameterValue = null;
+            if (match && match.length > 1) {
+                queryParameterValue = match[1];
+            } else {
+                return null;
+            }
+
+            return queryParameterValue;
+        }
+
         return {
             sendExtensionMessage: sendExtensionMessage,
             displayNotification: displayNotification,
@@ -74,6 +88,7 @@
             getPageContext: getPageContext,
             openUrlNewTab: openUrlNewTab,
             initializeSolutions: initializeSolutions,
+            parseUrlQueryParameters: parseUrlQueryParameters,
         };
     })();
 })(this);

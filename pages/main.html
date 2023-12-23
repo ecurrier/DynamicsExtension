@@ -46,7 +46,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Confirm</button>
+                        <button type="button" class="btn btn-primary" id="confirmation-modal-confirm" data-bs-dismiss="modal">Confirm</button>
                     </div>
                 </div>
             </div>
@@ -84,13 +84,49 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary">Confirm</button>
+                        <button type="button" class="btn btn-secondary" id="solution-selector-cancel" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="solution-selector-confirm" data-bs-dismiss="modal">Confirm</button>
                     </div>
                 </div>
             </div>
         </div>
         <!-- END SOLUTION SELECTOR MODAL -->
+        <!-- ENVIRONMENT SELECTOR MODAL -->
+        <div
+            class="modal fade"
+            id="environment-selector-modal"
+            data-bs-backdrop="static"
+            data-bs-keyboard="false"
+            tabindex="-1"
+            aria-labelledby="environment-selector-modal-label"
+            aria-hidden="true"
+            data-category="global"
+        >
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="environment-selector-modal-label">Select an environment</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body environment-selector-modal-body">
+                        <div class="row">
+                            <div class="col-1"></div>
+                            <div class="col-10 d-grid d-select-container">
+                                <select class="form-select" id="environment-selector" aria-label="Environment Selector">
+                                    <option value="" selected disabled>Select an environment...</option>
+                                </select>
+                            </div>
+                            <div class="col-1"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="environment-selector-cancel" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="environment-selector-confirm" data-bs-dismiss="modal">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END ENVIRONMENT SELECTOR MODAL -->
         <!-- FETCH XML DISPLAY MODAL -->
         <div
             class="modal fade"
@@ -557,7 +593,7 @@
                                     <button
                                         type="button"
                                         class="btn btn-outline-primary"
-                                        data-function-name="openControlEditor"
+                                        data-extension-function-name="openControlEditor"
                                         data-bs-toggle="tooltip"
                                         data-bs-placement="top"
                                         title="Opens the current form/view editor in the Maker Portal (make.powerapps.com)"
@@ -581,6 +617,39 @@
                                             />
                                         </svg>
                                     </button>
+                                </div>
+                            </div>
+                            <div class="row text-center button-grid-row">
+                                <div class="col d-grid">
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-primary"
+                                        data-extension-function-name="openAdminCenter"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="Opens the Power Platform Admin Center (admin.powerplatform.microsoft.com) in a new tab"
+                                    >
+                                        Open Admin Center
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="16"
+                                            height="16"
+                                            fill="currentColor"
+                                            class="bi bi-box-arrow-up-right icon-button"
+                                            viewBox="0 0 16 16"
+                                        >
+                                            <path
+                                                fill-rule="evenodd"
+                                                d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"
+                                            />
+                                            <path
+                                                fill-rule="evenodd"
+                                                d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"
+                                            />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="col d-grid">
                                 </div>
                             </div>
                         </div>
@@ -1207,16 +1276,38 @@
                                                     class="form-check-input"
                                                     type="checkbox"
                                                     id="extension-setting-open-control-editor"
-                                                    data-setting-key="DefaultEnvironment"
+                                                    data-setting-key="UseDefaultSolution"
                                                     data-setting-default="false"
                                                 />
                                                 <label class="form-check-label" for="extension-setting-open-control-editor"
-                                                    >Default to current environment when opening editor
+                                                    >Default to Default Solution when opening control editor
                                                     <span
                                                         class="settings-tooltip"
                                                         data-bs-toggle="tooltip"
                                                         data-bs-placement="top"
-                                                        title="When enabled, the Maker Portal URL used for editing will be automatically selected based on your current environment<br><br>This will only work if an environment exists with a populated Model-Driven URL that matches your current environment"
+                                                        title="When enabled, the solution used for editing will be automatically defaulted to the Default Solution<br/><br/>When disabled, you will be prompted to select an unmanaged solution in your environment to edit the control in"
+                                                        ><img src="../images/tooltip-icon.svg" alt="Tooltip Icon" />
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="row extension-setting-group" data-setting-group="OpenAdminCenter">
+                                            <p>Open Admin Center</p>
+                                            <div class="form-check form-switch">
+                                                <input
+                                                    class="form-check-input"
+                                                    type="checkbox"
+                                                    id="extension-setting-open-admin-center"
+                                                    data-setting-key="DefaultEnvironment"
+                                                    data-setting-default="false"
+                                                />
+                                                <label class="form-check-label" for="extension-setting-open-admin-center"
+                                                    >Default to current environment when opening admin center
+                                                    <span
+                                                        class="settings-tooltip"
+                                                        data-bs-toggle="tooltip"
+                                                        data-bs-placement="top"
+                                                        title="When enabled, the Power Platform Admin Center URL will be automatically selected based on your current environment<br><br>This will only work if an environment exists that matches the Model-Driven URL or Power Pages URL"
                                                         ><img src="../images/tooltip-icon.svg" alt="Tooltip Icon" />
                                                     </span>
                                                 </label>

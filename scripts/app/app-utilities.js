@@ -18,22 +18,6 @@
             EMC.App.Global.sendExtensionMessage("handleFetchXmlResult", queries, category);
         }
 
-        async function parseForSavedQueries() {
-            const savedQueryId = retrieveSavedQueryIds();
-            if (savedQueryId === null) {
-                EMC.App.Global.displayNotification(false, "Could not obtain Fetch XML from record/view");
-                return;
-            }
-
-            const response = await Xrm.WebApi.retrieveRecord("savedquery", savedQueryId, "?$select=fetchxml,name");
-            if (!response) {
-                EMC.App.Global.displayNotification(false, "Could not obtain Fetch XML from record/view");
-                return;
-            }
-
-            return [{ name: response.name, fetchXml: response.fetchxml }];
-        }
-
         async function retrieveSavedQueries() {
             const queryParamRegex = /(?:&|\?)etn=([^&]+)/;
             const match = window.location.search.match(queryParamRegex);
@@ -282,6 +266,50 @@
             }
         }
 
+        function retrieveControlDetails() {
+            if (!Xrm || !Xrm.Page) {
+                EMC.App.Global.displayNotification(false, `Please navigate to a form/view before attempting this action`);
+                return;
+            }
+
+            const controlDetails = !Xrm.Page.data ? retrieveViewControlDetails() : retrieveFormControlDetails();
+            if (!controlDetails) {
+                EMC.App.Global.displayNotification(false, `Please navigate to a form/view before attempting this action`);
+                return;
+            }
+
+            EMC.App.Global.sendExtensionMessage("handleControlDetails", controlDetails, category);
+        }
+
+        function retrieveFormControlDetails() {
+            const entityName = Xrm.Page.data.entity.getEntityName();
+            const formId = Xrm.Page.ui.formSelector.getCurrentItem().getId();
+
+            return {
+                entityName: entityName,
+                controlType: "form/edit",
+                id: formId,
+            };
+        }
+
+        function retrieveViewControlDetails() {
+            const entityName = EMC.App.Global.parseUrlQueryParameters("etn");
+            if (!entityName) {
+                return null;
+            }
+
+            const viewId = EMC.App.Global.parseUrlQueryParameters("viewid");
+            if (!viewId) {
+                return null;
+            }
+
+            return {
+                entityName: entityName,
+                controlType: "view",
+                id: viewId,
+            };
+        }
+
         return {
             refreshCommandBar: refreshCommandBar,
             generateFetchXml: generateFetchXml,
@@ -290,6 +318,7 @@
             toggleControlLogicalNames: toggleControlLogicalNames,
             enableAdminMode: enableAdminMode,
             generateChoiceCodeSnippets: generateChoiceCodeSnippets,
+            retrieveControlDetails: retrieveControlDetails,
         };
     })();
 })(this);
