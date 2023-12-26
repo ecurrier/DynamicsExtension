@@ -7,6 +7,7 @@
         const category = "Global";
         let pageContext = null;
         let globalSolutions = null;
+        let defaultEnvironmentDetails = null;
 
         const ODataFormattedValueKeys = {
             DisplayValue: "@OData.Community.Display.V1.FormattedValue",
@@ -50,12 +51,15 @@
         const solutionSelectSelector = "#solution-selector";
         const environmentSelectSelector = "#environment-selector";
 
+        const defaultLoadingMessage = "Loading...";
+
         async function executeOnLoad() {
             attachHandlers();
 
             await initializeTabId();
             initializeListener();
             initializePageContext();
+            initializeEnvironmentDetails();
             initializeSolutions();
             refreshTooltips('[data-bs-toggle="tooltip"]');
 
@@ -98,6 +102,21 @@
             EMC.Extension.Templates.executeOnLoad();
             EMC.Extension.WebAPI.executeOnLoad();
             EMC.Extension.Security.executeOnLoad();
+        }
+
+        function initializeEnvironmentDetails() {
+            const parameters = {
+                callbackFunction: "handleEnvironmentDetails",
+                category: category,
+            };
+
+            EMC.Extension.Global.executeChromeScript("retrieveEnvironmentDetails", "Settings", parameters, false);
+        }
+
+        function handleEnvironmentDetails(environmentDetails) {
+            environmentDetails.environmentName = "Current Environment";
+
+            defaultEnvironmentDetails = environmentDetails;
         }
 
         function initializeSolutions() {
@@ -187,7 +206,7 @@
         function initializeEnvironmentSelector() {
             clearEnvironmentSelector();
 
-            const storedEnvironments = EMC.Extension.Settings.getStoredEnvironments();
+            const storedEnvironments = EMC.Extension.Settings.getStoredEnvironments(true);
             $.each(storedEnvironments, function (index, storedEnvironment) {
                 if (!storedEnvironment.environmentId) {
                     return;
@@ -252,8 +271,8 @@
             return storageKey.split(`${settingsKey}.`)[1];
         }
 
-        function executeChromeScript(command, category, additionalArgs = null, showIndicator = true) {
-            showLoadingIndicator(showIndicator);
+        function executeChromeScript(command, category, additionalArgs = null, showIndicator = true, indicatorMessage = null) {
+            showLoadingIndicator(showIndicator, indicatorMessage);
 
             chrome.scripting.executeScript({
                 target: { tabId: activeTabId },
@@ -272,8 +291,9 @@
             window.postMessage({ command: command, category: category, additionalArgs: additionalArgs }, "*");
         }
 
-        function showLoadingIndicator(display = true) {
-            display ? $(".loading-container").show() : $(".loading-container").hide();
+        function showLoadingIndicator(display = true, message = null) {
+            display ? $("#progress-indicator").addClass("visible") : $("#progress-indicator").removeClass("visible");
+            message ? $("#progress-indicator-message").text(message) : $("#progress-indicator-message").text(defaultLoadingMessage);
         }
 
         function displayNotification(response) {
@@ -328,6 +348,10 @@
             return pageContext;
         }
 
+        function getDefaultEnvironmentDetails() {
+            return defaultEnvironmentDetails;
+        }
+
         async function getActiveTabUrl(baseUrlOnly = false) {
             try {
                 const activeTabs = await chrome.tabs.query({ active: true });
@@ -357,6 +381,7 @@
             AdminCenterUrls: AdminCenterUrls,
             executeChromeScript: executeChromeScript,
             handlePageContext: handlePageContext,
+            handleEnvironmentDetails: handleEnvironmentDetails,
             handleSolutions: handleSolutions,
             upsertSetting: upsertSetting,
             retrieveSetting: retrieveSetting,
@@ -368,6 +393,7 @@
             showLoadingIndicator: showLoadingIndicator,
             displayNotification: displayNotification,
             getPageContext: getPageContext,
+            getDefaultEnvironmentDetails: getDefaultEnvironmentDetails,
             getSolutions: getSolutions,
             selectSolution: selectSolution,
             selectEnvironment: selectEnvironment,

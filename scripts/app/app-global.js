@@ -33,11 +33,11 @@
         }
 
         function openUrlNewTab(url) {
-            if (Xrm && Xrm.Navigation && Xrm.Navigation.openUrl) {
-                Xrm.Navigation.openUrl(url);
+            if (!window.Xrm || !window.Xrm.Navigation || !window.Xrm.Navigation.openUrl) {
+                window.open(url, "_blank");
             }
             else {
-                window.open(url, "_blank");
+                Xrm.Navigation.openUrl(url);
             }
 
             EMC.App.Global.displayNotification(true);

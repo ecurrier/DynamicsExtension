@@ -25,7 +25,8 @@
 
         function attachHandlers() {
             $("[data-category='utilities'] button[data-function-name]").click(function () {
-                EMC.Extension.Global.executeChromeScript($(this).attr("data-function-name"), category);
+                debugger;
+                EMC.Extension.Global.executeChromeScript($(this).attr("data-function-name"), category, null, true, $(this).attr("data-loading-message"));
             });
 
             $("[data-category='utilities'] button[data-extension-function-name]").click(function () {
@@ -313,26 +314,12 @@
 
         async function openMakerPortal() {
             const environments = EMC.Extension.Settings.getStoredEnvironments();
-            if (!environments || environments.length === 0) {
-                openMakerPortalUrl();
-                return;
-            }
-
-            if (environments.length === 1) {
-                const environment = environments[0];
-                openMakerPortalUrl(environment.environmentType, environment.environmentId);
-                return;
-            }
 
             const defaultEnvironment = EMC.Extension.Settings.getExtensionSettings({ Parent: category, Group: "OpenMakerUrl", Key: "DefaultEnvironment" });
-            if (defaultEnvironment) {
-                const activeTabUrl = await EMC.Extension.Global.getActiveTabUrl(true);
-                const filteredEnvironments = environments.filter((e) => e.mdaUrl === activeTabUrl);
-                if (filteredEnvironments && filteredEnvironments.length === 1) {
-                    const environment = filteredEnvironments[0];
-                    openMakerPortalUrl(environment.environmentType, environment.environmentId);
-                    return;
-                }
+            if (defaultEnvironment || !environments || environments.length === 0) {
+                const defaultEnvironmentDetails = EMC.Extension.Global.getDefaultEnvironmentDetails();
+                openMakerPortalUrl(defaultEnvironmentDetails.environmentType, defaultEnvironmentDetails.environmentId);
+                return;
             }
 
             const selectedEnvironment = await EMC.Extension.Global.selectEnvironment();
@@ -355,23 +342,7 @@
         }
 
         async function handleControlDetails(controlDetails) {
-            const errorMessage =
-                "In order to use this utility, create a new environment setting under Settings -> Environments with the following values populated:<br/><br/>Model-Driven Base Url (must match current environment)<br/>Environment Id";
-
-            const environments = EMC.Extension.Settings.getStoredEnvironments();
-            if (!environments || environments.length === 0) {
-                EMC.Extension.Global.displayDetailedError("Setup Required", errorMessage, false);
-                return;
-            }
-
-            const activeTabUrl = await EMC.Extension.Global.getActiveTabUrl(true);
-            const filteredEnvironments = environments.filter((e) => e.mdaUrl === activeTabUrl);
-            if (!filteredEnvironments || filteredEnvironments.length === 0) {
-                EMC.Extension.Global.displayDetailedError("Setup Required", errorMessage, false);
-                return;
-            }
-
-            const environment = filteredEnvironments[0];
+            const defaultEnvironmentDetails = EMC.Extension.Global.getDefaultEnvironmentDetails();
 
             const useDefaultSolution = EMC.Extension.Settings.getExtensionSettings({ Parent: category, Group: "OpenControlEditor", Key: "UseDefaultSolution" });
             const solutionId = !useDefaultSolution
@@ -381,34 +352,20 @@
                 return;
             }
 
-            const baseUrl = EMC.Extension.Global.MakerPortalUrls[environment.environmentType] || EMC.Extension.Global.MakerPortalUrls.Default;
-            const fullUrl = `${baseUrl}e/${environment.environmentId}/s/${solutionId}/entity/${controlDetails.entityName}/${controlDetails.controlType}/${controlDetails.id}`;
+            const baseUrl = EMC.Extension.Global.MakerPortalUrls[defaultEnvironmentDetails.environmentType] || EMC.Extension.Global.MakerPortalUrls.Default;
+            const fullUrl = `${baseUrl}e/${defaultEnvironmentDetails.environmentId}/s/${solutionId}/entity/${controlDetails.entityName}/${controlDetails.controlType}/${controlDetails.id}`;
 
             EMC.Extension.Global.executeChromeScript("openUrlNewTab", "Global", fullUrl);
         }
 
         async function openAdminCenter() {
             const environments = EMC.Extension.Settings.getStoredEnvironments();
-            if (!environments || environments.length === 0) {
-                openAdminCenterUrl();
-                return;
-            }
-
-            if (environments.length === 1) {
-                const environment = environments[0];
-                openAdminCenterUrl(environment.environmentType, environment.environmentId);
-                return;
-            }
 
             const defaultEnvironment = EMC.Extension.Settings.getExtensionSettings({ Parent: category, Group: "OpenAdminCenter", Key: "DefaultEnvironment" });
-            if (defaultEnvironment) {
-                const activeTabUrl = await EMC.Extension.Global.getActiveTabUrl(true);
-                const filteredEnvironments = environments.filter((e) => e.mdaUrl === activeTabUrl);
-                if (filteredEnvironments && filteredEnvironments.length === 1) {
-                    const environment = filteredEnvironments[0];
-                    openAdminCenterUrl(environment.environmentType, environment.environmentId);
-                    return;
-                }
+            if (defaultEnvironment || !environments || environments.length === 0) {
+                const defaultEnvironmentDetails = EMC.Extension.Global.getDefaultEnvironmentDetails();
+                openAdminCenterUrl(defaultEnvironmentDetails.environmentType, defaultEnvironmentDetails.environmentId);
+                return;
             }
 
             const selectedEnvironment = await EMC.Extension.Global.selectEnvironment();

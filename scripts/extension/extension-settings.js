@@ -44,14 +44,29 @@
             storedEnvironments = await EMC.Extension.Global.retrieveSetting(null, environmentsSettingsKey);
         }
 
-        function getStoredEnvironments() {
-            return Object.values(storedEnvironments);
+        function getStoredEnvironments(includeDefault = false) {
+            const defaultEnvironmentDetails = EMC.Extension.Global.getDefaultEnvironmentDetails();
+            if (!includeDefault || !defaultEnvironmentDetails) {
+                return Object.values(storedEnvironments);
+            }
+
+            return [defaultEnvironmentDetails, ...Object.values(storedEnvironments)];
         }
 
-        async function addNewEnvironment() {
+        function addNewEnvironment() {
+            const parameters = {
+                callbackFunction: "handleEnvironmentDetails",
+                category: category,
+            };
+
+            EMC.Extension.Global.executeChromeScript("retrieveEnvironmentDetails", category, parameters, true, "Retrieving Environment Details...");
+        }
+
+        async function handleEnvironmentDetails(environmentDetails) {
             currentEnvironmentId = null;
 
             await refreshEnvironmentForm();
+            loadEnvironmentDetailsForm(environmentDetails);
 
             if ($(`${environmentSelectSelector} option[value="1"]`).length === 0) {
                 $(environmentSelectSelector).append(
@@ -178,26 +193,28 @@
 
         async function refreshEnvironmentInputs() {
             if (!currentEnvironmentId) {
-                $("#settings-environment-name-input").val(null);
-                $("#settings-environment-mda-url-input").val(null);
-                $("#settings-environment-type-selector option:first").prop("selected", true);
-                $("#settings-environment-portal-url-input").val(null);
-                $("#settings-environment-id-input").val(null);
-
+                loadEnvironmentDetailsForm(null);
                 $(inputsContainerSelector).hide();
                 return;
             }
 
             const settingsKey = EMC.Extension.Global.formatStorageKey(environmentsSettingsKey, currentEnvironmentId);
-            const environment = await EMC.Extension.Global.retrieveSetting(settingsKey);
+            const environmentDetails = await EMC.Extension.Global.retrieveSetting(settingsKey);
 
-            $("#settings-environment-name-input").val(environment.environmentName);
-            $("#settings-environment-mda-url-input").val(environment.mdaUrl);
-            $("#settings-environment-type-selector").val(environment.environmentType);
-            $("#settings-environment-portal-url-input").val(environment.portalUrl);
-            $("#settings-environment-id-input").val(environment.environmentId);
-
+            loadEnvironmentDetailsForm(environmentDetails);
             $(inputsContainerSelector).show();
+        }
+
+        function loadEnvironmentDetailsForm(environmentDetails) {
+            $("#settings-environment-name-input").val(environmentDetails?.environmentName);
+            $("#settings-environment-mda-url-input").val(environmentDetails?.mdaUrl);
+
+            !environmentDetails?.environmentType
+                ? $("#settings-environment-type-selector option:first").prop("selected", true)
+                : $("#settings-environment-type-selector").val(environmentDetails?.environmentType);
+
+            $("#settings-environment-portal-url-input").val(environmentDetails?.portalUrl);
+            $("#settings-environment-id-input").val(environmentDetails?.environmentId);
         }
 
         function openUrlNewTab(e) {
@@ -283,6 +300,7 @@
             executeOnLoad: executeOnLoad,
             getStoredEnvironments: getStoredEnvironments,
             addNewEnvironment: addNewEnvironment,
+            handleEnvironmentDetails: handleEnvironmentDetails,
             saveCurrentEnvironment: saveCurrentEnvironment,
             removeCurrentEnvironment: removeCurrentEnvironment,
             openUrlNewTab: openUrlNewTab,
