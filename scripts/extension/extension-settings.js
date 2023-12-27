@@ -108,19 +108,25 @@
             const settingsKey = EMC.Extension.Global.formatStorageKey(environmentsSettingsKey, currentEnvironmentId);
             const environment = await EMC.Extension.Global.retrieveSetting(settingsKey);
 
-            EMC.Extension.Global.confirmAction(function () {
-                chrome.storage.sync.remove([`${settingsKey}`], function () {
-                    const error = chrome.runtime.lastError;
-                    if (error) {
-                        EMC.Extension.Global.displayNotification({ success: false, text: `Error occurred removing environment: ${error}` });
-                        return;
-                    }
+            const confirm = await EMC.Extension.Global.confirmAction(
+                `Please confirm that you would like to remove the environment "${environment.environmentName}" `
+            );
 
-                    EMC.Extension.Global.displayNotification({ success: true, text: `Successfully removed environment` });
-                    currentEnvironmentId = null;
-                    refreshEnvironmentForm();
-                });
-            }, `Please confirm that you would like to remove the environment "${environment.environmentName}" `);
+            if (!confirm) {
+                return;
+            }
+
+            chrome.storage.sync.remove([`${settingsKey}`], function () {
+                const error = chrome.runtime.lastError;
+                if (error) {
+                    EMC.Extension.Global.displayNotification({ success: false, text: `Error occurred removing environment: ${error}` });
+                    return;
+                }
+
+                EMC.Extension.Global.displayNotification({ success: true, text: `Successfully removed environment` });
+                currentEnvironmentId = null;
+                refreshEnvironmentForm();
+            });
         }
 
         async function loadSelectedEnvironment() {

@@ -84,19 +84,25 @@
             const syncStorageTemplate = await chrome.storage.sync.get(storageKey);
             const templateJson = syncStorageTemplate[storageKey];
 
-            EMC.Extension.Global.confirmAction(function () {
-                chrome.storage.sync.remove([`${storageKey}`], function () {
-                    const error = chrome.runtime.lastError;
-                    if (error) {
-                        EMC.Extension.Global.displayNotification({ success: false, text: `Error occurred deleting template: ${error}` });
-                        return;
-                    }
+            const confirm = await EMC.Extension.Global.confirmAction(
+                `Please confirm that you would like to delete the template "${templateJson.templateName}" `
+            );
 
-                    EMC.Extension.Global.displayNotification({ success: true, text: `Successfully deleted template` });
-                    currentTemplateId = null;
-                    refreshTemplateForm();
-                });
-            }, `Please confirm that you would like to delete the template "${templateJson.templateName}" `);
+            if (!confirm) {
+                return;
+            }
+
+            chrome.storage.sync.remove([`${storageKey}`], function () {
+                const error = chrome.runtime.lastError;
+                if (error) {
+                    EMC.Extension.Global.displayNotification({ success: false, text: `Error occurred deleting template: ${error}` });
+                    return;
+                }
+
+                EMC.Extension.Global.displayNotification({ success: true, text: `Successfully deleted template` });
+                currentTemplateId = null;
+                refreshTemplateForm();
+            });
         }
 
         function exportCurrentTemplate() {

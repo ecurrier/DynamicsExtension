@@ -309,12 +309,26 @@
             $("#toast-notification").toast("show");
         }
 
-        function confirmAction(handler, content, htmlContent = false) {
+        async function confirmAction(content, htmlContent = false) {
             $("#confirmation-modal-label").text("Confirmation");
             htmlContent ? $(".confirmation-modal-body-label").html(content) : $(".confirmation-modal-body-label").text(content);
-            $("#confirmation-modal button.btn-primary").off("click").on("click", handler);
             $("#confirmation-modal-confirm").show();
-            $("#confirmation-modal").modal("show");
+
+            return new Promise(function (resolve, reject) {
+                const $modal = $("#confirmation-modal");
+                const $confirmButton = $("#confirmation-modal button.btn-primary");
+                const $cancelButton = $("#confirmation-modal button.btn-secondary");
+
+                $confirmButton.off("click").on("click", () => {
+                    resolve(true);
+                });
+
+                $cancelButton.off("click").on("click", () => {
+                    resolve(false);
+                });
+
+                $modal.modal("show");
+            });
         }
 
         function displayDetailedError(label, content, htmlContent = false, handler = null) {

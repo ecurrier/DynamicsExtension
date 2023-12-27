@@ -95,7 +95,26 @@
         }
 
         async function retrieveUserSecurityRoles(userDetails) {
-            const fetchXml = `
+            const systemuserFetchXml = `
+                <fetch>
+                    <entity name="systemuser">
+                        <attribute name="fullname" />
+                        <attribute name="systemuserid" />
+                        <filter type="and">
+                            <condition attribute="systemuserid" operator="eq" value="${userDetails.systemuserid}" />
+                            <condition attribute="businessunitid" operator="eq" value="${userDetails.businessunitid}" />
+                        </filter>
+                    </entity>
+                </fetch>`;
+
+            const systemuserQuery = `?fetchXml=${systemuserFetchXml}`;
+            const systemuserResponse = await Xrm.WebApi.retrieveMultipleRecords("systemuser", systemuserQuery);
+            if (!systemuserResponse || !systemuserResponse.entities || systemuserResponse.entities.length === 0) {
+                EMC.App.Global.displayNotification(false, "Selected user does not belong to this Business Unit");
+                return;
+            }
+
+            const roleFetchXml = `
                 <fetch>
                     <entity name="role">
                         <attribute name="name" />
@@ -112,19 +131,14 @@
                     </entity>
                 </fetch>`;
 
-            const query = `?fetchXml=${fetchXml}`;
-            const response = await Xrm.WebApi.retrieveMultipleRecords("role", query);
-            if (!response || !response.entities) {
+            const roleQuery = `?fetchXml=${roleFetchXml}`;
+            const roleResponse = await Xrm.WebApi.retrieveMultipleRecords("role", roleQuery);
+            if (!roleResponse || !roleResponse.entities) {
                 EMC.App.Global.displayNotification(false, "Error occurred");
                 return;
             }
 
-            if (response.entities.length === 0) {
-                EMC.App.Global.displayNotification(false, "Selected user does not belong to this Business Unit");
-                return;
-            }
-
-            EMC.App.Global.sendExtensionMessage("setSecurityRolesData", response.entities, category);
+            EMC.App.Global.sendExtensionMessage("setSecurityRolesData", roleResponse.entities, category);
         }
 
         async function applySecurityRoleChanges(payload) {
