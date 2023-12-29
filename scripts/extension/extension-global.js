@@ -241,26 +241,42 @@
         }
 
         async function upsertSetting(setting) {
-            chrome.storage.sync.set(setting);
+            try {
+                await chrome.storage.local.set(setting);
+                return { success: true };
+            } catch (error) {
+                return { success: false, message: error?.message };
+            }
         }
 
         async function retrieveSetting(setting = null, filter = null) {
             try {
-                const syncStorage = await chrome.storage.sync.get();
+                const localStorage = await chrome.storage.local.get();
 
                 if (filter) {
-                    return Object.keys(syncStorage)
+                    return Object.keys(localStorage)
                         .filter((key) => key.startsWith(filter))
                         .reduce((obj, key) => {
-                            obj[key] = syncStorage[key];
+                            obj[key] = localStorage[key];
                             return obj;
                         }, {});
                 }
 
-                return !setting ? syncStorage : syncStorage[setting];
+                return !setting ? localStorage : localStorage[setting];
             } catch (error) {
                 console.error(`Error retrieving setting: ${error}`);
             }
+        }
+
+        async function deleteSetting(storageKey) {
+            await chrome.storage.local.remove([`${storageKey}`]);
+
+            const error = chrome.runtime.lastError;
+            if (!error) {
+                return { success: true };
+            }
+
+            return { success: false, message: `Error occurred deleting setting: ${error}` };
         }
 
         function formatStorageKey(settingsKey, guid) {
@@ -399,6 +415,7 @@
             handleSolutions: handleSolutions,
             upsertSetting: upsertSetting,
             retrieveSetting: retrieveSetting,
+            deleteSetting: deleteSetting,
             formatStorageKey: formatStorageKey,
             parseStorageKey: parseStorageKey,
             generateGuid: generateGuid,

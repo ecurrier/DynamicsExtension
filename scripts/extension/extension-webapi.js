@@ -411,6 +411,7 @@
         function resetResultsTable() {
             $("#results-viewer-table-container table tr").remove();
             $("#results-viewer-table-container").hide();
+            localStorage.sharedData = null;
         }
 
         function buildTableHeader(attributes) {
@@ -441,6 +442,7 @@
             });
 
             $("#results-viewer-table-container").toggle(results.length !== 0);
+            localStorage.sharedData = JSON.stringify({ attributes: attributes, results: results });
         }
 
         function setResultsCountLabel(results) {
@@ -462,6 +464,10 @@
             return Array.from(uniqueAttributes).sort();
         }
 
+        function openResultsViewer() {
+            chrome.tabs.create({ url: "/pages/results-viewer.html" });
+        }
+
         function handleSpecialKeyDown(e) {
             if (e.which !== EMC.Extension.Global.KeyCodes.Tab) {
                 return;
@@ -480,6 +486,7 @@
             refreshForm: refreshForm,
             executeFetchXml: executeFetchXml,
             populateResultsTable: populateResultsTable,
+            openResultsViewer: openResultsViewer,
         };
     })();
 })(this);

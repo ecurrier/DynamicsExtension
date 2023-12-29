@@ -1,4 +1,4 @@
-body {
+body.extension-body {
     max-width: 700px;
     min-width: 700px;
     min-height: 600px;
@@ -269,6 +269,44 @@ main .container {
 
 .table-important.table-danger {
     background-color: #f8d7da !important;
+}
+
+.table-full-screen {
+    height: 80%;
+    border: 1px #6c757d solid;
+}
+
+.table-full-screen th {
+    font-size: 14px;
+}
+
+.table-full-screen td {
+    font-size: 12px;
+}
+
+.table-cells-max-width th,
+.table-cells-max-width td {
+    max-width: 200px;
+    word-wrap: break-word;
+}
+
+.table-cells-min-width th,
+.table-cells-min-width td {
+    min-width: 100px;
+}
+
+.table-header-component {
+    float: right;
+    cursor: pointer;
+}
+
+.inactive {
+    opacity: 0.6;
+}
+
+.expand-table-component {
+    float: right;
+    margin-top: 0.5rem;
 }
 
 .toast-container {

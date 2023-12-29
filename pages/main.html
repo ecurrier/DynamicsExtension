@@ -15,7 +15,7 @@
         <link rel="stylesheet" href="../styles/highlight.min.css" />
         <link rel="stylesheet" href="../styles/styles.css" />
     </head>
-    <body>
+    <body class="extension-body">
         <!-- LOADING OVERLAY -->
         <div id="progress-indicator" class="loading-ui full-screen" role="alert">
             <div>
@@ -1125,9 +1125,36 @@
                                                 </tbody>
                                             </table>
                                         </div>
-                                        <p class="results-viewer-record-count-label">
-                                            <small><span id="record-count">Please execute a Fetch XML statement to view records.</span></small>
-                                        </p>
+                                        <div class="row">
+                                            <div class="col">
+                                                <p class="results-viewer-record-count-label">
+                                                    <small><span id="record-count">Please execute a Fetch XML statement to view records.</span></small>
+                                                </p>
+                                            </div>
+                                            <div class="col">
+                                                <div class="expand-table-component">
+                                                    <button class="btn btn-outline-secondary" type="button" data-extension-function-name="openResultsViewer">
+                                                        Expand<svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            width="16"
+                                                            height="16"
+                                                            fill="currentColor"
+                                                            class="bi bi-box-arrow-up-right icon-button"
+                                                            viewBox="0 0 16 16"
+                                                        >
+                                                            <path
+                                                                fill-rule="evenodd"
+                                                                d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"
+                                                            />
+                                                            <path
+                                                                fill-rule="evenodd"
+                                                                d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"
+                                                            />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1464,6 +1491,51 @@
                                     data-bs-parent="#accordion-extension-settings-templates"
                                 >
                                     <div class="accordion-body"></div>
+                                </div>
+                            </div>
+                            <div class="accordion-item" data-setting-parent="Security">
+                                <h2 class="accordion-header" id="accordion-extension-settings-security">
+                                    <button
+                                        class="accordion-button collapsed"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#accordion-container-settings-security"
+                                        aria-expanded="false"
+                                        aria-controls="accordion-container-settings-security"
+                                    >
+                                        Security Management
+                                    </button>
+                                </h2>
+                                <div
+                                    id="accordion-container-settings-security"
+                                    class="accordion-collapse collapse"
+                                    aria-labelledby="accordion-header-settings-security"
+                                    data-bs-parent="#accordion-extension-settings-security"
+                                >
+                                    <div class="accordion-body">
+                                        <div class="row extension-setting-group" data-setting-group="ApplyChanges">
+                                            <p>Apply Security Role Changes</p>
+                                            <div class="form-check form-switch">
+                                                <input
+                                                    class="form-check-input"
+                                                    type="checkbox"
+                                                    id="extension-setting-security-require-confirmation"
+                                                    data-setting-key="RequireConfirmation"
+                                                    data-setting-default="true"
+                                                />
+                                                <label class="form-check-label" for="extension-setting-security-require-confirmation"
+                                                    >Require confirmation when removing a user's security roles
+                                                    <span
+                                                        class="settings-tooltip"
+                                                        data-bs-toggle="tooltip"
+                                                        data-bs-placement="top"
+                                                        title="When enabled, a confirmation modal will appear that will require the user to take action before removing a user's security roles"
+                                                        ><img src="../images/tooltip-icon.svg" alt="Tooltip Icon" />
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -269,7 +269,8 @@
                 disassociateRoleIds: disassociateRoleIds,
             };
 
-            if (payload.disassociateRoleIds.length > 0) {
+            const requireConfirmation = EMC.Extension.Settings.getExtensionSettings({ Parent: category, Group: "ApplyChanges", Key: "RequireConfirmation" });
+            if (payload.disassociateRoleIds.length > 0 && requireConfirmation) {
                 const confirm = await EMC.Extension.Global.confirmAction(
                     'You have selected to remove one or more security roles from the selected user.<br/><br/>Removing security roles may result in a loss of accessibility to certain system functionalities.<br/><br/><span class="fw-bold">Please confirm you would like to proceed with removing the selected security roles.</span>',
                     true
@@ -280,7 +281,7 @@
                 }
             }
 
-            EMC.Extension.Global.executeChromeScript("applySecurityRoleChanges", category, payload, true, "Apply Security Role Changes...");
+            EMC.Extension.Global.executeChromeScript("applySecurityRoleChanges", category, payload, true, "Applying Security Role Changes...");
         }
 
         function getRoleIds(selector) {

@@ -84,15 +84,15 @@
         async function saveCurrentEnvironment() {
             const environmentGuid = currentEnvironmentId !== null ? currentEnvironmentId : EMC.Extension.Global.generateGuid();
 
-            const syncStorageValue = {};
+            const localStorageValue = {};
             const settingsKey = EMC.Extension.Global.formatStorageKey(environmentsSettingsKey, environmentGuid);
             const environmentSettings = formatEnvironmentSettingsObject();
             if (!environmentSettings) {
                 return;
             }
 
-            syncStorageValue[settingsKey] = environmentSettings;
-            await EMC.Extension.Global.upsertSetting(syncStorageValue);
+            localStorageValue[settingsKey] = environmentSettings;
+            await EMC.Extension.Global.upsertSetting(localStorageValue);
             currentEnvironmentId = environmentGuid;
 
             refreshEnvironmentForm();
@@ -116,17 +116,15 @@
                 return;
             }
 
-            chrome.storage.sync.remove([`${settingsKey}`], function () {
-                const error = chrome.runtime.lastError;
-                if (error) {
-                    EMC.Extension.Global.displayNotification({ success: false, text: `Error occurred removing environment: ${error}` });
-                    return;
-                }
+            const response = await EMC.Extension.Global.deleteSetting(settingsKey);
+            if (!response || !response.success) {
+                EMC.Extension.Global.displayNotification(response);
+                return;
+            }
 
-                EMC.Extension.Global.displayNotification({ success: true, text: `Successfully removed environment` });
-                currentEnvironmentId = null;
-                refreshEnvironmentForm();
-            });
+            EMC.Extension.Global.displayNotification({ success: true, text: `Successfully removed environment` });
+            currentEnvironmentId = null;
+            refreshEnvironmentForm();
         }
 
         async function loadSelectedEnvironment() {

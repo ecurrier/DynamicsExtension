@@ -61,11 +61,16 @@
             const templateJson = generateTemplateJSON();
             const jsonGuid = currentTemplateId !== null ? currentTemplateId : EMC.Extension.Global.generateGuid();
 
-            const syncStorageValue = {};
+            const localStorageValue = {};
             const storageKey = formatStorageKey(jsonGuid);
-            syncStorageValue[storageKey] = templateJson;
+            localStorageValue[storageKey] = templateJson;
 
-            await chrome.storage.sync.set(syncStorageValue);
+            const response = await EMC.Extension.Global.upsertSetting(localStorageValue);
+            if (!response || !response.success) {
+                EMC.Extension.Global.displayNotification(response);
+                EMC.Extension.Global.showLoadingIndicator(false);
+                return;
+            }
 
             currentTemplateId = jsonGuid;
             EMC.Extension.Global.displayNotification({ success: true, text: `Successfully saved template: ${templateName}` });
@@ -81,8 +86,7 @@
             }
 
             const storageKey = formatStorageKey(currentTemplateId);
-            const syncStorageTemplate = await chrome.storage.sync.get(storageKey);
-            const templateJson = syncStorageTemplate[storageKey];
+            const templateJson = await EMC.Extension.Global.retrieveSetting(storageKey);
 
             const confirm = await EMC.Extension.Global.confirmAction(
                 `Please confirm that you would like to delete the template "${templateJson.templateName}" `
@@ -92,17 +96,15 @@
                 return;
             }
 
-            chrome.storage.sync.remove([`${storageKey}`], function () {
-                const error = chrome.runtime.lastError;
-                if (error) {
-                    EMC.Extension.Global.displayNotification({ success: false, text: `Error occurred deleting template: ${error}` });
-                    return;
-                }
+            const response = await EMC.Extension.Global.deleteSetting(storageKey);
+            if (!response || !response.success) {
+                EMC.Extension.Global.displayNotification(response);
+                return;
+            }
 
-                EMC.Extension.Global.displayNotification({ success: true, text: `Successfully deleted template` });
-                currentTemplateId = null;
-                refreshTemplateForm();
-            });
+            EMC.Extension.Global.displayNotification({ success: true, text: `Successfully deleted template` });
+            currentTemplateId = null;
+            refreshTemplateForm();
         }
 
         function exportCurrentTemplate() {
@@ -144,8 +146,7 @@
             currentTemplateId = $selector.val();
 
             const storageKey = formatStorageKey(currentTemplateId);
-            const syncStorageTemplate = await chrome.storage.sync.get(storageKey);
-            const templateJson = syncStorageTemplate[storageKey];
+            const templateJson = await EMC.Extension.Global.retrieveSetting(storageKey);
 
             setJSONTemplateName(templateJson.templateName);
             setJSONEditor(templateJson.fields);
