@@ -25,7 +25,6 @@
 
         function attachHandlers() {
             $("[data-category='utilities'] button[data-function-name]").click(function () {
-                debugger;
                 EMC.Extension.Global.executeChromeScript($(this).attr("data-function-name"), category, null, true, $(this).attr("data-loading-message"));
             });
 

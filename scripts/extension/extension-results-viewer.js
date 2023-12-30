@@ -37,14 +37,9 @@
         }
 
         function initializeHeader(attributes) {
-            let tableCellsHtml = "";
-
-            $.each(attributes, function (index, attribute) {
-                tableCellsHtml = tableCellsHtml.concat(
-                    `<th scope="col">${attribute}<span class="table-header-component inactive"></span></th>`
-                );
-            });
-
+            const tableCellsHtml = attributes
+                .map((attribute) => `<th scope="col">${attribute}<span class="table-header-component inactive"></span></th>`)
+                .join("");
             $(`${resultsTableSelector} thead`).append(`<tr>${tableCellsHtml}</tr>`);
         }
 
