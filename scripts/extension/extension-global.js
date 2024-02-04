@@ -62,8 +62,6 @@
             initializeEnvironmentDetails();
             initializeSolutions();
             refreshTooltips('[data-bs-toggle="tooltip"]');
-
-            $("[data-bs-target='#utilities-admin-content']").click();
         }
 
         function attachHandlers() {
@@ -76,6 +74,9 @@
                 const navLandmarkTooltip = $(this).attr("data-nav-landmark-tooltip");
 
                 updateNavigationLandmark(navLandmarkPath, navLandmarkTooltip);
+
+                const targetTab = $(this).attr("data-bs-target");
+                saveLastVisitedPage(targetTab);
             });
         }
 
@@ -361,6 +362,28 @@
             refreshTooltips(".nav-landmark-tooltip");
         }
 
+        function saveLastVisitedPage(targetTab) {
+            upsertSetting({
+                "Extension.OpenLastVisitedPage.Target": targetTab,
+            });
+        }
+
+        async function openDefaultTab() {
+            const $defaultTab = $("[data-bs-target='#utilities-admin-content']");
+
+            const isEnabled = EMC.Extension.Settings.getExtensionSettings({ Parent: "Extension", Group: "OpenLastVisitedPage", Key: "Enabled" });
+            if (!isEnabled) {
+                $defaultTab.click();
+                return;
+            }
+
+            const targetId = await retrieveSetting("Extension.OpenLastVisitedPage.Target");
+            const $targetTab = targetId ? $(`[data-bs-target='${targetId}']`) : $defaultTab;
+
+            $targetTab.click();
+            new bootstrap.Tab($targetTab).show();
+        }
+
         function getPluralName(logicalName) {
             if (!logicalName) {
                 return logicalName;
@@ -430,6 +453,7 @@
             selectEnvironment: selectEnvironment,
             confirmAction: confirmAction,
             displayDetailedError: displayDetailedError,
+            openDefaultTab: openDefaultTab,
         };
     })();
 })(this);

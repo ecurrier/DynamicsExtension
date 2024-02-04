@@ -236,6 +236,8 @@
             }
 
             globalExtensionSettings = extensionSettings;
+
+            EMC.Extension.Global.openDefaultTab();
         }
 
         function initializeExtensionSettingsForm() {

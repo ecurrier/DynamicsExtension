@@ -947,116 +947,93 @@
                     <!-- END TEMPLATES -->
                     <!-- WEB API - UPDATE FIELDS -->
                     <div class="tab-pane fade" id="webapi-update-fields-content" role="tabpanel" aria-labelledby="webapi-tab" data-category="webapi">
-                        <div>
-                            <div class="d-flex align-items-start">
-                                <div class="tab-content" id="v-pills-tabContent">
-                                    <div class="tab-pane fade show active" id="v-pills-update-field" role="tabpanel" aria-labelledby="v-pills-update-field-tab">
-                                        <div class="container">
-                                            <div class="row text-center">
-                                                <div class="col d-grid">
-                                                    <button type="button" class="btn btn-outline-primary" data-function-name="loadAttributeMetadata">
-                                                        Load Attribute Metadata
-                                                    </button>
-                                                </div>
-                                                <div class="col d-grid d-select-container">
-                                                    <select
-                                                        class="form-select"
-                                                        id="attribute-metadata-selector"
-                                                        aria-label="Attribute Metadata Field List"
-                                                        disabled
-                                                    >
-                                                        <option selected>Select a field to update...</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-1"></div>
+                        <div class="container">
+                            <div class="row text-center">
+                                <div class="col d-grid">
+                                    <button type="button" class="btn btn-outline-primary" data-function-name="loadAttributeMetadata">
+                                        Load Attribute Metadata
+                                    </button>
+                                </div>
+                                <div class="col d-grid d-select-container">
+                                    <select class="form-select" id="attribute-metadata-selector" aria-label="Attribute Metadata Field List" disabled>
+                                        <option selected>Select a field to update...</option>
+                                    </select>
+                                </div>
+                                <div class="col-1"></div>
+                            </div>
+                            <div class="container" id="update-field-inputs-container">
+                                <div class="row text-center no-padding">
+                                    <div class="embedded-container">
+                                        <p class="text-start fs-4 fw-bold">Field Attribute Information:</p>
+                                        <div class="row no-padding">
+                                            <div class="col-6">
+                                                <p class="text-start fw-bold no-margin">
+                                                    Current Value: <span class="fw-normal attribute-label" id="field-attribute-value"></span>
+                                                </p>
                                             </div>
-                                            <div class="container" id="update-field-inputs-container">
-                                                <div class="row text-center no-padding">
-                                                    <div class="embedded-container">
-                                                        <p class="text-start fs-4 fw-bold">Field Attribute Information:</p>
-                                                        <div class="row no-padding">
-                                                            <div class="col-6">
-                                                                <p class="text-start fw-bold no-margin">
-                                                                    Current Value: <span class="fw-normal attribute-label" id="field-attribute-value"></span>
-                                                                </p>
-                                                            </div>
-                                                            <div class="col-6">
-                                                                <p class="text-start fw-bold no-margin">
-                                                                    Display Name: <span class="fw-normal attribute-label" id="field-display-name"></span>
-                                                                </p>
-                                                                <p class="text-start fw-bold no-margin">
-                                                                    Logical Name: <span class="fw-normal attribute-label" id="field-logical-name"></span>
-                                                                </p>
-                                                                <p class="text-start fw-bold no-margin">
-                                                                    Field Type: <span class="fw-normal attribute-label" id="field-attribute-type"></span>
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="row no-padding">
-                                                    <div class="embedded-container">
-                                                        <div class="col-8">
-                                                            <div class="mb-3">
-                                                                <div class="form-check">
-                                                                    <input class="form-check-input" type="checkbox" value="" id="update-field-null" />
-                                                                    <label class="form-check-label" for="update-field-null">Clear field?</label>
-                                                                </div>
-                                                            </div>
-                                                            <div class="mb-3 field-input field-input-select-entity">
-                                                                <label for="update-field-select-entity" class="form-label">Table Logical Name</label>
-                                                                <select class="form-select" id="update-field-select-entity" aria-label="Select a table">
-                                                                    <option selected>Select a table...</option>
-                                                                </select>
-                                                            </div>
-                                                            <div class="mb-3 field-input field-input-text-singleline">
-                                                                <label for="update-field-text-singleline" class="form-label">...</label>
-                                                                <input type="text" value="" class="form-control" id="update-field-text-singleline" />
-                                                            </div>
-                                                            <div class="mb-3 field-input field-input-text-multiline">
-                                                                <label for="update-field-text-multiline" class="form-label">Enter a value</label>
-                                                                <textarea value="" class="form-control" id="update-field-text-multiline"></textarea>
-                                                            </div>
-                                                            <div class="mb-3 field-input field-input-number">
-                                                                <label for="update-field-number" class="form-label">Enter a number</label>
-                                                                <input type="text" value="" class="form-control" id="update-field-number" />
-                                                            </div>
-                                                            <div class="mb-3 field-input field-input-select-choice">
-                                                                <label for="update-field-select-choice" class="form-label">Choices</label>
-                                                                <select class="form-select" id="update-field-select-choice" aria-label="Select a choice">
-                                                                    <option disabled selected>Select a choice...</option>
-                                                                </select>
-                                                            </div>
-                                                            <div class="mb-3 field-input field-input-multiselect-choice">
-                                                                <label for="update-field-multiselect-choice" class="form-label">Choices</label>
-                                                                <select
-                                                                    class="form-select"
-                                                                    id="update-field-multiselect-choice"
-                                                                    aria-label="Select a choice"
-                                                                    multiple
-                                                                >
-                                                                    <option disabled>Select choices...</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="row text-center no-padding">
-                                                    <div class="col d-grid">
-                                                        <button
-                                                            type="button"
-                                                            class="btn btn-outline-primary"
-                                                            data-function-name="updateField"
-                                                            data-has-parameters="true"
-                                                        >
-                                                            Update Field
-                                                        </button>
-                                                    </div>
-                                                    <div class="col-1"></div>
-                                                </div>
+                                            <div class="col-6">
+                                                <p class="text-start fw-bold no-margin">
+                                                    Display Name: <span class="fw-normal attribute-label" id="field-display-name"></span>
+                                                </p>
+                                                <p class="text-start fw-bold no-margin">
+                                                    Logical Name: <span class="fw-normal attribute-label" id="field-logical-name"></span>
+                                                </p>
+                                                <p class="text-start fw-bold no-margin">
+                                                    Field Type: <span class="fw-normal attribute-label" id="field-attribute-type"></span>
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                                <div class="row no-padding">
+                                    <div class="embedded-container">
+                                        <div class="col-8">
+                                            <div class="mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value="" id="update-field-null" />
+                                                    <label class="form-check-label" for="update-field-null">Clear field?</label>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3 field-input field-input-select-entity">
+                                                <label for="update-field-select-entity" class="form-label">Table Logical Name</label>
+                                                <select class="form-select" id="update-field-select-entity" aria-label="Select a table">
+                                                    <option selected>Select a table...</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3 field-input field-input-text-singleline">
+                                                <label for="update-field-text-singleline" class="form-label">...</label>
+                                                <input type="text" value="" class="form-control" id="update-field-text-singleline" />
+                                            </div>
+                                            <div class="mb-3 field-input field-input-text-multiline">
+                                                <label for="update-field-text-multiline" class="form-label">Enter a value</label>
+                                                <textarea value="" class="form-control" id="update-field-text-multiline"></textarea>
+                                            </div>
+                                            <div class="mb-3 field-input field-input-number">
+                                                <label for="update-field-number" class="form-label">Enter a number</label>
+                                                <input type="text" value="" class="form-control" id="update-field-number" />
+                                            </div>
+                                            <div class="mb-3 field-input field-input-select-choice">
+                                                <label for="update-field-select-choice" class="form-label">Choices</label>
+                                                <select class="form-select" id="update-field-select-choice" aria-label="Select a choice">
+                                                    <option disabled selected>Select a choice...</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3 field-input field-input-multiselect-choice">
+                                                <label for="update-field-multiselect-choice" class="form-label">Choices</label>
+                                                <select class="form-select" id="update-field-multiselect-choice" aria-label="Select a choice" multiple>
+                                                    <option disabled>Select choices...</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row text-center no-padding">
+                                    <div class="col d-grid">
+                                        <button type="button" class="btn btn-outline-primary" data-function-name="updateField" data-has-parameters="true">
+                                            Update Field
+                                        </button>
+                                    </div>
+                                    <div class="col-1"></div>
                                 </div>
                             </div>
                         </div>
@@ -1381,6 +1358,52 @@
                     <!-- SETTINGS - EXTENSION SETTINGS -->
                     <div class="tab-pane fade" id="settings-extension-settings-content" role="tabpanel" aria-labelledby="settings-tab" data-category="settings">
                         <div class="accordion accordion-flush" id="accordion-extension-settings">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="accordion-extension-settings-extension">
+                                    <button
+                                        class="accordion-button collapsed"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#accordion-container-settings-extension"
+                                        aria-expanded="false"
+                                        aria-controls="accordion-container-settings-extension"
+                                    >
+                                        Extension
+                                    </button>
+                                </h2>
+                                <div
+                                    id="accordion-container-settings-extension"
+                                    class="accordion-collapse collapse"
+                                    aria-labelledby="accordion-header-settings-extension"
+                                    data-bs-parent="#accordion-extension-settings-extension"
+                                    data-setting-parent="Extension"
+                                >
+                                    <div class="accordion-body">
+                                        <div class="row extension-setting-group" data-setting-group="OpenLastVisitedPage">
+                                            <p>Open Last Visited Page</p>
+                                            <div class="form-check form-switch">
+                                                <input
+                                                    class="form-check-input"
+                                                    type="checkbox"
+                                                    id="extension-setting-open-last-visited-page"
+                                                    data-setting-key="Enabled"
+                                                    data-setting-default="false"
+                                                />
+                                                <label class="form-check-label" for="extension-setting-open-last-visited-page"
+                                                    >When extension is opened, you will be brought to the last page you used
+                                                    <span
+                                                        class="settings-tooltip"
+                                                        data-bs-toggle="tooltip"
+                                                        data-bs-placement="top"
+                                                        title="When enabled, when the extension is initially opened, the last page you visited will be automatically loaded"
+                                                        ><img src="../images/tooltip-icon.svg" alt="Tooltip Icon" />
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="accordion-item">
                                 <h2 class="accordion-header" id="accordion-extension-settings-utilities">
                                     <button
