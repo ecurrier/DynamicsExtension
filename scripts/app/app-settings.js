@@ -18,8 +18,13 @@
                 environmentName: organizationSettings.uniqueName,
                 environmentId: organizationSettings.bapEnvironmentId,
                 environmentType: retrieveEnvironmentType(organizationSettings),
-                mdaUrl: retrieveBaseUrl(),
-                portalUrl: await retrievePowerPagesUrl(),
+                modelDrivenAppUrl: retrieveBaseUrl(),
+                powerPagesUrl: await retrievePowerPagesUrl(),
+                environmentGeographicalRegion: organizationSettings.organizationGeo,
+                environmentOrganizationId: organizationSettings.organizationId,
+                environmentOrganizationTenantId: organizationSettings.organizationTenant,
+                environmentBlockedAttachments: organizationSettings.attributes.blockedattachments,
+                environmentBaseCurrency: organizationSettings.baseCurrency?.name,
             };
 
             EMC.App.Global.sendExtensionMessage(args.callbackFunction, environmentDetails, args.category);

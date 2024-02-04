@@ -273,10 +273,18 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body fetch-xml-modal-body">
-                        <div class="col-8 d-grid d-select-container">
-                            <select class="form-select" id="fetch-xml-selector" aria-label="Fetch Xml Selector">
-                                <option value="" selected disabled>Select a query...</option>
-                            </select>
+                        <div class="row">
+                            <div class="col-7 d-grid d-select-container">
+                                <select class="form-select" id="fetch-xml-selector" aria-label="Fetch Xml Selector">
+                                    <option value="" selected disabled>Select a query...</option>
+                                </select>
+                            </div>
+                            <div class="col-5 d-grid">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="" id="fetch-xml-double-quote" checked />
+                                    <label class="form-check-label" for="fetch-xml-double-quote">Double Quotes?</label>
+                                </div>
+                            </div>
                         </div>
                         <pre>
                             <code class="language-xml">
@@ -424,6 +432,34 @@
             </div>
         </div>
         <!-- END CHOICE CODE SNIPPET DISPLAY MODAL -->
+        <!-- ENVIRONMENT DETAILS MODAL -->
+        <div
+            class="modal fade"
+            id="environment-details-modal"
+            data-bs-backdrop="static"
+            data-bs-keyboard="false"
+            tabindex="-1"
+            aria-labelledby="environment-details-modal-label"
+            aria-hidden="true"
+            data-category="global"
+        >
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="environment-details-modal-label">Environment Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body environment-details-modal-body">
+                        <p class="environment-details-modal-body-label"></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" id="environment-details-modal-confirm" data-bs-dismiss="modal">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END ENVIRONMENT DETAILS MODAL -->
         <!-- END MODALS -->
         <!-- TOASTS -->
         <div class="toast-container position-absolute p-3 top-0 end-0">
@@ -777,7 +813,18 @@
                                         </svg>
                                     </button>
                                 </div>
-                                <div class="col d-grid"></div>
+                                <div class="col d-grid">
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-primary"
+                                        data-extension-function-name="displayEnvironmentDetails"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="Opens a modal window displaying details about the current Dynamics Environment"
+                                    >
+                                        Display Environment Details
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

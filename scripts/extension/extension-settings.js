@@ -142,15 +142,15 @@
             }
 
             const environmentType = $("#settings-environment-type-selector").val();
-            const mdaUrl = $("#settings-environment-mda-url-input").val();
-            const portalUrl = $("#settings-environment-portal-url-input").val();
+            const modelDrivenAppUrl = $("#settings-environment-mda-url-input").val();
+            const powerPagesUrl = $("#settings-environment-portal-url-input").val();
             const environmentId = $("#settings-environment-id-input").val();
 
             return {
                 environmentName: environmentName,
                 environmentType: environmentType,
-                mdaUrl: mdaUrl,
-                portalUrl: portalUrl,
+                modelDrivenAppUrl: modelDrivenAppUrl,
+                powerPagesUrl: powerPagesUrl,
                 environmentId: environmentId,
             };
         }
@@ -211,13 +211,13 @@
 
         function loadEnvironmentDetailsForm(environmentDetails) {
             $("#settings-environment-name-input").val(environmentDetails?.environmentName);
-            $("#settings-environment-mda-url-input").val(environmentDetails?.mdaUrl);
+            $("#settings-environment-mda-url-input").val(environmentDetails?.modelDrivenAppUrl);
 
             !environmentDetails?.environmentType
                 ? $("#settings-environment-type-selector option:first").prop("selected", true)
                 : $("#settings-environment-type-selector").val(environmentDetails?.environmentType);
 
-            $("#settings-environment-portal-url-input").val(environmentDetails?.portalUrl);
+            $("#settings-environment-portal-url-input").val(environmentDetails?.powerPagesUrl);
             $("#settings-environment-id-input").val(environmentDetails?.environmentId);
         }
 

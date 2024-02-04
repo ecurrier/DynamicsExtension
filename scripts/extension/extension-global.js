@@ -115,8 +115,9 @@
         }
 
         function handleEnvironmentDetails(environmentDetails) {
-            environmentDetails.environmentName = "Current Environment";
+            EMC.Extension.Utilities.initializeEnvironmentDetailsModal(environmentDetails);
 
+            environmentDetails.environmentName = "Current Environment";
             defaultEnvironmentDetails = environmentDetails;
         }
 

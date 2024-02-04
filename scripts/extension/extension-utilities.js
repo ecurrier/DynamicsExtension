@@ -33,6 +33,8 @@
             });
 
             $(`${$fetchXmlSelector}`).change(loadSelectedQuery);
+            $("#fetch-xml-double-quote").change(reformatQueries);
+
             $(`${$urlSelector}`).change(loadSelectedUrl);
             $(`${$choiceCodeSnippetSelector}`).change(loadSelectedChoiceCodeSnippet);
             $(`${$choiceCodeLanguageSelector}`).change(loadSelectedChoiceCodeSnippet);
@@ -40,7 +42,7 @@
         }
 
         function loadSelectedQuery() {
-            const $selector = $(this);
+            const $selector = !this ? $(`${$fetchXmlSelector}`) : $(this);
             const queryId = $selector.val();
             const query = currentQueries[queryId];
 
@@ -86,6 +88,29 @@
                     text: query.name,
                 })
             );
+        }
+
+        function reformatQueries() {
+            const useDoubleQuotes = $(this).prop("checked");
+            currentQueries = replaceQuotesInObject(currentQueries, useDoubleQuotes);
+
+            loadSelectedQuery();
+        }
+
+        function replaceQuotesInObject(obj, useDouble) {
+            const updatedEntries = Object.entries(obj).map(([key, value]) => {
+                let updatedValue;
+
+                if (useDouble) {
+                    updatedValue = value.replace(/'/g, '"');
+                } else {
+                    updatedValue = value.replace(/"/g, "'");
+                }
+
+                return [key, updatedValue];
+            });
+
+            return Object.fromEntries(updatedEntries);
         }
 
         function loadSelectedUrl() {
@@ -382,6 +407,31 @@
             EMC.Extension.Global.executeChromeScript("openUrlNewTab", "Global", fullUrl, false);
         }
 
+        function initializeEnvironmentDetailsModal(environmentDetails) {
+            const formattedEnvironmentDetails = formatEnvironmentDetails(environmentDetails);
+            $(".environment-details-modal-body").append(formattedEnvironmentDetails);
+        }
+
+        function formatEnvironmentDetails(environmentDetails) {
+            const detailsList = $("<ul></ul>");
+
+            Object.entries(environmentDetails).forEach(([key, value]) => {
+                const formattedKey = key
+                    .replace(/([A-Z])/g, " $1")
+                    .replace(/^./, (str) => str.toUpperCase())
+                    .trim()
+                    .replace(" ", " ");
+                const formattedValue = value || "&mdash;";
+                detailsList.append(`<li>${formattedKey}: ${formattedValue}</li>`);
+            });
+
+            return detailsList;
+        }
+
+        function displayEnvironmentDetails() {
+            $("#environment-details-modal").modal("show");
+        }
+
         return {
             executeOnLoad: executeOnLoad,
             handleFetchXmlResult: handleFetchXmlResult,
@@ -396,6 +446,8 @@
             openControlEditor: openControlEditor,
             handleControlDetails: handleControlDetails,
             openAdminCenter: openAdminCenter,
+            initializeEnvironmentDetailsModal: initializeEnvironmentDetailsModal,
+            displayEnvironmentDetails: displayEnvironmentDetails,
         };
     })();
 })(this);
