@@ -13,6 +13,7 @@
         let selectedUrl = null;
         let appBaseUrl = null;
         let selectedChoiceCodeSnippet = null;
+        let selectedFormXml = null;
 
         const $fetchXmlSelector = "#fetch-xml-selector";
         const $urlSelector = "#url-selector";
@@ -362,7 +363,7 @@
         }
 
         function openControlEditor() {
-            EMC.Extension.Global.executeChromeScript("retrieveControlDetails", category);
+            EMC.Extension.Global.executeChromeScript("retrieveControlDetails", category, { handler: "handleControlDetails" });
         }
 
         async function handleControlDetails(controlDetails) {
@@ -432,6 +433,24 @@
             $("#environment-details-modal").modal("show");
         }
 
+        function openFormXmlViewer() {
+            EMC.Extension.Global.executeChromeScript("retrieveControlDetails", category, { handler: "openFormXmlViewerModal", controlToCheck: "form" });
+        }
+
+        function openFormXmlViewerModal(controlDetails) {
+            const formattedXml = formatXml(controlDetails.xml);
+            selectedFormXml = formattedXml;
+
+            const highlightedCode = hljs.highlight(formattedXml, { language: "xml" }).value;
+            $(".form-xml-editor-modal-body-content").html(highlightedCode);
+            $("#form-xml-editor-modal").modal("show");
+        }
+
+        function copyFormXmlSnippetToClipboard() {
+            navigator.clipboard.writeText(selectedFormXml);
+            EMC.Extension.Global.displayNotification({ success: true, text: "Copied Form XML to clipboard" });
+        }
+
         return {
             executeOnLoad: executeOnLoad,
             handleFetchXmlResult: handleFetchXmlResult,
@@ -448,6 +467,9 @@
             openAdminCenter: openAdminCenter,
             initializeEnvironmentDetailsModal: initializeEnvironmentDetailsModal,
             displayEnvironmentDetails: displayEnvironmentDetails,
+            openFormXmlViewer: openFormXmlViewer,
+            openFormXmlViewerModal: openFormXmlViewerModal,
+            copyFormXmlSnippetToClipboard: copyFormXmlSnippetToClipboard,
         };
     })();
 })(this);

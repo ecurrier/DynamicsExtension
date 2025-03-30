@@ -180,6 +180,35 @@
             </div>
         </div>
         <!-- END CONFIRMATION MODAL -->
+        <!-- INPUT CONFIRMATION MODAL -->
+        <div
+            class="modal fade"
+            id="input-confirmation-modal"
+            data-bs-backdrop="static"
+            data-bs-keyboard="false"
+            tabindex="-1"
+            aria-labelledby="input-confirmation-modal-label"
+            aria-hidden="true"
+            data-category="global"
+        >
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="input-confirmation-modal-label">Input Required</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body input-confirmation-modal-body">
+                        <p class="input-confirmation-modal-body-label"></p>
+                        <input id="input-confirmation-modal-input" class="form-control" type="text" />
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" id="input-confirmation-modal-confirm">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END INPUT CONFIRMATION MODAL -->
         <!-- SOLUTION SELECTOR MODAL -->
         <div
             class="modal fade"
@@ -460,6 +489,38 @@
             </div>
         </div>
         <!-- END ENVIRONMENT DETAILS MODAL -->
+        <!-- FORM XML VIEWER MODAL -->
+        <div
+            class="modal fade"
+            id="form-xml-editor-modal"
+            data-bs-backdrop="static"
+            data-bs-keyboard="false"
+            tabindex="-1"
+            aria-labelledby="form-xml-editor-modal-label"
+            aria-hidden="true"
+            data-category="utilities"
+        >
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="form-xml-editor-modal-label">Form XML Viewer</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body form-xml-editor-modal-body">
+                        <pre class="overflow-visible">
+                        <code class="language-xml">
+                            <div class="form-xml-editor-modal-body-content"></div>
+                        </code>
+                    </pre>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" data-extension-function-name="copyFormXmlSnippetToClipboard">Copy to Clipboard</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END FORM XML VIEWER MODAL -->
         <!-- END MODALS -->
         <!-- TOASTS -->
         <div class="toast-container position-absolute p-3 top-0 end-0">
@@ -568,7 +629,7 @@
                                                     class="nav-link"
                                                     href="#"
                                                     data-bs-toggle="pill"
-                                                    data-bs-target="#templates-content"
+                                                    data-bs-target="#templates-prepopulate-content"
                                                     data-nav-landmark-path="Templates > Pre-populate"
                                                     data-nav-landmark-tooltip="Allows the user to generate a template of pre-populated data from an existing record<br><br>The template can then be applied to any record in order to quickly pre-populated a form with specific data"
                                                     >Pre-populate Forms</a
@@ -889,13 +950,25 @@
                                         Generate Choice Code Snippet
                                     </button>
                                 </div>
-                                <div class="col d-grid"></div>
+                                <div class="col d-grid">
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-primary"
+                                        data-extension-function-name="openFormXmlViewer"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="Opens a modal window, allowing you to view a Form's XML directly"
+                                    >
+                                        View Form XML
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <!-- END UTILITIES - DEVELOPER -->
-                    <!-- TEMPLATES -->
-                    <div class="tab-pane fade" id="templates-content" role="tabpanel" aria-labelledby="templates-tab">
+                    <!-- START TEMPLATES -->
+                    <!-- START TEMPLATES - PRE-POPULATE FORMS -->
+                    <div class="tab-pane fade templates-content" id="templates-prepopulate-content" role="tabpanel" aria-labelledby="templates-tab">
                         <div class="container">
                             <div class="row">
                                 <div class="col-8 d-grid d-select-container file-selector">
@@ -922,9 +995,19 @@
                                                 data-function-name="generateNewTemplate"
                                                 data-bs-toggle="tooltip"
                                                 data-bs-placement="left"
-                                                title="Generates a JSON template of input/value data from the current form"
+                                                title="Generates a JSON template of field data from the current form"
                                             >
-                                                Generate New Template
+                                                Generate New Template (Form)
+                                            </button>
+                                            <button
+                                                class="dropdown-item"
+                                                type="button"
+                                                data-function-name="generateNewTemplateFromRecord"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="left"
+                                                title="Generates a JSON template of field data from the current record (includes all fields)"
+                                            >
+                                                Generate New Template (Record)
                                             </button>
                                             <button
                                                 class="dropdown-item"
@@ -936,11 +1019,35 @@
                                             >
                                                 Apply Template
                                             </button>
+                                            <button
+                                                class="dropdown-item"
+                                                type="button"
+                                                data-extension-function-name="upsertCurrentTemplate"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="left"
+                                                title="Upserts the selected JSON data to the current Dataverse environment"
+                                            >
+                                                Upsert Template
+                                            </button>
                                             <hr class="dropdown-divider" />
-                                            <button class="dropdown-item" type="button" data-extension-function-name="saveCurrentTemplate">
+                                            <button
+                                                class="dropdown-item"
+                                                type="button"
+                                                data-extension-function-name="saveCurrentTemplate"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="left"
+                                                title="Saves the selected JSON/Template"
+                                            >
                                                 Save Template
                                             </button>
-                                            <button class="dropdown-item" type="button" data-extension-function-name="deleteCurrentTemplate">
+                                            <button
+                                                class="dropdown-item"
+                                                type="button"
+                                                data-extension-function-name="deleteCurrentTemplate"
+                                                data-bs-toggle="tooltip"
+                                                data-bs-placement="left"
+                                                title="Deletes the selected JSON/Template"
+                                            >
                                                 Delete Template
                                             </button>
                                             <hr class="dropdown-divider" />
@@ -952,7 +1059,7 @@
                                                 data-bs-placement="left"
                                                 title="Downloads the selected JSON data"
                                             >
-                                                Export Template
+                                                Download Template
                                             </button>
                                             <a id="export-template-anchor" style="display: none"></a>
                                             <button
@@ -963,7 +1070,7 @@
                                                 data-bs-placement="left"
                                                 title="Select a JSON file to import as a new template"
                                             >
-                                                Import Template
+                                                Upload Template
                                             </button>
                                             <input type="file" id="import-template-file" class="hidden" />
                                         </div>
@@ -991,6 +1098,7 @@
                             </div>
                         </div>
                     </div>
+                    <!-- END TEMPLATES - PRE-POPULATE FORMS -->
                     <!-- END TEMPLATES -->
                     <!-- WEB API - UPDATE FIELDS -->
                     <div class="tab-pane fade" id="webapi-update-fields-content" role="tabpanel" aria-labelledby="webapi-tab" data-category="webapi">

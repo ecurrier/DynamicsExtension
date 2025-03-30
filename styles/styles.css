@@ -403,3 +403,7 @@ code textarea {
 .extension-setting-group:not(:first-child) {
     margin-top: 10px;
 }
+
+.overflow-visible {
+    overflow: visible;
+}

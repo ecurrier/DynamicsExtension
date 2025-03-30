@@ -121,6 +121,7 @@
         }
 
         return {
+            fetchAttributeMetadata: fetchAttributeMetadata,
             fetchChildAttributeMetadata: fetchChildAttributeMetadata,
             loadAttributeMetadata: loadAttributeMetadata,
             updateField: updateField,

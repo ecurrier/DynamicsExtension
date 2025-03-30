@@ -266,30 +266,64 @@
             }
         }
 
-        function retrieveControlDetails() {
+        async function retrieveControlDetails(args) {
             if (!Xrm || !Xrm.Page) {
                 EMC.App.Global.displayNotification(false, `Please navigate to a form/view before attempting this action`);
                 return;
             }
 
-            const controlDetails = !Xrm.Page.data ? retrieveViewControlDetails() : retrieveFormControlDetails();
-            if (!controlDetails) {
-                EMC.App.Global.displayNotification(false, `Please navigate to a form/view before attempting this action`);
-                return;
+            let controlDetails = null;
+            if (!args.controlToCheck) {
+                controlDetails = !Xrm.Page.data ? retrieveViewControlDetails() : retrieveFormControlDetails();
+                if (!controlDetails) {
+                    EMC.App.Global.displayNotification(false, `Please navigate to a form/view before attempting this action`);
+                    return;
+                }
+
+                EMC.App.Global.sendExtensionMessage(args.handler, controlDetails, category);
             }
 
-            EMC.App.Global.sendExtensionMessage("handleControlDetails", controlDetails, category);
+            if (args.controlToCheck === "form") {
+                controlDetails = Xrm.Page.data ? await retrieveFormControlDetails() : null;
+                if (!controlDetails) {
+                    EMC.App.Global.displayNotification(false, `Please navigate to a form before attempting this action`);
+                    return;
+                }
+
+                EMC.App.Global.sendExtensionMessage(args.handler, controlDetails, category);
+            }
+
+            if (args.controlToCheck === "view") {
+                controlDetails = !Xrm.Page.data ? retrieveViewControlDetails() : null;
+                if (!controlDetails) {
+                    EMC.App.Global.displayNotification(false, `Please navigate to a view before attempting this action`);
+                    return;
+                }
+            }
+
+            EMC.App.Global.sendExtensionMessage(args.handler, controlDetails, category);
         }
 
-        function retrieveFormControlDetails() {
+        async function retrieveFormControlDetails() {
             const entityName = Xrm.Page.data.entity.getEntityName();
             const formId = Xrm.Page.ui.formSelector.getCurrentItem().getId();
+            const formXml = await retrieveFormXml(formId);
 
             return {
                 entityName: entityName,
                 controlType: "form/edit",
                 id: formId,
+                xml: formXml,
             };
+        }
+
+        async function retrieveFormXml(formId) {
+            const response = await Xrm.WebApi.retrieveRecord("systemform", formId, "?$select=formxml");
+            if (!response) {
+                return null;
+            }
+
+            return response.formxml;
         }
 
         function retrieveViewControlDetails() {
@@ -318,7 +352,7 @@
             toggleControlLogicalNames: toggleControlLogicalNames,
             enableAdminMode: enableAdminMode,
             generateChoiceCodeSnippets: generateChoiceCodeSnippets,
-            retrieveControlDetails: retrieveControlDetails,
+            retrieveControlDetails: retrieveControlDetails
         };
     })();
 })(this);

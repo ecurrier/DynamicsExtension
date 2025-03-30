@@ -5,12 +5,13 @@
     global.EMC.Extension = global.EMC.Extension || {};
     global.EMC.Extension.Templates = (function () {
         const category = "Templates";
+        const formTemplatesSettingKey = "Templates.forms";
 
         const $jsonEditorSelector = "#template-json-editor";
         const $templateSelectSelector = "#template-file-selector";
         const $templateNameInput = "#input-template-name";
-        let jsonEditor = null;
 
+        let jsonEditor = null;
         let currentTemplateId;
 
         function executeOnLoad() {
@@ -21,11 +22,11 @@
         }
 
         function attachHandlers() {
-            $("#templates-content button[data-function-name]:not([data-has-parameters])").click(function () {
+            $(".templates-content button[data-function-name]:not([data-has-parameters])").click(function () {
                 EMC.Extension.Global.executeChromeScript($(this).attr("data-function-name"), category);
             });
 
-            $("#templates-content button[data-extension-function-name]").click(function () {
+            $(".templates-content button[data-extension-function-name]").click(function () {
                 EMC.Extension.Templates[$(this).attr("data-extension-function-name")]();
             });
 
@@ -35,7 +36,7 @@
         }
 
         function loadNewTemplate(json) {
-            startDraftForm(null, json);
+            startDraftTemplateForm(null, json);
         }
 
         function applyCurrentTemplate() {
@@ -45,7 +46,31 @@
                 return;
             }
 
-            EMC.Extension.Global.executeChromeScript("populateFieldsFromTemplate", category, json);
+            const attributes = json.attributes ?? json;
+            EMC.Extension.Global.executeChromeScript("populateFieldsFromTemplate", category, attributes);
+        }
+
+        async function upsertCurrentTemplate() {
+            const json = jsonEditor.get();
+            if (!json || Object.keys(json).length === 0) {
+                EMC.Extension.Global.displayNotification({ success: false, text: "No template found to apply" });
+                return;
+            }
+
+            const attributes = json.attributes ?? json;
+            let entityLogicalName = json.logicalName;
+            if (!entityLogicalName) {
+                entityLogicalName = await EMC.Extension.Global.confirmInputAction(`Please enter an entity logical name`);
+                if (!entityLogicalName) {
+                    return;
+                }
+            }
+
+            EMC.Extension.Global.executeChromeScript("upsertRecordFromTemplate", category, {
+                logicalName: entityLogicalName,
+                id: json.id,
+                attributes: attributes,
+            });
         }
 
         async function saveCurrentTemplate() {
@@ -61,11 +86,7 @@
             const templateJson = generateTemplateJSON();
             const jsonGuid = currentTemplateId !== null ? currentTemplateId : EMC.Extension.Global.generateGuid();
 
-            const localStorageValue = {};
-            const storageKey = formatStorageKey(jsonGuid);
-            localStorageValue[storageKey] = templateJson;
-
-            const response = await EMC.Extension.Global.upsertSetting(localStorageValue);
+            const response = await upsertTemplateSetting(jsonGuid, templateJson);
             if (!response || !response.success) {
                 EMC.Extension.Global.displayNotification(response);
                 EMC.Extension.Global.showLoadingIndicator(false);
@@ -85,18 +106,12 @@
                 return;
             }
 
-            const storageKey = formatStorageKey(currentTemplateId);
-            const templateJson = await EMC.Extension.Global.retrieveSetting(storageKey);
-
-            const confirm = await EMC.Extension.Global.confirmAction(
-                `Please confirm that you would like to delete the template "${templateJson.templateName}" `
-            );
-
+            const confirm = await EMC.Extension.Global.confirmAction(`Please confirm that you would like to delete the selected template`);
             if (!confirm) {
                 return;
             }
 
-            const response = await EMC.Extension.Global.deleteSetting(storageKey);
+            const response = await removeTemplateSetting(currentTemplateId);
             if (!response || !response.success) {
                 EMC.Extension.Global.displayNotification(response);
                 return;
@@ -138,15 +153,17 @@
         function onReaderLoad(event) {
             const templateJson = JSON.parse(event.target.result);
 
-            startDraftForm(templateJson.templateName, templateJson.fields);
+            startDraftTemplateForm(templateJson.templateName, templateJson.fields);
         }
 
         async function loadSelectedTemplate() {
             const $selector = $(this);
             currentTemplateId = $selector.val();
 
-            const storageKey = formatStorageKey(currentTemplateId);
-            const templateJson = await EMC.Extension.Global.retrieveSetting(storageKey);
+            const pageContext = EMC.Extension.Global.getPageContext();
+            const formTemplates = await EMC.Extension.Global.retrieveSetting(formTemplatesSettingKey);
+
+            const templateJson = formTemplates[pageContext][currentTemplateId];
 
             setJSONTemplateName(templateJson.templateName);
             setJSONEditor(templateJson.fields);
@@ -172,12 +189,16 @@
 
         async function retrieveSavedTemplates() {
             const pageContext = EMC.Extension.Global.getPageContext();
-            const templates = await EMC.Extension.Global.retrieveSetting(null, `${category}.${pageContext}`);
+            const formTemplates = await EMC.Extension.Global.retrieveSetting(formTemplatesSettingKey);
+            if (!formTemplates) {
+                return;
+            }
+
+            const templates = formTemplates[pageContext];
 
             let options = Object.keys(templates).map((key) => {
-                const templateId = parseStorageKey(key);
                 return {
-                    value: templateId,
+                    value: key,
                     text: templates[key].templateName,
                 };
             });
@@ -196,7 +217,7 @@
             });
         }
 
-        function startDraftForm(templateName, fields) {
+        function startDraftTemplateForm(templateName, fields) {
             currentTemplateId = null;
 
             if ($(`${$templateSelectSelector} option[value="1"]`).length === 0) {
@@ -239,24 +260,50 @@
             showJSONEditor(true);
         }
 
+        // TO-DO: Separate Export functionality is a bad idea... just add some new options to "Pre-Populate Forms" for Importing/Creating Record
+        // When that option is used,
+
         function showJSONEditor(show) {
             show ? $(".template-preview-container").show() : $(".template-preview-container").hide();
         }
 
-        function formatStorageKey(templateId) {
+        async function upsertTemplateSetting(templateId, data) {
             const pageContext = EMC.Extension.Global.getPageContext();
-            return `${category}.${pageContext}.${templateId}`;
+            const formTemplatesSettings = (await EMC.Extension.Global.retrieveSetting(formTemplatesSettingKey)) ?? initializeTemplateSettings();
+            formTemplatesSettings[pageContext][templateId] = data;
+
+            const storageObject = {};
+            storageObject[formTemplatesSettingKey] = formTemplatesSettings;
+            return await EMC.Extension.Global.upsertSetting(storageObject);
         }
 
-        function parseStorageKey(storageKey) {
+        const templatePageContexts = ["model-driven-app", "portal"];
+        function initializeTemplateSettings() {
+            const templateSettings = {};
+            templateSettings[formTemplatesSettingKey] = {};
+            templatePageContexts.forEach((pageContext) => {
+                templateSettings[formTemplatesSettingKey][pageContext] = {};
+            });
+
+            return templateSettings[formTemplatesSettingKey];
+        }
+
+        async function removeTemplateSetting(templateId) {
             const pageContext = EMC.Extension.Global.getPageContext();
-            return storageKey.split(`${category}.${pageContext}.`)[1];
+            const formTemplatesSettings = await EMC.Extension.Global.retrieveSetting(formTemplatesSettingKey);
+
+            delete formTemplatesSettings[pageContext][templateId];
+
+            const storageObject = {};
+            storageObject[formTemplatesSettingKey] = formTemplatesSettings;
+            return await EMC.Extension.Global.upsertSetting(storageObject);
         }
 
         return {
             executeOnLoad: executeOnLoad,
             loadNewTemplate: loadNewTemplate,
             applyCurrentTemplate: applyCurrentTemplate,
+            upsertCurrentTemplate: upsertCurrentTemplate,
             saveCurrentTemplate: saveCurrentTemplate,
             deleteCurrentTemplate: deleteCurrentTemplate,
             exportCurrentTemplate: exportCurrentTemplate,

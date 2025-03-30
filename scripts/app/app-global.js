@@ -80,6 +80,19 @@
             return queryParameterValue;
         }
 
+        function getPluralName(logicalName) {
+            if (!logicalName) {
+                return logicalName;
+            }
+            if (logicalName.endsWith("s")) {
+                return `${logicalName}es`;
+            }
+            if (logicalName.endsWith("y")) {
+                return `${logicalName.slice(0, -1)}ies`;
+            }
+            return `${logicalName}s`;
+        }
+
         return {
             sendExtensionMessage: sendExtensionMessage,
             displayNotification: displayNotification,
@@ -89,6 +102,7 @@
             openUrlNewTab: openUrlNewTab,
             initializeSolutions: initializeSolutions,
             parseUrlQueryParameters: parseUrlQueryParameters,
+            getPluralName: getPluralName,
         };
     })();
 })(this);

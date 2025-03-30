@@ -357,6 +357,34 @@
             $("#confirmation-modal").modal("show");
         }
 
+        async function confirmInputAction(content, htmlContent = false) {
+            $("#input-confirmation-modal-label").text("Input Required");
+            htmlContent ? $(".input-confirmation-modal-body-label").html(content) : $(".input-confirmation-modal-body-label").text(content);
+            $("#input-confirmation-modal-confirm").show();
+
+            return new Promise(function (resolve, reject) {
+                const $modal = $("#input-confirmation-modal");
+                const $confirmButton = $("#input-confirmation-modal button.btn-primary");
+                const $cancelButton = $("#input-confirmation-modal button.btn-secondary");
+
+                $confirmButton.off("click").on("click", () => {
+                    const input = $("#input-confirmation-modal #input-confirmation-modal-input").val();
+                    if (!input) {
+                        return;
+                    }
+
+                    $modal.modal("hide");
+                    resolve(input);
+                });
+
+                $cancelButton.off("click").on("click", () => {
+                    resolve(false);
+                });
+
+                $modal.modal("show");
+            });
+        }
+
         function updateNavigationLandmark(path, tooltip) {
             $(".nav-landmark-path").text(path);
             $(".nav-landmark-tooltip").attr("title", tooltip);
@@ -453,6 +481,7 @@
             selectSolution: selectSolution,
             selectEnvironment: selectEnvironment,
             confirmAction: confirmAction,
+            confirmInputAction: confirmInputAction,
             displayDetailedError: displayDetailedError,
             openDefaultTab: openDefaultTab,
         };

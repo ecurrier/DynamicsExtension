@@ -111,9 +111,124 @@
             });
         }
 
+        async function generateNewTemplateFromRecord() {
+            let formJson = {};
+
+            const pageContext = EMC.App.Global.getPageContext();
+            switch (pageContext) {
+                case EMC.App.Constants.PageContexts.ModelDrivenApp:
+                    if (!Xrm.Page || !Xrm.Page.data || !Xrm.Page.data.entity) {
+                        EMC.App.Global.displayNotification(false, "Please navigate to a record before attempting to export");
+                        return;
+                    }
+
+                    formJson = await retrieveRecordData();
+                    break;
+                default:
+                    return;
+            }
+
+            EMC.App.Global.sendExtensionMessage("loadNewTemplate", formJson, category);
+        }
+
+        async function retrieveRecordData() {
+            const recordId = Xrm.Page.data.entity.getId();
+            const recordLogicalName = Xrm.Page.data.entity.getEntityName();
+
+            const response = await Xrm.WebApi.retrieveRecord(recordLogicalName, recordId);
+            if (!response) {
+                EMC.App.Global.displayNotification(false, "Unexpected error occurred. Unable to export record.");
+                return;
+            }
+
+            const lookupAttributeMetadata = await fetchAttributeMetadata(recordLogicalName);
+
+            sanitizeResponse(response);
+            const formattedResponse = formatResponse(response, lookupAttributeMetadata);
+
+            return {
+                logicalName: recordLogicalName,
+                id: recordId,
+                attributes: formattedResponse
+            };
+        }
+
+        const blacklistedFields = [
+            "_ownerid_value",
+            "_ownerid_value@Microsoft.Dynamics.CRM.lookuplogicalname",
+            "_owninguser_value",
+            "_owninguser_value@Microsoft.Dynamics.CRM.lookuplogicalname",
+            "_owningbusinessunit_value",
+            "_owningbusinessunit_value@Microsoft.Dynamics.CRM.lookuplogicalname",
+            "_createdby_value",
+            "_createdby_value@Microsoft.Dynamics.CRM.lookuplogicalname",
+            "createdon",
+            "_modifiedby_value",
+            "_modifiedby_value@Microsoft.Dynamics.CRM.lookuplogicalname",
+            "modifiedon",
+        ];
+
+        const blacklistedEndings = ["@OData.Community.Display.V1.FormattedValue", "@Microsoft.Dynamics.CRM.associatednavigationproperty", "_base"];
+
+        function sanitizeResponse(response) {
+            Object.keys(response).forEach((key) => {
+                if (response[key] === null || blacklistedEndings.some((ending) => key.endsWith(ending)) || blacklistedFields.includes(key)) {
+                    delete response[key];
+                }
+            });
+        }
+
+        async function fetchAttributeMetadata(entityName) {
+            const response = await fetch(
+                `${EMC.App.Constants.WebApiEndpoint}EntityDefinitions(LogicalName='${entityName}')?$select=LogicalName&$expand=Attributes($filter=AttributeType eq 'Lookup' or AttributeType eq 'Customer')`
+            );
+            return await response.json();
+        }
+
+        function formatResponse(response, lookupAttributeMetadata) {
+            let parsedResponse = { ...response };
+            const deleteParsedResponseKeys = (keys) => {
+                keys.forEach((key) => delete parsedResponse[key]);
+            };
+
+            for (const key in response) {
+                if (!(key.startsWith("_") && key.endsWith("_value"))) {
+                    continue;
+                }
+
+                const lookupKey = `${key}@Microsoft.Dynamics.CRM.lookuplogicalname`;
+                const entityLogicalName = response[lookupKey];
+                if (!entityLogicalName) {
+                    deleteParsedResponseKeys([key, lookupKey]);
+                    continue;
+                }
+
+                const fieldName = key.slice(1, -6);
+                const attributeMetadata = lookupAttributeMetadata.Attributes.find((lam) => lam.LogicalName === fieldName);
+                if (!attributeMetadata) {
+                    deleteParsedResponseKeys([key, lookupKey]);
+                    continue;
+                }
+
+                const entityCollectionName = EMC.App.Global.getPluralName(entityLogicalName);
+                const newKey = `${attributeMetadata.SchemaName}${attributeMetadata.Targets.length > 1 ? `_${entityLogicalName}` : ""}@odata.bind`;
+                parsedResponse[newKey] = `/${entityCollectionName}(${parsedResponse[key]})`;
+
+                deleteParsedResponseKeys([key, lookupKey]);
+            }
+
+            return parsedResponse;
+        }
+
+        function upsertRecordFromTemplate(entity) {
+            debugger;
+        }
+
         return {
             generateNewTemplate: generateNewTemplate,
             populateFieldsFromTemplate: populateFieldsFromTemplate,
+            generateNewTemplateFromRecord: generateNewTemplateFromRecord,
+            upsertRecordFromTemplate: upsertRecordFromTemplate,
         };
     })();
 })(this);
