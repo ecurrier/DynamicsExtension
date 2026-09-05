@@ -1,2 +1,6 @@
-
 *.zip
+node_modules/
+.output/
+.wxt/
+.env
+.env.*

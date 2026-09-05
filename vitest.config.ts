@@ -1,0 +1,12 @@
+import { defineConfig } from 'vitest/config'
+import { WxtVitest } from 'wxt/testing/vitest-plugin'
+
+export default defineConfig({
+  plugins: [WxtVitest()],
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.ts'],
+    passWithNoTests: true,
+    setupFiles: ['src/test/setup.ts'],
+  },
+})
