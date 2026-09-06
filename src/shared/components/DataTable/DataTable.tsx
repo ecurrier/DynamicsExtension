@@ -8,6 +8,7 @@ import {
   DataGridHeaderCell,
   DataGridRow,
   makeStyles,
+  mergeClasses,
   type SortDirection,
   type TableColumnDefinition,
   type TableRowId,
@@ -23,6 +24,13 @@ const useStyles = makeStyles({
     flexDirection: 'column',
     gap: '8px',
     minHeight: 0,
+  },
+  fill: {
+    flex: 1,
+    minHeight: 0,
+    '& > div:first-child': {
+      flex: 1,
+    },
   },
   scroller: {
     overflow: 'auto',
@@ -65,6 +73,7 @@ export interface DataTableProps<T> {
   sortable?: boolean
   pageSize?: number
   maxHeight?: string
+  fill?: boolean
   autoFitColumns?: boolean
   selectionMode?: 'single' | 'multiselect'
   selectedIds?: Set<TableRowId>
@@ -107,6 +116,7 @@ export const DataTable = <T,>({
   sortable = true,
   pageSize,
   maxHeight = '320px',
+  fill = false,
   autoFitColumns = true,
   selectionMode,
   selectedIds,
@@ -171,8 +181,8 @@ export const DataTable = <T,>({
   }
 
   return (
-    <div className={styles.root}>
-      <div className={styles.scroller} style={{ maxHeight }}>
+    <div className={mergeClasses(styles.root, fill && styles.fill)}>
+      <div className={styles.scroller} style={fill ? undefined : { maxHeight }}>
         <DataGrid
           items={pageRows}
           columns={gridColumns}

@@ -1,3 +1,4 @@
+import { isGuid } from '@/shared/lib'
 import { PLUGIN_STEP_MODE_LABELS, PLUGIN_STEP_STAGE_LABELS, type PluginStep } from '@/shared/types'
 
 export type StepStateFilter = 'all' | 'enabled' | 'disabled'
@@ -155,3 +156,14 @@ export const treeCheckedItems = (groups: AssemblyGroup[], checked: Set<string>):
       ...type.steps.map((step) => [stepValue(step.id), checked.has(step.id)] as [string, TreeSelection]),
     ]),
   ])
+
+const meaningfulFriendlyName = (friendlyName: string | null): string | null =>
+  friendlyName && !isGuid(friendlyName.trim()) ? friendlyName : null
+
+export const typeDisplayName = (type: Pick<TypeGroup, 'name' | 'friendlyName'>): string =>
+  type.name || meaningfulFriendlyName(type.friendlyName) || 'Unknown type'
+
+export const typeCaption = (type: Pick<TypeGroup, 'name' | 'friendlyName'>): string | null => {
+  const friendly = meaningfulFriendlyName(type.friendlyName)
+  return friendly && friendly !== type.name && type.name ? friendly : null
+}

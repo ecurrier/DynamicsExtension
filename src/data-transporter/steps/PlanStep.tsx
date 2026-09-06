@@ -2,10 +2,13 @@ import {
   Badge,
   Button,
   Checkbox,
+  CounterBadge,
   makeStyles,
   MessageBar,
   MessageBarBody,
   Spinner,
+  Tab,
+  TabList,
   Text,
   tokens,
 } from '@fluentui/react-components'
@@ -13,7 +16,7 @@ import { ArrowRight20Regular, ArrowSwap20Regular } from '@fluentui/react-icons'
 import { useEffect, useMemo, useState } from 'react'
 
 import { cellText } from '@/modules/webapi/lib'
-import { CodeBlock, DataTable, type DataTableColumn, FormRow, FormStack, Grow, useAppToast } from '@/shared/components'
+import { CodeBlock, DataTable, type DataTableColumn, FormRow, Grow, useAppToast } from '@/shared/components'
 import { useAsyncAction } from '@/shared/hooks'
 import { type Environment } from '@/shared/storage'
 
@@ -31,7 +34,7 @@ import {
   selectableFields,
   sourceColumns,
 } from '../lib'
-import { useTransporterStore } from '../store'
+import { type PlanTab, useTransporterStore } from '../store'
 
 const SCOPE_LIMIT = 100_000
 const ACTION_COLORS: Record<PlannedRow['action'], 'success' | 'brand' | 'subtle'> = {
@@ -41,6 +44,13 @@ const ACTION_COLORS: Record<PlannedRow['action'], 'success' | 'brand' | 'subtle'
 }
 
 const useStyles = makeStyles({
+  root: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    height: '100%',
+    minHeight: 0,
+  },
   hint: {
     color: tokens.colorNeutralForeground3,
   },
@@ -49,11 +59,25 @@ const useStyles = makeStyles({
     flexWrap: 'wrap',
     gap: '16px',
   },
+  tabLabel: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+  },
+  panel: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    flex: 1,
+    minHeight: '260px',
+  },
   split: {
     display: 'grid',
     gridTemplateColumns: 'minmax(0, 3fr) minmax(320px, 2fr)',
+    gridTemplateRows: 'minmax(0, 1fr)',
     gap: '16px',
-    alignItems: 'start',
+    flex: 1,
+    minHeight: 0,
   },
   mono: {
     fontFamily: tokens.fontFamilyMonospace,
@@ -67,6 +91,7 @@ const useStyles = makeStyles({
     display: 'flex',
     flexDirection: 'column',
     gap: '8px',
+    minHeight: 0,
   },
 })
 
@@ -86,9 +111,11 @@ export const PlanStep = ({ target }: PlanStepProps) => {
     options,
     selectedFields,
     plan,
+    planTab,
     setOptions,
     setSelectedFields,
     setPlan,
+    setPlanTab,
     setStep,
   } = useTransporterStore()
   const { targetOps, metadata, entities, entitySets } = useTargetMetadata(target, entity?.logicalName ?? null)
@@ -109,6 +136,7 @@ export const PlanStep = ({ target }: PlanStepProps) => {
   const info = metadata.data?.info ?? null
   const primaryId = info?.primaryIdAttribute || entity?.primaryIdAttribute || ''
   const nameAttribute = info?.primaryNameAttribute ?? entity?.primaryNameAttribute ?? null
+  const activeTab: PlanTab = planTab === 'plan' && plan ? 'plan' : 'fields'
 
   const runCompare = () =>
     compare.run(async () => {
@@ -200,7 +228,7 @@ export const PlanStep = ({ target }: PlanStepProps) => {
   )
 
   return (
-    <FormStack>
+    <div className={styles.root}>
       <div className={styles.options}>
         <Checkbox
           label="Create records missing in the target"
@@ -226,12 +254,72 @@ export const PlanStep = ({ target }: PlanStepProps) => {
           </MessageBarBody>
         </MessageBar>
       ) : null}
-      {metadata.isLoading || entities.isLoading ? (
-        <Spinner size="small" label="Loading target metadata..." labelPosition="after" />
-      ) : null}
       {metadata.isError ? <Text size={200}>{metadata.error.message}</Text> : null}
       {entities.isError ? <Text size={200}>{entities.error.message}</Text> : null}
-      {metadata.data ? <FieldSelector fields={fields} selected={selected} onChange={setSelectedFields} /> : null}
+      <TabList
+        size="small"
+        appearance="subtle"
+        selectedValue={activeTab}
+        onTabSelect={(_, data) => setPlanTab(data.value as PlanTab)}
+      >
+        <Tab value="fields">
+          <span className={styles.tabLabel}>
+            Fields
+            {metadata.data ? (
+              <CounterBadge count={selected.size} showZero overflowCount={9_999} appearance="ghost" size="small" />
+            ) : null}
+          </span>
+        </Tab>
+        <Tab value="plan" disabled={!plan}>
+          <span className={styles.tabLabel}>
+            Comparison
+            {plan ? (
+              <CounterBadge count={items.length} showZero overflowCount={99_999} appearance="ghost" size="small" />
+            ) : null}
+          </span>
+        </Tab>
+      </TabList>
+      <div className={styles.panel}>
+        {activeTab === 'fields' ? (
+          <>
+            {metadata.isLoading || entities.isLoading ? (
+              <Spinner size="small" label="Loading target metadata..." labelPosition="after" />
+            ) : null}
+            {metadata.data ? <FieldSelector fields={fields} selected={selected} onChange={setSelectedFields} /> : null}
+          </>
+        ) : (
+          <div className={styles.split}>
+            <DataTable
+              items={items}
+              columns={planColumns}
+              getRowId={(row) => row.key}
+              pageSize={100}
+              fill
+              autoFitColumns={false}
+              onRowClick={(row) => setPreviewKey(row.key)}
+              rowClassName={(row) => (row.key === previewKey ? styles.activeRow : undefined)}
+              emptyMessage="The source returned no rows"
+            />
+            <div className={styles.preview}>
+              {preview && previewRow ? (
+                <>
+                  <Text weight="semibold">Payload for {previewRow.action}</Text>
+                  <CodeBlock value={JSON.stringify(preview.payload, null, 2)} language="json" fill />
+                  {preview.skipped.length > 0 ? (
+                    <Text size={200} className={styles.hint}>
+                      Skipped: {preview.skipped.map((skip) => `${skip.field} (${skip.reason})`).join(', ')}
+                    </Text>
+                  ) : null}
+                </>
+              ) : (
+                <Text size={200} className={styles.hint}>
+                  Select a create or update row to preview the payload that will be sent.
+                </Text>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
       <FormRow>
         <Grow>
           <Text size={200} className={styles.hint}>
@@ -252,38 +340,6 @@ export const PlanStep = ({ target }: PlanStepProps) => {
           Continue to run
         </Button>
       </FormRow>
-      {plan ? (
-        <div className={styles.split}>
-          <DataTable
-            items={items}
-            columns={planColumns}
-            getRowId={(row) => row.key}
-            pageSize={100}
-            maxHeight="calc(100vh - 620px)"
-            autoFitColumns={false}
-            onRowClick={(row) => setPreviewKey(row.key)}
-            rowClassName={(row) => (row.key === previewKey ? styles.activeRow : undefined)}
-            emptyMessage="The source returned no rows"
-          />
-          <div className={styles.preview}>
-            {preview && previewRow ? (
-              <>
-                <Text weight="semibold">Payload for {previewRow.action}</Text>
-                <CodeBlock value={JSON.stringify(preview.payload, null, 2)} language="json" height="220px" />
-                {preview.skipped.length > 0 ? (
-                  <Text size={200} className={styles.hint}>
-                    Skipped: {preview.skipped.map((skip) => `${skip.field} (${skip.reason})`).join(', ')}
-                  </Text>
-                ) : null}
-              </>
-            ) : (
-              <Text size={200} className={styles.hint}>
-                Select a create or update row to preview the payload that will be sent.
-              </Text>
-            )}
-          </div>
-        </div>
-      ) : null}
-    </FormStack>
+    </div>
   )
 }

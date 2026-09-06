@@ -45,6 +45,8 @@ import {
   stepSummary,
   stepValue,
   treeCheckedItems,
+  typeCaption,
+  typeDisplayName,
   typeValue,
   visibleStepIds,
 } from '../../lib'
@@ -308,7 +310,17 @@ export const PluginStepsArea = () => {
                 <Tree>
                   {assembly.types.map((type) => (
                     <TreeItem key={type.key} itemType="branch" value={typeValue(assembly.key, type.key)}>
-                      <TreeItemLayout>{type.friendlyName ?? type.name}</TreeItemLayout>
+                      <TreeItemLayout
+                        aside={
+                          typeCaption(type) ? (
+                            <Text size={200} className={styles.caption}>
+                              {typeCaption(type)}
+                            </Text>
+                          ) : undefined
+                        }
+                      >
+                        {typeDisplayName(type)}
+                      </TreeItemLayout>
                       <Tree>{type.steps.map(renderStep)}</Tree>
                     </TreeItem>
                   ))}

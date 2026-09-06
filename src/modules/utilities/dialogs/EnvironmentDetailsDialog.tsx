@@ -10,6 +10,7 @@ import {
   Text,
   tokens,
 } from '@fluentui/react-components'
+import { Fragment } from 'react'
 
 import { CopyButton } from '@/shared/components'
 import { type EnvironmentDetails } from '@/shared/types'
@@ -17,18 +18,24 @@ import { type EnvironmentDetails } from '@/shared/types'
 import { formatEnvironmentDetails } from '../lib'
 
 const useStyles = makeStyles({
+  surface: {
+    maxWidth: '640px',
+  },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'max-content 1fr',
-    columnGap: '16px',
-    rowGap: '6px',
+    gridTemplateColumns: 'max-content minmax(0, 1fr)',
+    columnGap: '20px',
+    rowGap: '10px',
     alignItems: 'baseline',
   },
   label: {
     color: tokens.colorNeutralForeground3,
+    whiteSpace: 'nowrap',
   },
   value: {
-    wordBreak: 'break-all',
+    minWidth: 0,
+    overflowWrap: 'anywhere',
+    fontFamily: tokens.fontFamilyMonospace,
   },
 })
 
@@ -42,18 +49,20 @@ export const EnvironmentDetailsDialog = ({ details, onClose }: EnvironmentDetail
   const rows = details ? formatEnvironmentDetails(details) : []
   return (
     <Dialog open={details !== null} onOpenChange={(_, data) => (data.open ? undefined : onClose())}>
-      <DialogSurface>
+      <DialogSurface className={styles.surface}>
         <DialogBody>
           <DialogTitle>Environment Details</DialogTitle>
           <DialogContent>
             <div className={styles.grid}>
               {rows.map((row) => (
-                <Text key={row.label} size={200} className={styles.label}>
-                  {row.label}
-                  <Text size={200} className={styles.value} style={{ display: 'contents' }}>
+                <Fragment key={row.label}>
+                  <Text size={200} className={styles.label}>
+                    {row.label}
+                  </Text>
+                  <Text size={200} className={styles.value}>
                     {row.value}
                   </Text>
-                </Text>
+                </Fragment>
               ))}
             </div>
           </DialogContent>

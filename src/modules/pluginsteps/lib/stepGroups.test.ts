@@ -10,6 +10,8 @@ import {
   stepSummary,
   stepValue,
   treeCheckedItems,
+  typeCaption,
+  typeDisplayName,
   typeValue,
 } from './stepGroups'
 
@@ -99,5 +101,28 @@ describe('step groups', () => {
     expect(stepSummary(step('s1', { messageName: '', primaryEntity: null, stage: 99 }))).toBe(
       'Unknown message · Stage 99 · Sync',
     )
+  })
+})
+
+describe('type display name', () => {
+  it('prefers the type name over a friendly name', () => {
+    expect(typeDisplayName({ name: 'Contoso.Plugins.AccountPreCreate', friendlyName: 'Account pre-create' })).toBe(
+      'Contoso.Plugins.AccountPreCreate',
+    )
+  })
+
+  it('never shows a guid friendly name', () => {
+    expect(typeDisplayName({ name: '', friendlyName: '{9931d7aa-6062-4c4c-bfc8-ecd0302e164c}' })).toBe('Unknown type')
+    expect(typeCaption({ name: 'Contoso.Plugins.X', friendlyName: '9931d7aa-6062-4c4c-bfc8-ecd0302e164c' })).toBeNull()
+  })
+
+  it('falls back to a readable friendly name when the type name is missing', () => {
+    expect(typeDisplayName({ name: '', friendlyName: 'Account pre-create' })).toBe('Account pre-create')
+  })
+
+  it('captions with the friendly name only when it adds information', () => {
+    expect(typeCaption({ name: 'Contoso.Plugins.X', friendlyName: 'Contoso.Plugins.X' })).toBeNull()
+    expect(typeCaption({ name: 'Contoso.Plugins.X', friendlyName: null })).toBeNull()
+    expect(typeCaption({ name: 'Contoso.Plugins.X', friendlyName: 'Account pre-create' })).toBe('Account pre-create')
   })
 })

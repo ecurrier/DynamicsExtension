@@ -380,7 +380,7 @@
     plugintypeid: {
       plugintypeid: step.pluginTypeId,
       typename: step.pluginTypeName,
-      friendlyname: null,
+      friendlyname: step.pluginTypeName.includes('Contact') ? '{9931d7aa-6062-4c4c-bfc8-ecd0302e164c}' : null,
       name: step.pluginTypeName,
       _pluginassemblyid_value: step.assemblyId,
     },

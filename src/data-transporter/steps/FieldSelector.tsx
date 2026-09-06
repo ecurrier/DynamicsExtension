@@ -93,7 +93,7 @@ export const FieldSelector = ({ fields, selected, onChange }: FieldSelectorProps
         items={fields}
         columns={columns}
         getRowId={(field) => field.logicalName}
-        maxHeight="260px"
+        fill
         selectionMode="multiselect"
         selectedIds={selectedIds}
         onSelectionChange={(ids) => onChange(new Set([...ids].map(String)))}

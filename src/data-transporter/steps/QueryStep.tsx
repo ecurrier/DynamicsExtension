@@ -1,10 +1,22 @@
-import { Button, Combobox, Dropdown, Field, makeStyles, Option, Text, tokens } from '@fluentui/react-components'
+import {
+  Button,
+  Combobox,
+  CounterBadge,
+  Dropdown,
+  Field,
+  makeStyles,
+  Option,
+  Tab,
+  TabList,
+  Text,
+  tokens,
+} from '@fluentui/react-components'
 import { ArrowRight20Regular, ArrowReset20Regular, Play20Regular, Stop20Regular } from '@fluentui/react-icons'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useRef, useState } from 'react'
 
 import { cellText, columnsFromRows } from '@/modules/webapi/lib'
-import { CodeEditor, DataTable, type DataTableColumn, FormRow, FormStack, Grow, useAppToast } from '@/shared/components'
+import { CodeEditor, DataTable, type DataTableColumn, FormRow, Grow, useAppToast } from '@/shared/components'
 import { useAsyncAction } from '@/shared/hooks'
 import { formatXml } from '@/shared/lib'
 import { type Environment } from '@/shared/storage'
@@ -12,13 +24,20 @@ import { type TransportRow } from '@/shared/types'
 
 import { useSourceGateway } from '../hooks'
 import { retrieveAllRows } from '../lib'
-import { MAX_ROW_OPTIONS, useTransporterStore } from '../store'
+import { MAX_ROW_OPTIONS, type QueryTab, useTransporterStore } from '../store'
 
 const PAGE_SIZE = 1000
 const ENTITY_OPTION_LIMIT = 100
 const PREVIEW_COLUMN_LIMIT = 12
 
 const useStyles = makeStyles({
+  root: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    height: '100%',
+    minHeight: 0,
+  },
   hint: {
     color: tokens.colorNeutralForeground3,
   },
@@ -26,6 +45,17 @@ const useStyles = makeStyles({
     color: tokens.colorNeutralForeground3,
     fontSize: tokens.fontSizeBase200,
     marginLeft: '6px',
+  },
+  tabLabel: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+  },
+  panel: {
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+    minHeight: '260px',
   },
 })
 
@@ -44,11 +74,13 @@ export const QueryStep = ({ target }: QueryStepProps) => {
     maxRows,
     sourceRows,
     sourceTruncated,
+    queryTab,
     setEntity,
     setView,
     setFetchXml,
     setMaxRows,
     setSourceRows,
+    setQueryTab,
     setStep,
   } = useTransporterStore()
   const gateway = useSourceGateway(source)
@@ -102,6 +134,8 @@ export const QueryStep = ({ target }: QueryStepProps) => {
       })),
     [previewColumns],
   )
+  const hasRows = sourceRows.length > 0
+  const activeTab: QueryTab = queryTab === 'results' && hasRows ? 'results' : 'fetchxml'
 
   const run = () =>
     retrieve.run(async () => {
@@ -135,12 +169,12 @@ export const QueryStep = ({ target }: QueryStepProps) => {
   const statusText =
     progress !== null
       ? `Retrieving... ${progress} rows so far`
-      : sourceRows.length > 0
+      : hasRows
         ? `${sourceRows.length} row${sourceRows.length === 1 ? '' : 's'} loaded${sourceTruncated ? ' (row limit reached)' : ''}`
         : 'No rows loaded yet'
 
   return (
-    <FormStack>
+    <div className={styles.root}>
       <FormRow>
         <Grow>
           <Field label="Entity">
@@ -208,15 +242,42 @@ export const QueryStep = ({ target }: QueryStepProps) => {
         </Field>
       </FormRow>
       {entities.isError ? <Text size={200}>{entities.error.message}</Text> : null}
-      <Field label="FetchXML">
-        <CodeEditor
-          value={fetchXml}
-          language="xml"
-          height="220px"
-          placeholder="Pick a view or paste FetchXML for the chosen entity..."
-          onChange={setFetchXml}
-        />
-      </Field>
+      <TabList
+        size="small"
+        appearance="subtle"
+        selectedValue={activeTab}
+        onTabSelect={(_, data) => setQueryTab(data.value as QueryTab)}
+      >
+        <Tab value="fetchxml">FetchXML</Tab>
+        <Tab value="results" disabled={!hasRows}>
+          <span className={styles.tabLabel}>
+            Results
+            {hasRows ? (
+              <CounterBadge count={sourceRows.length} overflowCount={99_999} appearance="ghost" size="small" />
+            ) : null}
+          </span>
+        </Tab>
+      </TabList>
+      <div className={styles.panel}>
+        {activeTab === 'fetchxml' ? (
+          <CodeEditor
+            value={fetchXml}
+            language="xml"
+            fill
+            placeholder="Pick a view or paste FetchXML for the chosen entity..."
+            onChange={setFetchXml}
+          />
+        ) : (
+          <DataTable
+            items={sourceRows}
+            columns={tableColumns}
+            pageSize={50}
+            fill
+            autoFitColumns={false}
+            emptyMessage="No rows"
+          />
+        )}
+      </div>
       <FormRow>
         <Button
           icon={<ArrowReset20Regular />}
@@ -245,22 +306,12 @@ export const QueryStep = ({ target }: QueryStepProps) => {
         </Button>
         <Button
           icon={<ArrowRight20Regular />}
-          disabled={sourceRows.length === 0 || !target || retrieve.running}
+          disabled={!hasRows || !target || retrieve.running}
           onClick={() => setStep('plan')}
         >
           Continue to plan
         </Button>
       </FormRow>
-      {sourceRows.length > 0 ? (
-        <DataTable
-          items={sourceRows}
-          columns={tableColumns}
-          pageSize={50}
-          maxHeight="calc(100vh - 560px)"
-          autoFitColumns={false}
-          emptyMessage="No rows"
-        />
-      ) : null}
-    </FormStack>
+    </div>
   )
 }
