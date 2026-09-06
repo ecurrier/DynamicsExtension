@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  copyDraft,
+  defaultAlert,
   draftFromDetails,
   draftFromEnvironment,
   EMPTY_DRAFT,
@@ -21,23 +23,14 @@ describe('environmentDraft', () => {
     expect(validateDraft(draft({ name: 'Dev', environmentType: 'GCC' }))).toBeNull()
   })
 
-  it('requires a complete credential set with an https url', () => {
-    expect(validateDraft(draft({ name: 'Dev', clientId: 'app' }))).toEqual({
+  it('requires an https url when a service principal is assigned', () => {
+    expect(validateDraft(draft({ name: 'Dev', servicePrincipalId: 'sp-1' }))).toEqual({
       field: 'modelDrivenAppUrl',
-      message: 'Enter the https URL of the environment to use client credentials',
+      message: 'Enter the https URL of the environment to use a service principal',
     })
     expect(
-      validateDraft(draft({ name: 'Dev', modelDrivenAppUrl: 'https://dev.crm.dynamics.com/', clientId: 'app' })),
-    ).toEqual({ field: 'credentials', message: 'Enter the tenant id, client id, and client secret together' })
-    expect(
       validateDraft(
-        draft({
-          name: 'Dev',
-          modelDrivenAppUrl: 'https://dev.crm.dynamics.com/',
-          tenantId: 't',
-          clientId: 'app',
-          clientSecret: 's',
-        }),
+        draft({ name: 'Dev', servicePrincipalId: 'sp-1', modelDrivenAppUrl: 'https://dev.crm.dynamics.com/' }),
       ),
     ).toBeNull()
   })
@@ -49,10 +42,9 @@ describe('environmentDraft', () => {
       modelDrivenAppUrl: ' https://dev.crm.dynamics.com/ ',
       powerPagesUrl: '',
       environmentId: 'env ',
-      tenantId: ' tenant ',
-      clientId: 'client',
-      clientSecret: ' secret ',
+      servicePrincipalId: 'sp-1',
       notes: ' admin org ',
+      alert: { enabled: true, level: 2, message: ' Careful ', showCloseButton: false },
     })
     expect(environment).toEqual({
       id: 'id-1',
@@ -61,17 +53,21 @@ describe('environmentDraft', () => {
       modelDrivenAppUrl: 'https://dev.crm.dynamics.com/',
       powerPagesUrl: '',
       environmentId: 'env',
+      servicePrincipalId: 'sp-1',
       notes: 'admin org',
-      credentials: { tenantId: 'tenant', clientId: 'client', clientSecret: 'secret' },
+      alert: { enabled: true, level: 2, message: 'Careful', showCloseButton: false },
     })
-    expect(draftFromEnvironment(environment)).toMatchObject({
-      name: 'Dev',
-      environmentType: 'DOD',
-      tenantId: 'tenant',
-      clientSecret: 'secret',
-      notes: 'admin org',
+    expect(draftFromEnvironment(environment)).toMatchObject({ name: 'Dev', servicePrincipalId: 'sp-1' })
+    expect(toEnvironment('id-2', draft({ name: 'Plain' }))).toMatchObject({ servicePrincipalId: null, alert: null })
+  })
+
+  it('copies an environment into a new draft without its environment id', () => {
+    const environment = toEnvironment('id-1', draft({ name: 'Dev', environmentId: 'abc', servicePrincipalId: 'sp-1' }))
+    expect(copyDraft(environment)).toEqual({
+      ...draftFromEnvironment(environment),
+      name: 'Dev (copy)',
+      environmentId: '',
     })
-    expect(toEnvironment('id-2', draft({ name: 'Plain' })).credentials).toBeNull()
   })
 
   it('builds a draft from page environment details', () => {
@@ -95,11 +91,16 @@ describe('environmentDraft', () => {
       environmentType: 'GCCHigh',
       modelDrivenAppUrl: 'https://org1.crm.dynamics.com/',
       environmentId: 'abc',
-      tenantId: 'tenant-1',
     })
   })
 
-  it('sorts environments by name', () => {
+  it('seeds a warning banner and sorts environments by name', () => {
+    expect(defaultAlert(' Prod ')).toEqual({
+      enabled: true,
+      level: 3,
+      message: 'You are in Prod',
+      showCloseButton: true,
+    })
     const sorted = sortEnvironments([
       toEnvironment('1', draft({ name: 'Zeta' })),
       toEnvironment('2', draft({ name: 'alpha' })),

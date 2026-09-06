@@ -100,6 +100,23 @@ export const useTraceColumns = (highlightedGuid: string | null): DataTableColumn
           ),
         sortValue: (trace) => trace.correlationId,
       },
+      {
+        id: 'pluginStep',
+        label: 'Step',
+        width: 90,
+        render: (trace) =>
+          trace.pluginStepId ? (
+            <span
+              className={mergeClasses(styles.mono, trace.pluginStepId === highlightedGuid && styles.highlight)}
+              title={trace.pluginStepId}
+            >
+              {shortId(trace.pluginStepId)}
+            </span>
+          ) : (
+            '—'
+          ),
+        sortValue: (trace) => trace.pluginStepId,
+      },
     ],
     [highlightedGuid, styles],
   )

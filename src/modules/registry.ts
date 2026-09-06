@@ -1,9 +1,12 @@
+import { environmentVariablesModule } from './environmentvariables'
 import { formsModule } from './forms'
 import { impersonationModule } from './impersonation'
+import { pluginStepsModule } from './pluginsteps'
 import { pluginTracesModule } from './plugintraces'
 import { securityModule } from './security'
 import { settingsModule } from './settings'
 import { templatesModule } from './templates'
+import { transporterModule } from './transporter'
 import { type AreaDefinition, type ModuleDefinition } from './types'
 import { utilitiesModule } from './utilities'
 import { webApiModule } from './webapi'
@@ -16,6 +19,9 @@ export const modules: ModuleDefinition[] = [
   securityModule,
   impersonationModule,
   pluginTracesModule,
+  environmentVariablesModule,
+  pluginStepsModule,
+  transporterModule,
   settingsModule,
 ].sort((left, right) => left.order - right.order)
 

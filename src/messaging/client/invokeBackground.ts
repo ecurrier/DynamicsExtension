@@ -8,8 +8,7 @@ import {
   type BackgroundMessage,
   type CommandEnvelope,
 } from '@/messaging/contract'
-
-import { PageCommandError } from './PageCommandError'
+import { PageCommandError } from '@/messaging/tab'
 
 export const invokeBackground = async <N extends BackgroundCommandName>(
   name: N,

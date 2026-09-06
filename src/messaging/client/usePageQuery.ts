@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { type CommandArgs, type CommandName, type CommandResult } from '@/messaging/contract'
+import { invoke, PageCommandError } from '@/messaging/tab'
 import { useSessionStore } from '@/shared/stores'
 
-import { invoke } from './invoke'
-import { PageCommandError } from './PageCommandError'
 import { pageKeys } from './queryKeys'
 
 const FIVE_MINUTES = 5 * 60 * 1000
@@ -20,6 +19,7 @@ const STALE_TIMES: Partial<Record<CommandName, number>> = {
   'webapi.getEntityInfo': Infinity,
   'forms.getForms': Infinity,
   'traces.getSetting': FIVE_MINUTES,
+  'pluginSteps.get': FIVE_MINUTES,
   'utilities.getChoiceMetadata': Infinity,
 }
 

@@ -1,3 +1,6 @@
 export * from './dynamics'
 export * from './impersonation'
 export * from './traces'
+export * from './environmentVariables'
+export * from './pluginSteps'
+export * from './transport'

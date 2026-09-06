@@ -201,3 +201,33 @@ export interface WhoAmIResponse {
   BusinessUnitId: string
   OrganizationId: string
 }
+
+export type EnvironmentAlertLevel = 1 | 2 | 3 | 4
+
+export const ALERT_LEVEL_LABELS: Record<EnvironmentAlertLevel, string> = {
+  1: 'Success',
+  2: 'Error',
+  3: 'Warning',
+  4: 'Information',
+}
+
+export interface EnvironmentAlert {
+  enabled: boolean
+  level: EnvironmentAlertLevel
+  message: string
+  showCloseButton: boolean
+}
+
+export const ALERT_LEVELS: readonly EnvironmentAlertLevel[] = [1, 2, 3, 4]
+
+export interface EnvironmentAlertRequest {
+  environmentId: string
+  alert: EnvironmentAlert | null
+}
+
+export type EnvironmentAlertReason = 'shown' | 'unchanged' | 'cleared' | 'disabled' | 'no-app'
+
+export interface EnvironmentAlertResult {
+  shown: boolean
+  reason: EnvironmentAlertReason
+}

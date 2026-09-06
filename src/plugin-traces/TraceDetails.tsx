@@ -7,6 +7,7 @@ import { modeLabel, operationTypeLabel } from '@/shared/lib'
 import { type PluginTraceLog } from '@/shared/types'
 
 import { formatDuration, formatTraceTime } from './lib'
+import { PluginStepCard } from './PluginStepCard'
 import { type GuidActions, TraceText } from './TraceText'
 
 const useStyles = makeStyles({
@@ -62,6 +63,9 @@ const useStyles = makeStyles({
     flexDirection: 'column',
     gap: '4px',
     marginBottom: '12px',
+  },
+  span: {
+    gridColumn: '1 / -1',
   },
 })
 
@@ -169,6 +173,11 @@ export const TraceDetails = ({ trace, ...actions }: TraceDetailsProps) => {
             {idRow('Correlation id', trace.correlationId)}
             {idRow('Request id', trace.requestId)}
             {idRow('Plug-in step id', trace.pluginStepId)}
+            {trace.pluginStepId ? (
+              <div className={styles.span}>
+                <PluginStepCard stepId={trace.pluginStepId} />
+              </div>
+            ) : null}
             <span />
             <span>
               <Button

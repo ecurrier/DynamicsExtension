@@ -2,10 +2,9 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 
 import { type CommandArgs, type CommandName, type CommandResult } from '@/messaging/contract'
+import { invoke, PageCommandError } from '@/messaging/tab'
 import { useSessionStore } from '@/shared/stores'
 
-import { invoke } from './invoke'
-import { PageCommandError } from './PageCommandError'
 import { pageKeys } from './queryKeys'
 
 export interface PageFetchOptions {

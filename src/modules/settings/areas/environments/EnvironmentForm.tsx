@@ -1,45 +1,54 @@
-import {
-  Accordion,
-  AccordionHeader,
-  AccordionItem,
-  AccordionPanel,
-  Button,
-  Dropdown,
-  Field,
-  Input,
-  MessageBar,
-  MessageBarBody,
-  Option,
-  Textarea,
-} from '@fluentui/react-components'
-import { Eye20Regular, EyeOff20Regular, PlugConnected20Regular } from '@fluentui/react-icons'
-import { useState } from 'react'
+import { Button, Dropdown, Field, Input, Option, Switch, Textarea } from '@fluentui/react-components'
+import { Eye20Regular, PlugConnected20Regular, Settings20Regular } from '@fluentui/react-icons'
 
 import { CopyButton, ExternalLinkButton, FormRow, FormStack, Grow, InfoTip } from '@/shared/components'
-import { CLOUD_TYPES, type CloudType } from '@/shared/types'
+import { type ServicePrincipal } from '@/shared/storage'
+import {
+  ALERT_LEVEL_LABELS,
+  ALERT_LEVELS,
+  CLOUD_TYPES,
+  type CloudType,
+  type EnvironmentAlert,
+  type EnvironmentAlertLevel,
+} from '@/shared/types'
 
-import { CLOUD_TYPE_LABELS, type DraftValidation, type EnvironmentDraft, hasCredentialInput } from '../../lib'
+import { CLOUD_TYPE_LABELS, defaultAlert, type DraftValidation, type EnvironmentDraft } from '../../lib'
+
+const NO_PRINCIPAL = '__none__'
 
 interface EnvironmentFormProps {
   draft: EnvironmentDraft
   validation: DraftValidation | null
+  principals: ServicePrincipal[]
   testingConnection: boolean
+  canPreviewAlert: boolean
+  previewingAlert: boolean
   onChange: (draft: EnvironmentDraft) => void
   onTestConnection: () => void
+  onManagePrincipals: () => void
+  onPreviewAlert: () => void
 }
 
 export const EnvironmentForm = ({
   draft,
   validation,
+  principals,
   testingConnection,
+  canPreviewAlert,
+  previewingAlert,
   onChange,
   onTestConnection,
+  onManagePrincipals,
+  onPreviewAlert,
 }: EnvironmentFormProps) => {
-  const [revealSecret, setRevealSecret] = useState(false)
   const set = <K extends keyof EnvironmentDraft>(key: K, value: EnvironmentDraft[K]) =>
     onChange({ ...draft, [key]: value })
+  const setAlert = (patch: Partial<EnvironmentAlert>) =>
+    set('alert', { ...(draft.alert ?? defaultAlert(draft.name)), ...patch })
   const messageFor = (field: DraftValidation['field']) => (validation?.field === field ? validation.message : undefined)
-  const credentialsEntered = hasCredentialInput(draft)
+  const principalLabel = draft.servicePrincipalId
+    ? (principals.find((principal) => principal.id === draft.servicePrincipalId)?.name ?? 'Removed service principal')
+    : 'None'
 
   return (
     <FormStack>
@@ -108,6 +117,116 @@ export const EnvironmentForm = ({
         </Grow>
         <CopyButton text={draft.environmentId} label="Copy id" iconOnly />
       </FormRow>
+      <FormRow>
+        <Grow>
+          <Field
+            label={
+              <>
+                Service Principal
+                <InfoTip content="Tools that run against this saved environment sign in as the selected app registration instead of you. Register it as an application user in the environment first" />
+              </>
+            }
+          >
+            <Dropdown
+              value={principalLabel}
+              selectedOptions={[draft.servicePrincipalId ?? NO_PRINCIPAL]}
+              onOptionSelect={(_, data) =>
+                set(
+                  'servicePrincipalId',
+                  !data.optionValue || data.optionValue === NO_PRINCIPAL ? null : data.optionValue,
+                )
+              }
+            >
+              <Option value={NO_PRINCIPAL} text="None">
+                None
+              </Option>
+              {principals.map((principal) => (
+                <Option key={principal.id} value={principal.id} text={principal.name}>
+                  {principal.name}
+                </Option>
+              ))}
+            </Dropdown>
+          </Field>
+        </Grow>
+        <Button appearance="subtle" icon={<Settings20Regular />} onClick={onManagePrincipals}>
+          Manage
+        </Button>
+        <Button
+          icon={<PlugConnected20Regular />}
+          disabled={testingConnection || !draft.servicePrincipalId}
+          onClick={onTestConnection}
+        >
+          {testingConnection ? 'Testing...' : 'Test Connection'}
+        </Button>
+      </FormRow>
+      <Field
+        label={
+          <>
+            Environment banner
+            <InfoTip content="Shows a notification bar at the top of the app whenever you browse this environment, so tabs for different environments are easy to tell apart" />
+          </>
+        }
+      >
+        <Switch
+          label="Show a banner while browsing this environment"
+          checked={draft.alert?.enabled ?? false}
+          onChange={(_, data) => {
+            if (data.checked) {
+              setAlert({ enabled: true })
+            } else if (draft.alert) {
+              setAlert({ enabled: false })
+            }
+          }}
+        />
+      </Field>
+      {draft.alert?.enabled ? (
+        <>
+          <FormRow>
+            <Field label="Level">
+              <Dropdown
+                style={{ minWidth: '150px' }}
+                value={ALERT_LEVEL_LABELS[draft.alert.level]}
+                selectedOptions={[String(draft.alert.level)]}
+                onOptionSelect={(_, data) =>
+                  data.optionValue && setAlert({ level: Number(data.optionValue) as EnvironmentAlertLevel })
+                }
+              >
+                {ALERT_LEVELS.map((level) => (
+                  <Option key={level} value={String(level)} text={ALERT_LEVEL_LABELS[level]}>
+                    {ALERT_LEVEL_LABELS[level]}
+                  </Option>
+                ))}
+              </Dropdown>
+            </Field>
+            <Grow>
+              <Field label="Message">
+                <Input
+                  value={draft.alert.message}
+                  placeholder="You are in Production"
+                  onChange={(_, data) => setAlert({ message: data.value })}
+                />
+              </Field>
+            </Grow>
+          </FormRow>
+          <FormRow>
+            <Switch
+              label="Users can close the banner"
+              checked={draft.alert.showCloseButton}
+              onChange={(_, data) => setAlert({ showCloseButton: data.checked })}
+            />
+            <Grow>
+              <span />
+            </Grow>
+            <Button
+              icon={<Eye20Regular />}
+              disabled={!canPreviewAlert || previewingAlert || !draft.alert.message.trim()}
+              onClick={onPreviewAlert}
+            >
+              {previewingAlert ? 'Showing...' : 'Preview on this page'}
+            </Button>
+          </FormRow>
+        </>
+      ) : null}
       <Field label="Notes">
         <Textarea
           value={draft.notes}
@@ -116,72 +235,6 @@ export const EnvironmentForm = ({
           onChange={(_, data) => set('notes', data.value)}
         />
       </Field>
-      <Accordion collapsible defaultOpenItems={credentialsEntered ? ['credentials'] : []}>
-        <AccordionItem value="credentials">
-          <AccordionHeader>Service principal (optional)</AccordionHeader>
-          <AccordionPanel>
-            <FormStack>
-              <MessageBar intent="warning">
-                <MessageBarBody>
-                  The client secret is stored unencrypted in this browser&apos;s extension storage. Use a dedicated app
-                  registration with the least privilege you need, and rotate the secret regularly.
-                </MessageBarBody>
-              </MessageBar>
-              <FormRow>
-                <Grow>
-                  <Field label="Tenant Id" validationMessage={messageFor('credentials')}>
-                    <Input
-                      value={draft.tenantId}
-                      placeholder="00000000-0000-0000-0000-000000000000"
-                      onChange={(_, data) => set('tenantId', data.value)}
-                    />
-                  </Field>
-                </Grow>
-                <CopyButton text={draft.tenantId} label="Copy tenant id" iconOnly />
-              </FormRow>
-              <FormRow>
-                <Grow>
-                  <Field label="Client Id">
-                    <Input
-                      value={draft.clientId}
-                      placeholder="Application (client) id of the app registration"
-                      onChange={(_, data) => set('clientId', data.value)}
-                    />
-                  </Field>
-                </Grow>
-                <CopyButton text={draft.clientId} label="Copy client id" iconOnly />
-              </FormRow>
-              <Field label="Client Secret">
-                <Input
-                  type={revealSecret ? 'text' : 'password'}
-                  value={draft.clientSecret}
-                  placeholder="Client secret value"
-                  autoComplete="off"
-                  contentAfter={
-                    <Button
-                      appearance="transparent"
-                      size="small"
-                      icon={revealSecret ? <EyeOff20Regular /> : <Eye20Regular />}
-                      aria-label={revealSecret ? 'Hide secret' : 'Show secret'}
-                      onClick={() => setRevealSecret((current) => !current)}
-                    />
-                  }
-                  onChange={(_, data) => set('clientSecret', data.value)}
-                />
-              </Field>
-              <FormRow>
-                <Button
-                  icon={<PlugConnected20Regular />}
-                  disabled={testingConnection || !credentialsEntered}
-                  onClick={onTestConnection}
-                >
-                  {testingConnection ? 'Testing...' : 'Test Connection'}
-                </Button>
-              </FormRow>
-            </FormStack>
-          </AccordionPanel>
-        </AccordionItem>
-      </Accordion>
     </FormStack>
   )
 }

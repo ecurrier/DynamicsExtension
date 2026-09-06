@@ -15,19 +15,18 @@ interface ConnectionPickerProps {
 }
 
 export const ConnectionPicker = ({ value, environments, disabled = false, onChange }: ConnectionPickerProps) => {
-  const connectable = environments.filter((environment) => environment.credentials !== null)
   const selectedKey = value.kind === 'page' ? PAGE_OPTION : value.environmentId
   const selectedLabel =
     value.kind === 'page'
       ? 'Current page'
-      : (connectable.find((environment) => environment.id === value.environmentId)?.name ?? 'Removed environment')
+      : (environments.find((environment) => environment.id === value.environmentId)?.name ?? 'Removed environment')
 
   return (
     <Field
       label={
         <>
           Connection
-          <InfoTip content="Run against the page you have open, or against a saved environment that has a client id and secret configured in Settings" />
+          <InfoTip content="Run against the page you have open, or against a saved environment that has a service principal assigned in Settings" />
         </>
       }
     >
@@ -49,7 +48,7 @@ export const ConnectionPicker = ({ value, environments, disabled = false, onChan
         <Option value={PAGE_OPTION} text="Current page">
           Current page
         </Option>
-        {connectable.map((environment) => (
+        {environments.map((environment) => (
           <Option key={environment.id} value={environment.id} text={environment.name}>
             {environment.name} (service principal)
           </Option>

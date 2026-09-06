@@ -8,7 +8,14 @@ export interface SettingDefinition {
   tooltip: string
 }
 
-export const SETTING_SECTIONS = ['Extension', 'Utilities', 'Forms', 'Security Management'] as const
+export const SETTING_SECTIONS = [
+  'Extension',
+  'Utilities',
+  'Forms',
+  'Security Management',
+  'Environment Variables',
+  'Plugin Steps',
+] as const
 
 export const SETTING_DEFINITIONS: SettingDefinition[] = [
   {
@@ -55,5 +62,20 @@ export const SETTING_DEFINITIONS: SettingDefinition[] = [
     title: 'Apply Security Role Changes',
     label: "Require confirmation when removing a user's security roles",
     tooltip: 'When enabled, a confirmation dialog appears before security roles are removed from a user',
+  },
+  {
+    key: 'environmentVariablesRequireSaveConfirmation',
+    section: 'Environment Variables',
+    title: 'Save Variable Values',
+    label: 'Require confirmation before saving or removing an environment variable value',
+    tooltip:
+      'When enabled, a confirmation dialog appears before a current value is written to or removed from Dataverse',
+  },
+  {
+    key: 'pluginStepsRequireToggleConfirmation',
+    section: 'Plugin Steps',
+    title: 'Enable or Disable Steps',
+    label: 'Require confirmation before enabling or disabling plug-in steps',
+    tooltip: 'When enabled, a confirmation dialog appears before plug-in steps are switched on or off for every user',
   },
 ]

@@ -1,32 +1,14 @@
 import { describe, expect, it, vi } from 'vitest'
 
+import { createFakeHttp } from '@/test/fakeHttp'
+
 import { DataverseOperationError } from './errors'
-import { type DataverseHttp } from './http'
 import { securityOperations } from './security'
 
 const USER = '11111111-1111-4111-8111-111111111111'
 const UNIT = '22222222-2222-4222-8222-222222222222'
 const ROLE_A = '33333333-3333-4333-8333-333333333333'
 const ROLE_B = '44444444-4444-4444-8444-444444444444'
-
-const createFakeHttp = (responses: Record<string, unknown> = {}) => {
-  const calls: { method: string; path: string; body?: unknown }[] = []
-  const respond = (method: string, path: string, body?: unknown) => {
-    calls.push({ method, path, body })
-    const match = Object.entries(responses).find(([needle]) => decodeURIComponent(path).includes(needle))
-    return Promise.resolve(match?.[1])
-  }
-  const http = {
-    origin: 'https://org.crm.dynamics.com',
-    apiUrl: 'https://org.crm.dynamics.com/api/data/v9.2/',
-    request: (method: string, path: string, body?: unknown) => respond(method, path, body),
-    get: (path: string) => respond('GET', path),
-    post: (path: string, body: unknown) => respond('POST', path, body),
-    patch: (path: string, body: unknown) => respond('PATCH', path, body),
-    delete: (path: string) => respond('DELETE', path),
-  } as unknown as DataverseHttp
-  return { http, calls }
-}
 
 describe('securityOperations', () => {
   it('reads roles and business units through fetchXml on the entity sets', async () => {

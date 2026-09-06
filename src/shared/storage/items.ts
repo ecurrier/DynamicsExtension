@@ -1,6 +1,6 @@
 import { storage, type WxtStorageItem } from 'wxt/utils/storage'
 
-import { type ImpersonationStates, type TraceViewerLaunch } from '@/shared/types'
+import { type ImpersonationStates, type TraceViewerLaunch, type TransporterLaunch } from '@/shared/types'
 
 import {
   type AccessTokens,
@@ -10,6 +10,7 @@ import {
   type Environments,
   type ExtensionSettings,
   type ResultsShare,
+  type ServicePrincipals,
   type TemplatesByContext,
 } from './schema'
 
@@ -20,11 +21,18 @@ export const schemaVersionItem: StorageItem<number> = storage.defineItem<number,
   { fallback: 0 },
 )
 
-const withCredentialFields = (environments: Record<string, Record<string, unknown>>): Environments =>
+type StoredEnvironments = Record<string, Record<string, unknown>>
+
+const withCredentialFields = (environments: StoredEnvironments): StoredEnvironments =>
+  Object.fromEntries(
+    Object.entries(environments).map(([id, environment]) => [id, { notes: '', credentials: null, ...environment }]),
+  )
+
+const withPrincipalAndAlertFields = (environments: StoredEnvironments): Environments =>
   Object.fromEntries(
     Object.entries(environments).map(([id, environment]) => [
       id,
-      { notes: '', credentials: null, ...environment } as Environment,
+      { servicePrincipalId: null, alert: null, ...environment } as unknown as Environment,
     ]),
   )
 
@@ -32,10 +40,18 @@ export const environmentsItem: StorageItem<Environments> = storage.defineItem<En
   'local:environments',
   {
     fallback: {},
-    version: 2,
-    migrations: { 2: withCredentialFields },
+    version: 3,
+    migrations: { 2: withCredentialFields, 3: withPrincipalAndAlertFields },
   },
 )
+
+export const servicePrincipalsItem: StorageItem<ServicePrincipals> = storage.defineItem<
+  ServicePrincipals,
+  Record<string, unknown>
+>('local:servicePrincipals', {
+  fallback: {},
+  version: 1,
+})
 
 export const templatesItem: StorageItem<TemplatesByContext> = storage.defineItem<
   TemplatesByContext,
@@ -84,3 +100,8 @@ export const pinnedWindowsItem: StorageItem<Record<string, number>> = storage.de
   Record<string, number>,
   Record<string, unknown>
 >('session:pinnedWindows', { fallback: {} })
+
+export const transporterLaunchItem: StorageItem<TransporterLaunch | null> = storage.defineItem<
+  TransporterLaunch | null,
+  Record<string, unknown>
+>('session:transporterLaunch', { fallback: null })

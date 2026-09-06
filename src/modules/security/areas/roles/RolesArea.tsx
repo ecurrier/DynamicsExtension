@@ -16,7 +16,7 @@ import { Checkmark20Regular, Person20Regular } from '@fluentui/react-icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
 
-import { useEnvironments, useExtensionSettings } from '@/modules/settings'
+import { useConnectableEnvironments, useExtensionSettings } from '@/modules/settings'
 import {
   AreaContainer,
   AreaToolbar,
@@ -56,7 +56,7 @@ export const RolesArea = () => {
   const confirm = useConfirm()
   const queryClient = useQueryClient()
   const { settings } = useExtensionSettings()
-  const { environments, byId } = useEnvironments()
+  const { environments, byId } = useConnectableEnvironments()
   const {
     connection,
     selectedBusinessUnitId,

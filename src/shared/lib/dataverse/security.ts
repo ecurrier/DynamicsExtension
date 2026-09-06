@@ -1,9 +1,10 @@
 import { type BusinessUnit, type RoleChangeSet, type SecurityRole, type SystemUser } from '@/shared/types'
 
 import { DataverseOperationError } from './errors'
+import { requireGuid } from './guards'
 import { type DataverseHttp } from './http'
 import { escapeFetchXmlLike } from '../fetchXmlEscape'
-import { isGuid, normalizeGuid } from '../guid'
+import { normalizeGuid } from '../guid'
 
 const ROLE_RELATIONSHIP = 'systemuserroles_association'
 
@@ -125,13 +126,6 @@ const toRole = (record: RoleRecord): SecurityRole => ({
   name: record.name,
   businessUnitId: record._businessunitid_value ? normalizeGuid(record._businessunitid_value) : null,
 })
-
-const requireGuid = (value: string, label: string): string => {
-  if (!isGuid(value)) {
-    throw new DataverseOperationError('InvalidArgument', `${label} is not a valid identifier`)
-  }
-  return normalizeGuid(value)
-}
 
 export const fetchXmlPath = (entitySet: string, fetchXml: string): string =>
   `${entitySet}?fetchXml=${encodeURIComponent(fetchXml)}`

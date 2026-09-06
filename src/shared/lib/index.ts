@@ -1,5 +1,7 @@
+export * from './chunk'
 export * from './clipboard'
 export * from './dataverse'
+export * from './environmentMatch'
 export * from './fetchXmlEscape'
 export * from './formatXml'
 export * from './guid'

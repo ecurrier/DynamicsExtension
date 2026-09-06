@@ -1,10 +1,8 @@
 import { type QueryKey, useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { type CommandArgs, type CommandName, type CommandResult } from '@/messaging/contract'
+import { invoke, PageCommandError } from '@/messaging/tab'
 import { useSessionStore } from '@/shared/stores'
-
-import { invoke } from './invoke'
-import { PageCommandError } from './PageCommandError'
 
 export interface PageMutationOptions<N extends CommandName> {
   timeoutMs?: number

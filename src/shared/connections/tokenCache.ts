@@ -20,3 +20,11 @@ export const clearCachedToken = async (key: string): Promise<void> => {
     await accessTokensItem.setValue(next)
   }
 }
+
+export const clearCachedTokensFor = async (prefix: string): Promise<void> => {
+  const tokens = await accessTokensItem.getValue()
+  const next = Object.fromEntries(Object.entries(tokens).filter(([key]) => !key.startsWith(prefix)))
+  if (Object.keys(next).length !== Object.keys(tokens).length) {
+    await accessTokensItem.setValue(next)
+  }
+}

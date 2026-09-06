@@ -23,5 +23,7 @@ declare global {
   interface Window {
     Xrm?: Xrm.XrmStatic
     portal?: unknown
+    __powerToolsAlert?: { key: string; id: string }
+    __powerToolsAlertPending?: Promise<void>
   }
 }

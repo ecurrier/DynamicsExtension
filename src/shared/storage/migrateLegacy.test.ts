@@ -4,7 +4,7 @@ import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { environmentsItem, lastVisitedAreaItem, schemaVersionItem, settingsItem, templatesItem } from './items'
 import { LEGACY_TARGET_TO_AREA } from './legacyKeys'
 import { buildSchemaFromLegacy, migrateLegacyStorage } from './migrateLegacy'
-import { DEFAULT_SETTINGS, SCHEMA_VERSION } from './schema'
+import { DEFAULT_SETTINGS, LEGACY_SCHEMA_VERSION } from './schema'
 
 const legacyFixture = {
   'Settings.environments.11111111-1111-4111-8111-111111111111': {
@@ -49,7 +49,8 @@ describe('buildSchemaFromLegacy', () => {
       powerPagesUrl: 'https://dev.powerappsportals.us/',
       environmentId: '22222222-2222-4222-8222-222222222222',
       notes: '',
-      credentials: null,
+      servicePrincipalId: null,
+      alert: null,
     })
     expect(migrated.environments['33333333-3333-4333-8333-333333333333']).toMatchObject({
       environmentType: 'Commercial',
@@ -95,7 +96,7 @@ describe('migrateLegacyStorage', () => {
 
     expect(await migrateLegacyStorage()).toBe(true)
 
-    expect(await schemaVersionItem.getValue()).toBe(SCHEMA_VERSION)
+    expect(await schemaVersionItem.getValue()).toBe(LEGACY_SCHEMA_VERSION)
     expect(Object.keys(await environmentsItem.getValue())).toHaveLength(2)
     expect((await settingsItem.getValue()).openLastVisitedArea).toBe(true)
     expect(await lastVisitedAreaItem.getValue()).toBe('webapi.retrieve-records')
@@ -110,7 +111,7 @@ describe('migrateLegacyStorage', () => {
   })
 
   it('is a no-op once the schema version is current', async () => {
-    await schemaVersionItem.setValue(SCHEMA_VERSION)
+    await schemaVersionItem.setValue(LEGACY_SCHEMA_VERSION)
     await fakeBrowser.storage.local.set({
       'Settings.extension': { Extension: { OpenLastVisitedPage: { Enabled: true } } },
     })
@@ -121,6 +122,6 @@ describe('migrateLegacyStorage', () => {
 
   it('stamps the version on a fresh install without legacy keys', async () => {
     expect(await migrateLegacyStorage()).toBe(false)
-    expect(await schemaVersionItem.getValue()).toBe(SCHEMA_VERSION)
+    expect(await schemaVersionItem.getValue()).toBe(LEGACY_SCHEMA_VERSION)
   })
 })

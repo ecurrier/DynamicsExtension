@@ -1,12 +1,19 @@
-import { type CloudType, type PageContext } from '@/shared/types'
+import { type CloudType, type EnvironmentAlert, type PageContext } from '@/shared/types'
 
-export const SCHEMA_VERSION = 2
+export const LEGACY_SCHEMA_VERSION = 2
+export const SERVICE_PRINCIPAL_SCHEMA_VERSION = 3
+export const SCHEMA_VERSION = SERVICE_PRINCIPAL_SCHEMA_VERSION
 
-export interface EnvironmentCredentials {
+export interface ServicePrincipal {
+  id: string
+  name: string
   tenantId: string
   clientId: string
   clientSecret: string
+  notes: string
 }
+
+export type ServicePrincipals = Record<string, ServicePrincipal>
 
 export interface Environment {
   id: string
@@ -16,7 +23,8 @@ export interface Environment {
   powerPagesUrl: string
   environmentId: string
   notes: string
-  credentials: EnvironmentCredentials | null
+  servicePrincipalId: string | null
+  alert: EnvironmentAlert | null
 }
 
 export type Environments = Record<string, Environment>
@@ -43,6 +51,8 @@ export interface ExtensionSettings {
   controlEditorUseDefaultSolution: boolean
   securityRequireRemovalConfirmation: boolean
   formsRequireSaveConfirmation: boolean
+  environmentVariablesRequireSaveConfirmation: boolean
+  pluginStepsRequireToggleConfirmation: boolean
 }
 
 export const DEFAULT_SETTINGS: ExtensionSettings = {
@@ -52,6 +62,8 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   controlEditorUseDefaultSolution: false,
   securityRequireRemovalConfirmation: true,
   formsRequireSaveConfirmation: true,
+  environmentVariablesRequireSaveConfirmation: true,
+  pluginStepsRequireToggleConfirmation: true,
 }
 
 export const EMPTY_TEMPLATES: TemplatesByContext = {

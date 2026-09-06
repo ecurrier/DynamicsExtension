@@ -18,6 +18,14 @@ const COMMAND_TIMEOUTS: Partial<Record<CommandName, number>> = {
   'forms.updateFormXml': 120_000,
   'traces.query': 120_000,
   'traces.delete': 300_000,
+  'environmentVariables.getDefinitions': 60_000,
+  'environmentVariables.setValue': 60_000,
+  'pluginSteps.getSteps': 90_000,
+  'pluginSteps.setState': 120_000,
+  'global.showEnvironmentAlert': 60_000,
+  'transport.listEntities': 90_000,
+  'transport.getEntityMetadata': 90_000,
+  'transport.retrievePage': 120_000,
 }
 
 const bridgeThunk = (name: string, args: unknown) => window.__powerTools?.invoke(name as never, args as never)

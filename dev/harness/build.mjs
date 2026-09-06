@@ -13,6 +13,7 @@ for (const [source, target] of [
   ['popup.html', 'harness.html'],
   ['results-viewer.html', 'harness-results.html'],
   ['plugin-traces.html', 'harness-traces.html'],
+  ['data-transporter.html', 'harness-transporter.html'],
 ]) {
   const html = readFileSync(join(output, source), 'utf8').replace(
     '<script type="module"',

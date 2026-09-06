@@ -16,7 +16,7 @@ import {
   EMPTY_TEMPLATES,
   type Environments,
   type ExtensionSettings,
-  SCHEMA_VERSION,
+  LEGACY_SCHEMA_VERSION,
   type TemplatesByContext,
 } from './schema'
 
@@ -65,7 +65,8 @@ export const buildSchemaFromLegacy = (raw: LegacyRecord): MigratedSchema => {
         powerPagesUrl: asString(value.powerPagesUrl),
         environmentId: asString(value.environmentId),
         notes: '',
-        credentials: null,
+        servicePrincipalId: null,
+        alert: null,
       }
       legacyKeys.push(key)
       continue
@@ -125,7 +126,7 @@ export const buildSchemaFromLegacy = (raw: LegacyRecord): MigratedSchema => {
 
 export const migrateLegacyStorage = async (): Promise<boolean> => {
   const currentVersion = await schemaVersionItem.getValue()
-  if (currentVersion >= SCHEMA_VERSION) {
+  if (currentVersion >= LEGACY_SCHEMA_VERSION) {
     return false
   }
   const raw = (await browser.storage.local.get(null)) as LegacyRecord
@@ -144,7 +145,7 @@ export const migrateLegacyStorage = async (): Promise<boolean> => {
       { item: lastVisitedAreaItem, value: migrated.lastVisitedArea },
     ])
   }
-  await schemaVersionItem.setValue(SCHEMA_VERSION)
+  await schemaVersionItem.setValue(LEGACY_SCHEMA_VERSION)
   if (migrated.legacyKeys.length > 0) {
     await browser.storage.local.remove(migrated.legacyKeys)
   }

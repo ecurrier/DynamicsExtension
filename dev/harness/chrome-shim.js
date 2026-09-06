@@ -166,12 +166,337 @@
     if (path.startsWith('systemusers?') && path.includes('businessunitid'))
       return jsonResponse({ value: [{ systemuserid: guid(301) }] })
     if (path.startsWith('systemusers?')) return jsonResponse({ value: remoteUsers })
+    if (path.startsWith('environmentvariabledefinitions?'))
+      return jsonResponse({ value: environmentVariables.map(toDefinitionRecord) })
+    if (method === 'POST' && path.startsWith('environmentvariablevalues'))
+      return jsonResponse({ environmentvariablevalueid: guid(870) }, 201)
+    if (path.startsWith('sdkmessageprocessingsteps?')) return jsonResponse({ value: pluginSteps.map(toStepRecord) })
+    if (path.startsWith('sdkmessageprocessingsteps(')) {
+      const step = pluginSteps.find((candidate) => path.includes(candidate.id))
+      return step ? jsonResponse(toStepRecord(step)) : jsonResponse({ error: { message: 'Not found' } }, 404)
+    }
+    if (path.startsWith('pluginassemblies?')) return jsonResponse({ value: pluginAssemblies.map(toAssemblyRecord) })
+    if (path.startsWith('pluginassemblies(')) {
+      const assembly = pluginAssemblies.find((candidate) => path.includes(candidate.id))
+      return assembly
+        ? jsonResponse(toAssemblyRecord(assembly))
+        : jsonResponse({ error: { message: 'Not found' } }, 404)
+    }
+    if (path.startsWith('EntityDefinitions?')) return jsonResponse({ value: transportEntities.map(toEntityDefinition) })
+    if (path.startsWith('EntityDefinitions(') && path.includes('LookupAttributeMetadata'))
+      return jsonResponse({
+        value: transportAttributes
+          .filter((a) => a.targets.length)
+          .map((a) => ({ LogicalName: a.logicalName, Targets: a.targets.map((t) => t.logicalName) })),
+      })
+    if (path.startsWith('EntityDefinitions(') && path.includes('ManyToOneRelationships'))
+      return jsonResponse({
+        value: transportAttributes.flatMap((a) =>
+          a.targets.map((t) => ({
+            ReferencingAttribute: a.logicalName,
+            ReferencedEntity: t.logicalName,
+            ReferencingEntityNavigationPropertyName: t.navigationProperty,
+          })),
+        ),
+      })
+    if (path.startsWith('EntityDefinitions(')) {
+      const logicalName = path.match(/LogicalName='([^']+)'/)?.[1]
+      const entity =
+        transportEntities.find((candidate) => candidate.logicalName === logicalName) ?? transportEntities[0]
+      return jsonResponse({ ...toEntityDefinition(entity), Attributes: transportAttributes.map(toAttributeDefinition) })
+    }
+    if (path.startsWith('savedqueries?'))
+      return jsonResponse({
+        value: transportViews.map((v) => ({
+          savedqueryid: v.id,
+          name: v.name,
+          fetchxml: v.fetchXml,
+          querytype: v.queryType,
+          isdefault: v.isDefault,
+        })),
+      })
+    if (path.startsWith('accounts?fetchXml') && path.includes('operator="in"')) {
+      const ids = [...path.matchAll(/<value>([^<]+)<\/value>/g)].map((match) => match[1])
+      return jsonResponse({ value: ids.filter((_, index) => index % 2 === 0).map((id) => ({ accountid: id })) })
+    }
+    if (path.startsWith('accounts?fetchXml'))
+      return jsonResponse({
+        value: [...transportRows.slice(0, 60).map((row) => ({ accountid: row.accountid })), { accountid: guid(7999) }],
+      })
+    if (path.startsWith('accounts?$skiptoken')) return jsonResponse({ value: transportRows.slice(100) })
     if (method === 'POST' || method === 'DELETE' || method === 'PATCH') return new Response(null, { status: 204 })
     return jsonResponse({ error: { message: `harness: no fake response for ${method} ${path}` } }, 404)
   }
 
+  const environmentVariables = [
+    {
+      id: guid(801),
+      schemaName: 'contoso_ApiBaseUrl',
+      displayName: 'API Base URL',
+      description: 'Base address of the integration API',
+      type: 100000000,
+      defaultValue: 'https://api.contoso.com',
+      currentValue: 'https://api-dev.contoso.com',
+      valueId: guid(851),
+      isManaged: true,
+      hint: null,
+      valueSchema: null,
+    },
+    {
+      id: guid(802),
+      schemaName: 'contoso_RetryCount',
+      displayName: 'Retry Count',
+      description: null,
+      type: 100000001,
+      defaultValue: '3',
+      currentValue: null,
+      valueId: null,
+      isManaged: false,
+      hint: 'Between 1 and 10',
+      valueSchema: null,
+    },
+    {
+      id: guid(803),
+      schemaName: 'contoso_NewPricing',
+      displayName: 'New Pricing Engine',
+      description: 'Turns on the new pricing engine',
+      type: 100000002,
+      defaultValue: 'no',
+      currentValue: 'yes',
+      valueId: guid(853),
+      isManaged: false,
+      hint: null,
+      valueSchema: null,
+    },
+    {
+      id: guid(804),
+      schemaName: 'contoso_RegionMapping',
+      displayName: 'Region Mapping',
+      description: null,
+      type: 100000003,
+      defaultValue: null,
+      currentValue: '{"na":"US","eu":"DE"}',
+      valueId: guid(854),
+      isManaged: false,
+      hint: null,
+      valueSchema: null,
+    },
+    {
+      id: guid(805),
+      schemaName: 'contoso_SharePointSite',
+      displayName: 'SharePoint Site',
+      description: null,
+      type: 100000004,
+      defaultValue: null,
+      currentValue: '{"siteUrl":"https://contoso.sharepoint.com/sites/sales"}',
+      valueId: guid(855),
+      isManaged: true,
+      hint: null,
+      valueSchema: null,
+    },
+    {
+      id: guid(806),
+      schemaName: 'contoso_ApiKey',
+      displayName: 'API Key',
+      description: 'Stored in Azure Key Vault',
+      type: 100000005,
+      defaultValue: null,
+      currentValue: '/subscriptions/1/resourceGroups/rg/providers/Microsoft.KeyVault/vaults/kv/secrets/api-key',
+      valueId: guid(856),
+      isManaged: false,
+      hint: null,
+      valueSchema: null,
+    },
+  ]
+  const toDefinitionRecord = (variable) => ({
+    environmentvariabledefinitionid: variable.id,
+    schemaname: variable.schemaName,
+    displayname: variable.displayName,
+    description: variable.description,
+    type: variable.type,
+    defaultvalue: variable.defaultValue,
+    ismanaged: variable.isManaged,
+    hint: variable.hint,
+    valueschema: variable.valueSchema,
+    environmentvariabledefinition_environmentvariablevalue: variable.valueId
+      ? [{ environmentvariablevalueid: variable.valueId, value: variable.currentValue }]
+      : [],
+  })
+
+  const pluginAssemblies = [
+    { id: guid(4100), name: 'Contoso.Plugins', version: '1.0.0.0' },
+    { id: guid(4101), name: 'Contoso.Workflows', version: '2.3.0.0' },
+    { id: guid(4102), name: 'Fabrikam.Integration', version: '1.2.0.0' },
+  ]
+  const pluginTypes = [
+    { id: guid(4200), name: 'Contoso.Plugins.AccountPreCreate', assemblyId: guid(4100) },
+    { id: guid(4201), name: 'Contoso.Plugins.ContactPostUpdate', assemblyId: guid(4100) },
+    { id: guid(4202), name: 'Contoso.Workflows.SendNotification', assemblyId: guid(4101) },
+    { id: guid(4203), name: 'Fabrikam.Integration.SyncOrders', assemblyId: guid(4102) },
+  ]
+  const stepMessages = ['Create', 'Update', 'Delete', 'Retrieve']
+  const stepEntities = ['account', 'contact', 'opportunity']
+  const pluginSteps = Array.from({ length: 12 }, (_, i) => {
+    const type = pluginTypes[i % 4]
+    const assembly = pluginAssemblies.find((candidate) => candidate.id === type.assemblyId)
+    return {
+      id: guid(4000 + i),
+      name: `${type.name}: ${stepMessages[i % 4]} of ${stepEntities[i % 3]}`,
+      stage: [10, 20, 40][i % 3],
+      mode: i % 5 === 0 ? 1 : 0,
+      rank: 1 + (i % 3),
+      enabled: i % 4 !== 3,
+      isManaged: i % 2 === 0,
+      filteringAttributes: i % 2 ? 'name,telephone1' : null,
+      description: null,
+      asyncAutoDelete: false,
+      messageName: stepMessages[i % 4],
+      primaryEntity: stepEntities[i % 3],
+      pluginTypeId: type.id,
+      pluginTypeName: type.name,
+      pluginTypeFriendlyName: null,
+      assemblyId: assembly.id,
+      assemblyName: assembly.name,
+      assemblyVersion: assembly.version,
+    }
+  })
+  const toAssemblyRecord = (assembly) => ({
+    pluginassemblyid: assembly.id,
+    name: assembly.name,
+    version: assembly.version,
+  })
+  const toStepRecord = (step) => ({
+    sdkmessageprocessingstepid: step.id,
+    name: step.name,
+    stage: step.stage,
+    mode: step.mode,
+    rank: step.rank,
+    statecode: step.enabled ? 0 : 1,
+    statuscode: step.enabled ? 1 : 2,
+    ismanaged: step.isManaged,
+    filteringattributes: step.filteringAttributes,
+    description: step.description,
+    asyncautodelete: step.asyncAutoDelete,
+    plugintypeid: {
+      plugintypeid: step.pluginTypeId,
+      typename: step.pluginTypeName,
+      friendlyname: null,
+      name: step.pluginTypeName,
+      _pluginassemblyid_value: step.assemblyId,
+    },
+    sdkmessageid: { name: step.messageName },
+    sdkmessagefilterid: { primaryobjecttypecode: step.primaryEntity },
+  })
+
+  const transportEntities = [
+    {
+      logicalName: 'account',
+      displayName: 'Account',
+      entitySetName: 'accounts',
+      primaryIdAttribute: 'accountid',
+      primaryNameAttribute: 'name',
+    },
+    {
+      logicalName: 'contact',
+      displayName: 'Contact',
+      entitySetName: 'contacts',
+      primaryIdAttribute: 'contactid',
+      primaryNameAttribute: 'fullname',
+    },
+    {
+      logicalName: 'systemuser',
+      displayName: 'User',
+      entitySetName: 'systemusers',
+      primaryIdAttribute: 'systemuserid',
+      primaryNameAttribute: 'fullname',
+    },
+  ]
+  const transportViews = [
+    {
+      id: guid(6001),
+      name: 'Active Accounts',
+      fetchXml:
+        '<fetch><entity name="account"><attribute name="accountid" /><attribute name="name" /><attribute name="revenue" /><attribute name="primarycontactid" /><filter type="and"><condition attribute="statecode" operator="eq" value="0" /></filter></entity></fetch>',
+      queryType: 0,
+      isDefault: true,
+    },
+    {
+      id: guid(6002),
+      name: 'My Active Accounts',
+      fetchXml: '<fetch><entity name="account"><attribute name="name" /></entity></fetch>',
+      queryType: 0,
+      isDefault: false,
+    },
+  ]
+  const transportAttribute = (logicalName, displayName, attributeType, overrides = {}) => ({
+    logicalName,
+    displayName,
+    attributeType,
+    attributeOf: null,
+    isPrimaryId: false,
+    isValidForCreate: true,
+    isValidForUpdate: true,
+    isLogical: false,
+    targets: [],
+    ...overrides,
+  })
+  const transportAttributes = [
+    transportAttribute('accountid', 'Account', 'Uniqueidentifier', { isPrimaryId: true, isValidForUpdate: false }),
+    transportAttribute('name', 'Account Name', 'String'),
+    transportAttribute('revenue', 'Annual Revenue', 'Money'),
+    transportAttribute('primarycontactid', 'Primary Contact', 'Lookup', {
+      targets: [{ logicalName: 'contact', navigationProperty: 'primarycontactid' }],
+    }),
+    transportAttribute('ownerid', 'Owner', 'Owner', {
+      targets: [{ logicalName: 'systemuser', navigationProperty: 'ownerid' }],
+    }),
+    transportAttribute('createdon', 'Created On', 'DateTime', { isValidForCreate: false, isValidForUpdate: false }),
+  ]
+  const transportRows = Array.from({ length: 120 }, (_, i) => ({
+    accountid: guid(7000 + i),
+    name: `Account ${i}`,
+    revenue: i * 1000,
+    _primarycontactid_value: i % 3 ? guid(8000 + (i % 5)) : null,
+    '_primarycontactid_value@Microsoft.Dynamics.CRM.lookuplogicalname': 'contact',
+    _ownerid_value: guid(501),
+    createdon: new Date().toISOString(),
+  }))
+  const toEntityDefinition = (entity) => ({
+    LogicalName: entity.logicalName,
+    DisplayName: { UserLocalizedLabel: { Label: entity.displayName } },
+    EntitySetName: entity.entitySetName,
+    PrimaryIdAttribute: entity.primaryIdAttribute,
+    PrimaryNameAttribute: entity.primaryNameAttribute,
+  })
+  const toAttributeDefinition = (attribute) => ({
+    LogicalName: attribute.logicalName,
+    DisplayName: { UserLocalizedLabel: { Label: attribute.displayName } },
+    AttributeType: attribute.attributeType,
+    AttributeOf: attribute.attributeOf,
+    IsValidForCreate: attribute.isValidForCreate,
+    IsValidForUpdate: attribute.isValidForUpdate,
+    IsPrimaryId: attribute.isPrimaryId,
+    IsLogical: attribute.isLogical,
+  })
+  const transportPageLink = 'https://org12345.crm.dynamics.com/api/data/v9.2/accounts?$skiptoken=page2'
+
   const responses = {
     'global.getPageContext': () => 'model-driven-app',
+    'global.showEnvironmentAlert': (args) => ({
+      shown: !!args.alert?.enabled,
+      reason: args.alert?.enabled ? 'shown' : 'disabled',
+    }),
+    'global.clearEnvironmentAlert': () => undefined,
+    'transport.listEntities': () => transportEntities.map((entity) => ({ ...entity })),
+    'transport.listViews': () => transportViews.map((view) => ({ ...view })),
+    'transport.getEntityMetadata': (args) => ({
+      info: transportEntities.find((entity) => entity.logicalName === args.logicalName) ?? transportEntities[0],
+      attributes: transportAttributes.map((attribute) => ({ ...attribute })),
+    }),
+    'transport.retrievePage': (args) =>
+      args.nextLink
+        ? { rows: transportRows.slice(100), nextLink: null }
+        : { rows: transportRows.slice(0, 100), nextLink: transportPageLink },
     'global.getSolutions': () => [
       { id: 'fd140aaf-4df4-11dd-bd17-0019b9312238', name: 'Default Solution' },
       { id: 's2', name: 'Contoso Core' },
@@ -443,6 +768,35 @@
     'security.getSystemUserRoles': (args) =>
       args.systemUserId === 'u1' ? roles.filter((r) => ['r1', 'r3', 'r5'].includes(r.id)) : [],
     'security.applySecurityRoleChanges': () => undefined,
+    'environmentVariables.getDefinitions': () => environmentVariables.map((variable) => ({ ...variable })),
+    'environmentVariables.setValue': (args) => {
+      const variable = environmentVariables.find((candidate) => candidate.id === args.definitionId)
+      if (variable) {
+        variable.currentValue = args.value
+        variable.valueId = variable.valueId ?? guid(870)
+      }
+      return { valueId: variable?.valueId ?? guid(870) }
+    },
+    'environmentVariables.clearValue': (args) => {
+      const variable = environmentVariables.find((candidate) => candidate.valueId === args.valueId)
+      if (variable) {
+        variable.currentValue = null
+        variable.valueId = null
+      }
+      return undefined
+    },
+    'pluginSteps.getSteps': () => pluginSteps.map((step) => ({ ...step })),
+    'pluginSteps.get': (args) => {
+      const step = pluginSteps.find((candidate) => candidate.id === args.id)
+      return step ? { ...step } : null
+    },
+    'pluginSteps.setState': (args) => {
+      args.ids.forEach((id) => {
+        const step = pluginSteps.find((candidate) => candidate.id === id)
+        if (step) step.enabled = args.enabled
+      })
+      return { updated: args.ids.length, failed: [] }
+    },
   }
 
   const traceTypes = [
@@ -481,10 +835,62 @@
     }
   })
 
-  const local = makeArea(legacy, 'local')
+  const seededPrincipals = {
+    [guid(900)]: {
+      id: guid(900),
+      name: 'Contoso app registration',
+      tenantId: guid(901),
+      clientId: guid(902),
+      clientSecret: 'harness-secret',
+      notes: 'Seeded by the harness',
+    },
+  }
+  const seededEnvironments = {
+    'env-dev': {
+      id: 'env-dev',
+      name: 'Contoso Dev',
+      environmentType: 'Commercial',
+      modelDrivenAppUrl: 'https://contoso-dev.crm.dynamics.com/',
+      powerPagesUrl: 'https://contoso-dev.powerappsportals.com/',
+      environmentId: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+      notes: '',
+      servicePrincipalId: guid(900),
+      alert: null,
+    },
+    'env-uat': {
+      id: 'env-uat',
+      name: 'Contoso UAT',
+      environmentType: 'GCC',
+      modelDrivenAppUrl: 'https://contoso-uat.crm9.dynamics.com/',
+      powerPagesUrl: '',
+      environmentId: 'ffffffff-1111-4222-8333-444444444444',
+      notes: '',
+      servicePrincipalId: null,
+      alert: null,
+    },
+  }
+  const local = makeArea(
+    {
+      'Settings.extension': legacy['Settings.extension'],
+      'Templates.model-driven-app.33333333-3333-4333-8333-333333333333':
+        legacy['Templates.model-driven-app.33333333-3333-4333-8333-333333333333'],
+      schemaVersion: 3,
+      environments: seededEnvironments,
+      environments$: { v: 3 },
+      servicePrincipals: seededPrincipals,
+      servicePrincipals$: { v: 1 },
+    },
+    'local',
+  )
   const session = makeArea(
     {
       traceViewerLaunch: {
+        tabId: 1,
+        orgOrigin: 'https://org12345.crm.dynamics.com',
+        environmentName: 'org12345',
+        launchedAt: new Date().toISOString(),
+      },
+      transporterLaunch: {
         tabId: 1,
         orgOrigin: 'https://org12345.crm.dynamics.com',
         environmentName: 'org12345',
@@ -539,6 +945,7 @@
         const harnessUrl = url
           .replace('results-viewer.html', 'harness-results.html')
           .replace('plugin-traces.html', 'harness-traces.html')
+          .replace('data-transporter.html', 'harness-transporter.html')
         console.log('[harness] tabs.create', url, '->', harnessUrl)
         window.open(harnessUrl, '_blank')
         return { id: 2 }

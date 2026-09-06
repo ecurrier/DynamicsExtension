@@ -2,26 +2,40 @@ import {
   type AttributeMetadataBundle,
   type BusinessUnit,
   type ChoiceMetadata,
+  type ClearEnvironmentVariableValueRequest,
   type ClearLookupRequest,
   type ControlDetails,
   type CurrentUser,
   type EntityInfo,
+  type EntitySummary,
+  type EnvironmentAlertRequest,
+  type EnvironmentAlertResult,
   type EnvironmentDetails,
+  type EnvironmentVariable,
+  type EnvironmentVariableValueResult,
   type GeneratedUrls,
   type NamedFetchXml,
   type PageContext,
+  type PluginStep,
+  type PluginStepStateChange,
+  type PluginStepStateResult,
   type PluginTraceLog,
   type RecordSearchRequest,
   type RecordSearchResult,
   type RecordValues,
+  type RetrievePageRequest,
+  type RetrievePageResult,
   type RoleChangeSet,
+  type SavedView,
   type SecurityRole,
+  type SetEnvironmentVariableValueRequest,
   type Solution,
   type SystemForm,
   type SystemUser,
   type TraceDeleteResult,
   type TraceLogSetting,
   type TraceQuery,
+  type TransportEntityMetadata,
   type UpdateFieldRequest,
   type UpdateFormXmlRequest,
 } from '@/shared/types'
@@ -29,6 +43,8 @@ import {
 export interface CommandMap {
   'global.getPageContext': { args: void; result: PageContext | null }
   'global.getSolutions': { args: void; result: Solution[] }
+  'global.showEnvironmentAlert': { args: EnvironmentAlertRequest; result: EnvironmentAlertResult }
+  'global.clearEnvironmentAlert': { args: void; result: void }
   'settings.getEnvironmentDetails': { args: void; result: EnvironmentDetails }
   'utilities.refreshCommandBar': { args: void; result: void }
   'utilities.generateFetchXml': { args: void; result: NamedFetchXml[] }
@@ -64,6 +80,19 @@ export interface CommandMap {
   'security.getUserSecurityRoles': { args: { systemUserId: string; businessUnitId: string }; result: SecurityRole[] }
   'security.getSystemUserRoles': { args: { systemUserId: string }; result: SecurityRole[] }
   'security.applySecurityRoleChanges': { args: RoleChangeSet; result: void }
+  'environmentVariables.getDefinitions': { args: void; result: EnvironmentVariable[] }
+  'environmentVariables.setValue': {
+    args: SetEnvironmentVariableValueRequest
+    result: EnvironmentVariableValueResult
+  }
+  'environmentVariables.clearValue': { args: ClearEnvironmentVariableValueRequest; result: void }
+  'pluginSteps.getSteps': { args: void; result: PluginStep[] }
+  'pluginSteps.get': { args: { id: string }; result: PluginStep | null }
+  'pluginSteps.setState': { args: PluginStepStateChange; result: PluginStepStateResult }
+  'transport.listEntities': { args: void; result: EntitySummary[] }
+  'transport.listViews': { args: { entityLogicalName: string }; result: SavedView[] }
+  'transport.getEntityMetadata': { args: { logicalName: string }; result: TransportEntityMetadata }
+  'transport.retrievePage': { args: RetrievePageRequest; result: RetrievePageResult }
 }
 
 export type CommandName = keyof CommandMap

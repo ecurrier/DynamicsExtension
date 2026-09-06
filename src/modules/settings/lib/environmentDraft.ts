@@ -1,5 +1,5 @@
 import { type Environment } from '@/shared/storage'
-import { type CloudType, type EnvironmentDetails } from '@/shared/types'
+import { type CloudType, type EnvironmentAlert, type EnvironmentDetails } from '@/shared/types'
 
 export interface EnvironmentDraft {
   name: string
@@ -7,13 +7,12 @@ export interface EnvironmentDraft {
   modelDrivenAppUrl: string
   powerPagesUrl: string
   environmentId: string
-  tenantId: string
-  clientId: string
-  clientSecret: string
+  servicePrincipalId: string | null
   notes: string
+  alert: EnvironmentAlert | null
 }
 
-export type DraftField = 'name' | 'modelDrivenAppUrl' | 'credentials'
+export type DraftField = 'name' | 'modelDrivenAppUrl'
 
 export interface DraftValidation {
   field: DraftField
@@ -26,10 +25,9 @@ export const EMPTY_DRAFT: EnvironmentDraft = {
   modelDrivenAppUrl: '',
   powerPagesUrl: '',
   environmentId: '',
-  tenantId: '',
-  clientId: '',
-  clientSecret: '',
+  servicePrincipalId: null,
   notes: '',
+  alert: null,
 }
 
 export const CLOUD_TYPE_LABELS: Record<CloudType, string> = {
@@ -39,10 +37,7 @@ export const CLOUD_TYPE_LABELS: Record<CloudType, string> = {
   DOD: 'DoD',
 }
 
-export const hasCredentialInput = (draft: EnvironmentDraft): boolean =>
-  !!(draft.tenantId.trim() || draft.clientId.trim() || draft.clientSecret.trim())
-
-const isHttpsUrl = (value: string): boolean => {
+export const isHttpsUrl = (value: string): boolean => {
   try {
     return new URL(value.trim()).protocol === 'https:'
   } catch {
@@ -50,16 +45,22 @@ const isHttpsUrl = (value: string): boolean => {
   }
 }
 
+export const defaultAlert = (name: string): EnvironmentAlert => ({
+  enabled: true,
+  level: 3,
+  message: `You are in ${name.trim() || 'this environment'}`,
+  showCloseButton: true,
+})
+
 export const draftFromEnvironment = (environment: Environment): EnvironmentDraft => ({
   name: environment.name,
   environmentType: environment.environmentType,
   modelDrivenAppUrl: environment.modelDrivenAppUrl,
   powerPagesUrl: environment.powerPagesUrl,
   environmentId: environment.environmentId,
-  tenantId: environment.credentials?.tenantId ?? '',
-  clientId: environment.credentials?.clientId ?? '',
-  clientSecret: environment.credentials?.clientSecret ?? '',
+  servicePrincipalId: environment.servicePrincipalId,
   notes: environment.notes,
+  alert: environment.alert,
 })
 
 export const draftFromDetails = (details: EnvironmentDetails | null | undefined): EnvironmentDraft => ({
@@ -69,20 +70,20 @@ export const draftFromDetails = (details: EnvironmentDetails | null | undefined)
   modelDrivenAppUrl: details?.modelDrivenAppUrl ?? '',
   powerPagesUrl: details?.powerPagesUrl ?? '',
   environmentId: details?.environmentId ?? '',
-  tenantId: details?.tenantId ?? '',
+})
+
+export const copyDraft = (environment: Environment): EnvironmentDraft => ({
+  ...draftFromEnvironment(environment),
+  name: `${environment.name} (copy)`,
+  environmentId: '',
 })
 
 export const validateDraft = (draft: EnvironmentDraft): DraftValidation | null => {
   if (!draft.name.trim()) {
     return { field: 'name', message: 'Enter an environment name' }
   }
-  if (hasCredentialInput(draft)) {
-    if (!isHttpsUrl(draft.modelDrivenAppUrl)) {
-      return { field: 'modelDrivenAppUrl', message: 'Enter the https URL of the environment to use client credentials' }
-    }
-    if (!draft.tenantId.trim() || !draft.clientId.trim() || !draft.clientSecret.trim()) {
-      return { field: 'credentials', message: 'Enter the tenant id, client id, and client secret together' }
-    }
+  if (draft.servicePrincipalId && !isHttpsUrl(draft.modelDrivenAppUrl)) {
+    return { field: 'modelDrivenAppUrl', message: 'Enter the https URL of the environment to use a service principal' }
   }
   return null
 }
@@ -94,10 +95,9 @@ export const toEnvironment = (id: string, draft: EnvironmentDraft): Environment 
   modelDrivenAppUrl: draft.modelDrivenAppUrl.trim(),
   powerPagesUrl: draft.powerPagesUrl.trim(),
   environmentId: draft.environmentId.trim(),
+  servicePrincipalId: draft.servicePrincipalId,
   notes: draft.notes.trim(),
-  credentials: hasCredentialInput(draft)
-    ? { tenantId: draft.tenantId.trim(), clientId: draft.clientId.trim(), clientSecret: draft.clientSecret.trim() }
-    : null,
+  alert: draft.alert ? { ...draft.alert, message: draft.alert.message.trim() } : null,
 })
 
 export const sortEnvironments = (environments: Environment[]): Environment[] =>

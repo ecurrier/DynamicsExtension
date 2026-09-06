@@ -13,7 +13,7 @@ export default defineConfig({
     description:
       'Boost productivity & streamline workflows on Power Platform/Dynamics 365. Custom functionality & quality-of-life features.',
     permissions: ['activeTab', 'scripting', 'storage', 'declarativeNetRequestWithHostAccess'],
-    optional_host_permissions: [
+    host_permissions: [
       'https://*.dynamics.com/*',
       'https://*.microsoftdynamics.us/*',
       'https://*.appsplatform.us/*',
