@@ -9,16 +9,27 @@ import {
   Dropdown,
   Field,
   Input,
+  makeStyles,
   Option,
+  OptionGroup,
+  Text,
+  Textarea,
+  tokens,
 } from '@fluentui/react-components'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { CopyButton, ExternalLinkButton, FormStack } from '@/shared/components'
 import { type GeneratedUrls } from '@/shared/types'
 
-import { recordUrl } from '../lib'
+import { groupUrls, recordUrl } from '../lib'
 
 const MANUAL_ENTRY = '__manual__'
+
+const useStyles = makeStyles({
+  caption: {
+    color: tokens.colorNeutralForeground3,
+  },
+})
 
 interface UrlDialogBodyProps {
   urls: GeneratedUrls
@@ -26,20 +37,23 @@ interface UrlDialogBodyProps {
 }
 
 const UrlDialogBody = ({ urls, onClose }: UrlDialogBodyProps) => {
+  const styles = useStyles()
   const [selectedIndex, setSelectedIndex] = useState(urls.urls.length ? '0' : MANUAL_ENTRY)
   const [entityName, setEntityName] = useState('')
   const [recordId, setRecordId] = useState('')
 
+  const groups = useMemo(() => groupUrls(urls.urls), [urls.urls])
   const manual = selectedIndex === MANUAL_ENTRY
   const selectedUrl = manual
     ? recordUrl(urls.appUrl, entityName.trim(), recordId.trim())
     : (urls.urls[Number(selectedIndex)]?.url ?? '')
   const selectedLabel = manual ? 'Manual Entry' : (urls.urls[Number(selectedIndex)]?.name ?? '')
   const ready = manual ? entityName.trim() !== '' && recordId.trim() !== '' : selectedUrl !== ''
+  const allUrls = urls.urls.map((url) => `${url.name}\n${url.url}`).join('\n\n')
 
   return (
     <DialogBody>
-      <DialogTitle>Generated URLs</DialogTitle>
+      <DialogTitle>Links &amp; Debug Flags</DialogTitle>
       <DialogContent>
         <FormStack>
           <Field label="URL">
@@ -48,14 +62,20 @@ const UrlDialogBody = ({ urls, onClose }: UrlDialogBodyProps) => {
               selectedOptions={[selectedIndex]}
               onOptionSelect={(_, data) => data.optionValue && setSelectedIndex(data.optionValue)}
             >
-              {urls.urls.map((url, index) => (
-                <Option key={`${index}-${url.url}`} value={String(index)} text={url.name}>
-                  {url.name}
-                </Option>
+              {groups.map((group) => (
+                <OptionGroup key={group.name} label={group.name}>
+                  {group.urls.map((entry) => (
+                    <Option key={entry.index} value={String(entry.index)} text={entry.url.name}>
+                      {entry.url.name}
+                    </Option>
+                  ))}
+                </OptionGroup>
               ))}
-              <Option value={MANUAL_ENTRY} text="Manual Entry">
-                Manual Entry
-              </Option>
+              <OptionGroup label="Other">
+                <Option value={MANUAL_ENTRY} text="Manual Entry">
+                  Manual Entry
+                </Option>
+              </OptionGroup>
             </Dropdown>
           </Field>
           {manual ? (
@@ -73,14 +93,19 @@ const UrlDialogBody = ({ urls, onClose }: UrlDialogBodyProps) => {
             </>
           ) : null}
           <Field label="Record URL">
-            <Input value={selectedUrl} readOnly />
+            <Textarea value={selectedUrl} readOnly resize="vertical" rows={3} />
           </Field>
+          <Text size={200} className={styles.caption}>
+            Debug links open the same record with a platform diagnostic switched on — the command checker for ribbon
+            rules, the forms monitor for event timings, and the performance centre for load breakdowns.
+          </Text>
         </FormStack>
       </DialogContent>
       <DialogActions>
         <Button appearance="secondary" onClick={onClose}>
           Close
         </Button>
+        <CopyButton text={allUrls} label="Copy all" successMessage="All links copied to clipboard" />
         <CopyButton text={ready ? selectedUrl : null} label="Copy" successMessage="URL copied to clipboard" />
         <ExternalLinkButton url={ready ? selectedUrl : null} appearance="primary">
           Open in new tab
@@ -97,6 +122,8 @@ interface UrlDialogProps {
 
 export const UrlDialog = ({ urls, onClose }: UrlDialogProps) => (
   <Dialog open={urls !== null} onOpenChange={(_, data) => (data.open ? undefined : onClose())}>
-    <DialogSurface>{urls ? <UrlDialogBody urls={urls} onClose={onClose} /> : null}</DialogSurface>
+    <DialogSurface style={{ maxWidth: '640px' }}>
+      {urls ? <UrlDialogBody urls={urls} onClose={onClose} /> : null}
+    </DialogSurface>
   </Dialog>
 )

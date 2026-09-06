@@ -8,7 +8,7 @@ export const pluginTracesModule: ModuleDefinition = {
   id: 'plugintraces',
   label: 'Plugin Traces',
   icon: Bug20Regular,
-  order: 7,
+  order: 8,
   areas: [
     {
       id: 'plugintraces.viewer',

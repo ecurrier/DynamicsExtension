@@ -4,6 +4,7 @@ import { alertHandlers } from './alerts'
 import { environmentVariablesHandlers } from './environmentVariables'
 import { formsHandlers } from './forms'
 import { globalHandlers } from './global'
+import { investigateHandlers } from './investigate'
 import { pluginStepsHandlers } from './pluginSteps'
 import { securityHandlers } from './security'
 import { settingsHandlers } from './settings'
@@ -26,4 +27,5 @@ export const handlers: HandlerMap = {
   ...pluginStepsHandlers,
   ...alertHandlers,
   ...transportHandlers,
+  ...investigateHandlers,
 }

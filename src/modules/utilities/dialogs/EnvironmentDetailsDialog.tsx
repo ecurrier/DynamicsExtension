@@ -12,20 +12,24 @@ import {
 } from '@fluentui/react-components'
 import { Fragment } from 'react'
 
-import { CopyButton } from '@/shared/components'
-import { type EnvironmentDetails } from '@/shared/types'
+import { CopyButton, EmptyState, FormStack } from '@/shared/components'
+import { type EnvironmentDetails, type SessionSnapshot } from '@/shared/types'
 
-import { formatEnvironmentDetails } from '../lib'
+import { snapshotSections, snapshotToMarkdown } from '../lib'
 
 const useStyles = makeStyles({
   surface: {
-    maxWidth: '640px',
+    maxWidth: '680px',
+  },
+  content: {
+    maxHeight: '60vh',
+    overflowY: 'auto',
   },
   grid: {
     display: 'grid',
     gridTemplateColumns: 'max-content minmax(0, 1fr)',
     columnGap: '20px',
-    rowGap: '10px',
+    rowGap: '8px',
     alignItems: 'baseline',
   },
   label: {
@@ -37,40 +41,58 @@ const useStyles = makeStyles({
     overflowWrap: 'anywhere',
     fontFamily: tokens.fontFamilyMonospace,
   },
+  heading: {
+    marginTop: '4px',
+  },
 })
 
 interface EnvironmentDetailsDialogProps {
   details: EnvironmentDetails | null
+  snapshot: SessionSnapshot | null
+  loading?: boolean
   onClose: () => void
 }
 
-export const EnvironmentDetailsDialog = ({ details, onClose }: EnvironmentDetailsDialogProps) => {
+export const EnvironmentDetailsDialog = ({ details, snapshot, loading, onClose }: EnvironmentDetailsDialogProps) => {
   const styles = useStyles()
-  const rows = details ? formatEnvironmentDetails(details) : []
+  const sections = snapshotSections(details, snapshot)
   return (
-    <Dialog open={details !== null} onOpenChange={(_, data) => (data.open ? undefined : onClose())}>
+    <Dialog open={!!details} onOpenChange={(_, data) => (data.open ? undefined : onClose())}>
       <DialogSurface className={styles.surface}>
         <DialogBody>
-          <DialogTitle>Environment Details</DialogTitle>
-          <DialogContent>
-            <div className={styles.grid}>
-              {rows.map((row) => (
-                <Fragment key={row.label}>
-                  <Text size={200} className={styles.label}>
-                    {row.label}
+          <DialogTitle>Environment &amp; Session</DialogTitle>
+          <DialogContent className={styles.content}>
+            <FormStack>
+              {snapshot?.warnings.map((warning) => (
+                <EmptyState key={warning} intent="warning" title={warning} />
+              ))}
+              {sections.map((section) => (
+                <Fragment key={section.title}>
+                  <Text size={300} weight="semibold" className={styles.heading}>
+                    {section.title}
                   </Text>
-                  <Text size={200} className={styles.value}>
-                    {row.value}
-                  </Text>
+                  <div className={styles.grid}>
+                    {section.rows.map((row) => (
+                      <Fragment key={`${section.title}:${row.label}`}>
+                        <Text size={200} className={styles.label}>
+                          {row.label}
+                        </Text>
+                        <Text size={200} className={styles.value}>
+                          {row.value}
+                        </Text>
+                      </Fragment>
+                    ))}
+                  </div>
                 </Fragment>
               ))}
-            </div>
+              {loading && !snapshot ? <Text size={200}>Reading the session...</Text> : null}
+            </FormStack>
           </DialogContent>
           <DialogActions>
             <CopyButton
-              text={rows.map((row) => `${row.label}: ${row.value}`).join('\n')}
-              label="Copy all"
-              successMessage="Environment details copied"
+              text={snapshotToMarkdown(sections)}
+              label="Copy as Markdown"
+              successMessage="Environment and session details copied"
             />
             <Button appearance="primary" onClick={onClose}>
               Close

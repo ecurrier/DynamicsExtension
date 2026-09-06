@@ -10,12 +10,15 @@ export interface PluginStepsState {
   stateFilter: StepStateFilter
   checkedIds: Set<string>
   openItems: string[]
+  focusStepId: string | null
   setConnection: (connection: ConnectionTarget) => void
   setFilter: (filter: string) => void
   setStateFilter: (stateFilter: StepStateFilter) => void
   setChecked: (ids: string[], checked: boolean) => void
   clearChecked: () => void
   setOpenItems: (openItems: string[]) => void
+  focusStep: (step: { id: string; name: string }, connection: ConnectionTarget) => void
+  clearFocus: () => void
 }
 
 export const usePluginStepsStore = create<PluginStepsState>()((set) => ({
@@ -24,8 +27,9 @@ export const usePluginStepsStore = create<PluginStepsState>()((set) => ({
   stateFilter: 'all',
   checkedIds: new Set(),
   openItems: [],
-  setConnection: (connection) => set({ connection, checkedIds: new Set(), openItems: [] }),
-  setFilter: (filter) => set({ filter }),
+  focusStepId: null,
+  setConnection: (connection) => set({ connection, checkedIds: new Set(), openItems: [], focusStepId: null }),
+  setFilter: (filter) => set({ filter, focusStepId: null }),
   setStateFilter: (stateFilter) => set({ stateFilter }),
   setChecked: (ids, checked) =>
     set((state) => {
@@ -41,4 +45,14 @@ export const usePluginStepsStore = create<PluginStepsState>()((set) => ({
     }),
   clearChecked: () => set({ checkedIds: new Set() }),
   setOpenItems: (openItems) => set({ openItems }),
+  focusStep: (step, connection) =>
+    set({
+      connection,
+      filter: step.name,
+      stateFilter: 'all',
+      checkedIds: new Set([step.id]),
+      openItems: [],
+      focusStepId: step.id,
+    }),
+  clearFocus: () => set({ focusStepId: null }),
 }))

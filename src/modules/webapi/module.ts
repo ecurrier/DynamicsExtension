@@ -9,7 +9,7 @@ export const webApiModule: ModuleDefinition = {
   id: 'webapi',
   label: 'Web API',
   icon: Database20Regular,
-  order: 3,
+  order: 4,
   areas: [
     {
       id: 'webapi.update-fields',

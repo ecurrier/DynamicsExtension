@@ -1,9 +1,14 @@
 import {
+  type AdminModeResult,
   type AttributeMetadataBundle,
+  type AuditDetail,
+  type AuditDetailRequest,
   type BusinessUnit,
   type ChoiceMetadata,
   type ClearEnvironmentVariableValueRequest,
   type ClearLookupRequest,
+  type ColumnUsage,
+  type ColumnUsageRequest,
   type ControlDetails,
   type CurrentUser,
   type EntityInfo,
@@ -13,25 +18,40 @@ import {
   type EnvironmentDetails,
   type EnvironmentVariable,
   type EnvironmentVariableValueResult,
+  type FormDiagnostics,
   type GeneratedUrls,
   type NamedFetchXml,
   type PageContext,
+  type PageTarget,
   type PluginStep,
   type PluginStepStateChange,
   type PluginStepStateResult,
   type PluginTraceLog,
+  type RecordAccessReport,
+  type RecordAccessRequest,
+  type RecordCountRequest,
+  type RecordCounts,
+  type RecordHistory,
+  type RecordHistoryRequest,
   type RecordSearchRequest,
   type RecordSearchResult,
   type RecordValues,
+  type RestoreFormStateRequest,
+  type RestoreFormStateResult,
   type RetrievePageRequest,
   type RetrievePageResult,
   type RoleChangeSet,
   type SavedView,
   type SecurityRole,
+  type SessionSnapshot,
   type SetEnvironmentVariableValueRequest,
   type Solution,
+  type SolutionLayerRequest,
+  type SolutionLayers,
   type SystemForm,
   type SystemUser,
+  type TableAutomation,
+  type TableMetadata,
   type TraceDeleteResult,
   type TraceLogSetting,
   type TraceQuery,
@@ -51,7 +71,10 @@ export interface CommandMap {
   'utilities.generateUrls': { args: void; result: GeneratedUrls }
   'utilities.getWebApiUrl': { args: void; result: string }
   'utilities.toggleControlLogicalNames': { args: void; result: { mode: 'logical' | 'label' } }
-  'utilities.enableAdminMode': { args: void; result: void }
+  'utilities.enableAdminMode': { args: void; result: AdminModeResult }
+  'utilities.restoreFormState': { args: RestoreFormStateRequest; result: RestoreFormStateResult }
+  'utilities.getSessionSnapshot': { args: void; result: SessionSnapshot }
+  'utilities.getPageTarget': { args: void; result: PageTarget }
   'utilities.getChoiceMetadata': { args: void; result: ChoiceMetadata }
   'utilities.getControlDetails': { args: void; result: ControlDetails }
   'templates.captureFormValues': { args: void; result: Record<string, unknown> }
@@ -69,6 +92,7 @@ export interface CommandMap {
   'forms.getForms': { args: void; result: SystemForm[] }
   'forms.getFormXml': { args: { formId: string }; result: string }
   'forms.updateFormXml': { args: UpdateFormXmlRequest; result: void }
+  'forms.getFormDiagnostics': { args: void; result: FormDiagnostics }
   'traces.query': { args: TraceQuery; result: PluginTraceLog[] }
   'traces.delete': { args: { ids: string[] }; result: TraceDeleteResult }
   'traces.getSetting': { args: void; result: TraceLogSetting }
@@ -93,6 +117,16 @@ export interface CommandMap {
   'transport.listViews': { args: { entityLogicalName: string }; result: SavedView[] }
   'transport.getEntityMetadata': { args: { logicalName: string }; result: TransportEntityMetadata }
   'transport.retrievePage': { args: RetrievePageRequest; result: RetrievePageResult }
+  'investigate.getTableAutomation': { args: { entityLogicalName: string }; result: TableAutomation }
+  'investigate.getRecordAccess': { args: RecordAccessRequest; result: RecordAccessReport }
+  'investigate.getRecordHistory': { args: RecordHistoryRequest; result: RecordHistory }
+  'investigate.getAuditDetail': { args: AuditDetailRequest; result: AuditDetail }
+  'investigate.getSolutionLayers': { args: SolutionLayerRequest; result: SolutionLayers }
+  'investigate.getColumnUsage': { args: ColumnUsageRequest; result: ColumnUsage }
+  'investigate.getTableMetadata': { args: { entityLogicalName: string }; result: TableMetadata }
+  'investigate.getRecordCounts': { args: RecordCountRequest; result: RecordCounts }
+  'investigate.listTables': { args: void; result: EntitySummary[] }
+  'investigate.getTableColumns': { args: { entityLogicalName: string }; result: TransportEntityMetadata }
 }
 
 export type CommandName = keyof CommandMap

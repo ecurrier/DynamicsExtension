@@ -30,6 +30,7 @@ export interface NamedFetchXml {
 export interface GeneratedUrl {
   name: string
   url: string
+  group?: string
 }
 
 export interface GeneratedUrls {

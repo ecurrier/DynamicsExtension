@@ -8,7 +8,7 @@ export const templatesModule: ModuleDefinition = {
   id: 'templates',
   label: 'Templates',
   icon: DocumentCopy20Regular,
-  order: 2,
+  order: 3,
   areas: [
     {
       id: 'templates.templates',

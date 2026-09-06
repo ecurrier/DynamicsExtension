@@ -1,6 +1,10 @@
 # Power Tools for Power Platform / Dynamics 365
 
-Browser extension (Manifest V3) with productivity utilities for model-driven apps and Power Pages: admin shortcuts, Fetch XML and URL generation, choice code snippets, form templates, Web API field updates and queries, and security role management.
+Browser extension (Manifest V3) with productivity utilities for model-driven apps and Power Pages.
+
+**Do things:** admin shortcuts, Fetch XML and URL generation, choice code snippets, form templates, Web API field updates and queries, security role management, plug-in step and environment variable management, and record transport between environments.
+
+**Understand things:** read-only investigation tools that answer *why* the platform is behaving as it is — what automation runs on a table, why a user can or cannot see a record, what changed on a record and when, which solution layer is winning, what depends on a column (including cloud flows), and which scripts and control states are in play on the open form.
 
 Built with [WXT](https://wxt.dev), React, TypeScript, Fluent UI v9, TanStack Query, Zustand, and CodeMirror 6.
 

@@ -26,6 +26,15 @@ const COMMAND_TIMEOUTS: Partial<Record<CommandName, number>> = {
   'transport.listEntities': 90_000,
   'transport.getEntityMetadata': 90_000,
   'transport.retrievePage': 120_000,
+  'investigate.getTableAutomation': 90_000,
+  'investigate.getRecordAccess': 90_000,
+  'investigate.getRecordHistory': 90_000,
+  'investigate.getColumnUsage': 180_000,
+  'investigate.getTableMetadata': 90_000,
+  'investigate.getRecordCounts': 120_000,
+  'investigate.listTables': 90_000,
+  'investigate.getTableColumns': 90_000,
+  'forms.getFormDiagnostics': 60_000,
 }
 
 const bridgeThunk = (name: string, args: unknown) => window.__powerTools?.invoke(name as never, args as never)

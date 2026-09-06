@@ -4,6 +4,9 @@ import {
   Dropdown,
   Input,
   makeStyles,
+  MessageBar,
+  MessageBarActions,
+  MessageBarBody,
   Option,
   Spinner,
   Switch,
@@ -113,6 +116,8 @@ export const PluginStepsArea = () => {
     setChecked,
     clearChecked,
     setOpenItems,
+    focusStepId,
+    clearFocus,
   } = usePluginStepsStore()
   const gateway = usePluginStepsGateway(connection)
   const connect = useAsyncAction('Could not switch connection')
@@ -269,6 +274,24 @@ export const PluginStepsArea = () => {
           />
         </Tooltip>
       </AreaToolbar>
+      {focusStepId ? (
+        <MessageBar intent="info">
+          <MessageBarBody>Showing the one step you opened from Table Automation, already ticked.</MessageBarBody>
+          <MessageBarActions>
+            <Button
+              size="small"
+              appearance="transparent"
+              onClick={() => {
+                setFilter('')
+                clearChecked()
+                clearFocus()
+              }}
+            >
+              Show all steps
+            </Button>
+          </MessageBarActions>
+        </MessageBar>
+      ) : null}
       {steps.isError ? <Text size={200}>{steps.error.message}</Text> : null}
       {steps.isLoading ? <Spinner size="small" label="Loading plug-in steps..." labelPosition="after" /> : null}
       {steps.isSuccess && groups.length === 0 ? (

@@ -10,7 +10,7 @@ export const settingsModule: ModuleDefinition = {
   id: 'settings',
   label: 'Settings',
   icon: Settings20Regular,
-  order: 11,
+  order: 12,
   areas: [
     {
       id: 'settings.environments',

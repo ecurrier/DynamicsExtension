@@ -1,6 +1,7 @@
 import { environmentVariablesModule } from './environmentvariables'
 import { formsModule } from './forms'
 import { impersonationModule } from './impersonation'
+import { investigateModule } from './investigate'
 import { pluginStepsModule } from './pluginsteps'
 import { pluginTracesModule } from './plugintraces'
 import { securityModule } from './security'
@@ -13,6 +14,7 @@ import { webApiModule } from './webapi'
 
 export const modules: ModuleDefinition[] = [
   utilitiesModule,
+  investigateModule,
   templatesModule,
   webApiModule,
   formsModule,

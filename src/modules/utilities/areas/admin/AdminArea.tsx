@@ -2,6 +2,7 @@ import {
   ArrowSync20Regular,
   DocumentEdit20Regular,
   Info20Regular,
+  Layer20Regular,
   Link20Regular,
   LockOpen20Regular,
   Rename20Regular,
@@ -15,11 +16,22 @@ import { useExtensionSettings } from '@/modules/settings'
 import { TaskCard, TaskGrid, useAppToast, useSelectDialog } from '@/shared/components'
 import { openUrl } from '@/shared/extension'
 import { useAsyncAction } from '@/shared/hooks'
-import { type EnvironmentDetails, type GeneratedUrls } from '@/shared/types'
+import {
+  type AdminModeResult,
+  type EnvironmentDetails,
+  type GeneratedUrls,
+  type SessionSnapshot,
+  type SolutionLayers,
+} from '@/shared/types'
 
-import { EnvironmentDetailsDialog, UrlDialog } from '../../dialogs'
+import { AdminModeDialog, EnvironmentDetailsDialog, SolutionLayersDialog, UrlDialog } from '../../dialogs'
 import { useEnvironmentPicker } from '../../hooks'
 import { adminCenterUrl, controlEditorUrl, DEFAULT_SOLUTION_ID, makerPortalUrl } from '../../lib'
+
+const COMPONENT_NAMES: Record<string, string> = {
+  'form/edit': 'SystemForm',
+  view: 'SavedQuery',
+}
 
 export const AdminArea = () => {
   const toast = useAppToast()
@@ -29,9 +41,21 @@ export const AdminArea = () => {
   const { settings } = useExtensionSettings()
   const [urls, setUrls] = useState<GeneratedUrls | null>(null)
   const [details, setDetails] = useState<EnvironmentDetails | null>(null)
+  const [snapshot, setSnapshot] = useState<SessionSnapshot | null>(null)
+  const [adminModeResult, setAdminModeResult] = useState<AdminModeResult | null>(null)
+  const [layers, setLayers] = useState<SolutionLayers | null>(null)
 
   const adminMode = usePageMutation('utilities.enableAdminMode', {
-    onSuccess: () => toast.success('Admin mode enabled'),
+    onSuccess: (result) => {
+      setAdminModeResult(result)
+      toast.success('Admin mode enabled')
+    },
+  })
+  const restoreForm = usePageMutation('utilities.restoreFormState', {
+    onSuccess: (result) => {
+      setAdminModeResult(null)
+      toast.success(`Restored ${result.restored} control${result.restored === 1 ? '' : 's'}`)
+    },
   })
   const logicalNames = usePageMutation('utilities.toggleControlLogicalNames', {
     onSuccess: (result) =>
@@ -46,6 +70,7 @@ export const AdminArea = () => {
   const adminCenter = useAsyncAction('Could not open the admin center')
   const controlEditor = useAsyncAction('Could not open the control editor')
   const environmentDetails = useAsyncAction('Could not load environment details')
+  const solutionLayers = useAsyncAction('Could not read the solution layers')
 
   const openMakerPortal = () =>
     makerPortal.run(async () => {
@@ -87,7 +112,25 @@ export const AdminArea = () => {
 
   const showEnvironmentDetails = () =>
     environmentDetails.run(async () => {
+      setSnapshot(null)
       setDetails(await fetchPage('settings.getEnvironmentDetails', undefined))
+      setSnapshot(await fetchPage('utilities.getSessionSnapshot', undefined, { fresh: true }))
+    })
+
+  const showSolutionLayers = () =>
+    solutionLayers.run(async () => {
+      const control = await controlDetails.mutateAsync(undefined)
+      const solutionComponentName = COMPONENT_NAMES[control.controlType]
+      if (!solutionComponentName) {
+        throw new Error('Solution layers are only available for a form or a view')
+      }
+      setLayers(
+        await fetchPage(
+          'investigate.getSolutionLayers',
+          { componentId: control.id, solutionComponentName },
+          { fresh: true },
+        ),
+      )
     })
 
   return (
@@ -95,7 +138,7 @@ export const AdminArea = () => {
       <TaskGrid>
         <TaskCard
           title="Enable Admin Mode"
-          description="Show and enable every field, tab, and section on the form and remove field requirements."
+          description="Unlock every field, tab, and section, and report which of them were hidden, read-only, or required."
           icon={LockOpen20Regular}
           loading={adminMode.isPending}
           onAction={() => adminMode.mutate(undefined)}
@@ -108,11 +151,19 @@ export const AdminArea = () => {
           onAction={() => logicalNames.mutate(undefined)}
         />
         <TaskCard
-          title="Generate Record URL"
-          description="Build record links for the current form or view, including lookups."
+          title="Record Links & Debug Flags"
+          description="Build record links, the Web API URL, and one-click command checker, form monitor, and perf URLs."
           icon={Link20Regular}
           loading={generateUrls.isPending}
           onAction={() => generateUrls.mutate(undefined)}
+        />
+        <TaskCard
+          title="Solution Layers"
+          description="Show the layer stack for the current form or view and flag an unmanaged layer sitting on top."
+          icon={Layer20Regular}
+          actionLabel="Show"
+          loading={solutionLayers.running}
+          onAction={() => void showSolutionLayers()}
         />
         <TaskCard
           title="Refresh Command Bar"
@@ -146,8 +197,8 @@ export const AdminArea = () => {
           onAction={() => void openAdminCenter()}
         />
         <TaskCard
-          title="Environment Details"
-          description="Show details about the current Dataverse environment."
+          title="Environment & Session"
+          description="Environment, current user, org diagnostic switches, and page context — copyable for a ticket."
           icon={Info20Regular}
           actionLabel="Show"
           loading={environmentDetails.running}
@@ -155,7 +206,22 @@ export const AdminArea = () => {
         />
       </TaskGrid>
       <UrlDialog urls={urls} onClose={() => setUrls(null)} />
-      <EnvironmentDetailsDialog details={details} onClose={() => setDetails(null)} />
+      <EnvironmentDetailsDialog
+        details={details}
+        snapshot={snapshot}
+        loading={environmentDetails.running}
+        onClose={() => {
+          setDetails(null)
+          setSnapshot(null)
+        }}
+      />
+      <AdminModeDialog
+        result={adminModeResult}
+        restoring={restoreForm.isPending}
+        onRestore={() => adminModeResult && restoreForm.mutate({ snapshot: adminModeResult.snapshot })}
+        onClose={() => setAdminModeResult(null)}
+      />
+      <SolutionLayersDialog layers={layers} onClose={() => setLayers(null)} />
     </>
   )
 }

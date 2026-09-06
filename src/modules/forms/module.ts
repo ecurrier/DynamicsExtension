@@ -8,7 +8,7 @@ export const formsModule: ModuleDefinition = {
   id: 'forms',
   label: 'Forms',
   icon: DocumentTable20Regular,
-  order: 4,
+  order: 5,
   areas: [
     {
       id: 'forms.xml',
