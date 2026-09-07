@@ -25,7 +25,7 @@ const describeState = (control: CapturedControlState): { state: string; severe: 
 }
 
 export const adminModeFindings = (result: AdminModeResult): AdminModeFinding[] =>
-  result.snapshot
+  result.snapshot.controls
     .filter((control) => !control.visible || control.disabled || control.requiredLevel !== 'none')
     .map((control) => {
       const { state, severe } = describeState(control)

@@ -13,12 +13,12 @@ const control = (overrides: Partial<CapturedControlState>): CapturedControlState
   ...overrides,
 })
 
-const result = (snapshot: CapturedControlState[]): AdminModeResult => ({
-  total: snapshot.length,
-  hidden: snapshot.filter((entry) => !entry.visible),
-  disabled: snapshot.filter((entry) => entry.disabled),
-  required: snapshot.filter((entry) => entry.requiredLevel === 'required'),
-  snapshot,
+const result = (controls: CapturedControlState[]): AdminModeResult => ({
+  total: controls.length,
+  hidden: controls.filter((entry) => !entry.visible),
+  disabled: controls.filter((entry) => entry.disabled),
+  required: controls.filter((entry) => entry.requiredLevel === 'required'),
+  snapshot: { entityLogicalName: 'account', formId: null, controls },
 })
 
 describe('adminModeFindings', () => {

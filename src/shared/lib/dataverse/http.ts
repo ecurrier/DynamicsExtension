@@ -14,6 +14,7 @@ export interface DataverseHttpOptions {
   origin: string
   headers?: () => Promise<Record<string, string>> | Record<string, string>
   fetchImpl?: typeof fetch
+  timeoutMs?: number
 }
 
 export const WEB_API_VERSION = 'v9.2'
@@ -39,8 +40,24 @@ export class DataverseHttpError extends Error {
   }
 }
 
-export const createDataverseHttp = ({ origin, headers, fetchImpl = fetch }: DataverseHttpOptions): DataverseHttp => {
+export class DataverseTimeoutError extends Error {
+  readonly timeoutMs: number
+
+  constructor(timeoutMs: number) {
+    super(`The request did not complete within ${Math.round(timeoutMs / 1000)} seconds`)
+    this.name = 'DataverseTimeoutError'
+    this.timeoutMs = timeoutMs
+  }
+}
+
+export const createDataverseHttp = ({
+  origin,
+  headers,
+  fetchImpl = fetch,
+  timeoutMs,
+}: DataverseHttpOptions): DataverseHttp => {
   const apiUrl = `${origin}/api/data/${WEB_API_VERSION}/`
+  const deadline = timeoutMs === undefined ? null : AbortSignal.timeout(timeoutMs)
   const request = async <T>(
     method: DataverseMethod,
     path: string,
@@ -58,6 +75,12 @@ export const createDataverseHttp = ({ origin, headers, fetchImpl = fetch }: Data
         ...extraHeaders,
       },
       body: body === undefined ? undefined : JSON.stringify(body),
+      ...(deadline ? { signal: deadline } : {}),
+    }).catch((error: unknown) => {
+      if (timeoutMs !== undefined && deadline?.aborted) {
+        throw new DataverseTimeoutError(timeoutMs)
+      }
+      throw error
     })
     if (!response.ok) {
       throw new DataverseHttpError(response.status, response.statusText, await response.text())

@@ -15,6 +15,7 @@ import { getCachedToken, setCachedToken } from './tokenCache'
 
 export interface EnvironmentHttpOptions {
   forceRefresh?: boolean
+  timeoutMs?: number
 }
 
 export const environmentOrigin = (environment: Environment): string => {
@@ -76,6 +77,7 @@ export const getEnvironmentHttp = async (
   let current: AccessToken | null = null
   return createDataverseHttp({
     origin,
+    timeoutMs: options.timeoutMs,
     headers: async () => {
       if (refresh || !isTokenValid(current)) {
         current = await resolveEnvironmentToken(environment, principal, refresh)

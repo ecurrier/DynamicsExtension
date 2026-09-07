@@ -14,7 +14,6 @@ import {
 } from '@fluentui/react-components'
 import { Checkmark20Regular, Person20Regular } from '@fluentui/react-icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useMemo } from 'react'
 
 import { useConnectableEnvironments, useExtensionSettings } from '@/modules/settings'
 import {
@@ -35,8 +34,8 @@ import { type RoleChangeSet, type SystemUser } from '@/shared/types'
 import { PendingChangesList } from './PendingChangesList'
 import { RoleTable } from './RoleTable'
 import { useSecurityGateway } from '../../hooks'
-import { hasChanges, roleDiff } from '../../lib'
-import { stagingKey, useSecurityStore } from '../../store'
+import { resolveBusinessUnitId, rolesViewModel } from '../../lib'
+import { useSecurityStore } from '../../store'
 
 const useStyles = makeStyles({
   body: {
@@ -74,42 +73,39 @@ export const RolesArea = () => {
 
   const businessUnits = useQuery({
     queryKey: gateway.key('getBusinessUnits'),
-    queryFn: gateway.getBusinessUnits,
+    queryFn: () => gateway.ops.getBusinessUnits(),
     enabled: gateway.ready,
     staleTime: Infinity,
     retry: false,
   })
   const allRoles = useQuery({
     queryKey: gateway.key('getSecurityRoles'),
-    queryFn: gateway.getSecurityRoles,
+    queryFn: () => gateway.ops.getSecurityRoles(),
     enabled: gateway.ready,
     staleTime: Infinity,
     retry: false,
   })
-  const businessUnitId =
-    selectedBusinessUnitId ?? (businessUnits.data?.length === 1 ? (businessUnits.data[0]?.id ?? null) : null)
+  const businessUnitId = resolveBusinessUnitId(selectedBusinessUnitId, businessUnits.data ?? [])
   const userRolesArgs = { systemUserId: selectedUser?.id ?? '', businessUnitId: businessUnitId ?? '' }
   const userRoles = useQuery({
     queryKey: gateway.key('getUserSecurityRoles', userRolesArgs),
-    queryFn: () => gateway.getUserSecurityRoles(userRolesArgs.systemUserId, userRolesArgs.businessUnitId),
+    queryFn: () => gateway.ops.getUserSecurityRoles(userRolesArgs),
     enabled: gateway.ready && !!selectedUser && !!businessUnitId,
     retry: false,
   })
 
-  const roles = useMemo(
-    () => (allRoles.data ?? []).filter((role) => role.businessUnitId === businessUnitId),
-    [allRoles.data, businessUnitId],
-  )
-  const assignedIds = useMemo(() => new Set((userRoles.data ?? []).map((role) => role.id)), [userRoles.data])
-  const key = stagingKey(selectedUser?.id, businessUnitId)
-  const stagedIds = useMemo(
-    () => new Set(staged?.key === key ? staged.roleIds : [...assignedIds]),
-    [assignedIds, key, staged],
-  )
-  const diff = roleDiff([...assignedIds], [...stagedIds])
+  const model = rolesViewModel({
+    selectedUser,
+    selectedBusinessUnitId,
+    businessUnits: businessUnits.data ?? [],
+    allRoles: allRoles.data ?? [],
+    userRoles: userRoles.data ?? [],
+    staged,
+    requireRemovalConfirmation: settings.securityRequireRemovalConfirmation,
+  })
 
   const search = useMutation({
-    mutationFn: (query: string) => gateway.searchSystemUsers(query),
+    mutationFn: (query: string) => gateway.ops.searchSystemUsers({ query }),
     onSuccess: (users) => {
       setSearchResults(users)
       selectUser(null)
@@ -117,7 +113,7 @@ export const RolesArea = () => {
     },
   })
   const apply = useMutation({
-    mutationFn: (changes: RoleChangeSet) => gateway.applySecurityRoleChanges(changes),
+    mutationFn: (changes: RoleChangeSet) => gateway.ops.applySecurityRoleChanges(changes),
     onSuccess: async (_, changes) => {
       await queryClient.invalidateQueries({
         queryKey: gateway.key('getUserSecurityRoles', {
@@ -125,7 +121,9 @@ export const RolesArea = () => {
           businessUnitId: businessUnitId ?? '',
         }),
       })
-      await queryClient.invalidateQueries({ queryKey: gateway.key('getCurrentUser') })
+      if (gateway.mode === 'page') {
+        await queryClient.invalidateQueries({ queryKey: gateway.key('getCurrentUser') })
+      }
       clearStaged()
       toast.success('Security role changes applied')
     },
@@ -135,10 +133,10 @@ export const RolesArea = () => {
 
   const onLoadMyUser = () =>
     loadMyUser.run(async () => {
-      if (!gateway.getCurrentUser) {
+      if (gateway.mode !== 'page') {
         return
       }
-      const current = await gateway.getCurrentUser()
+      const current = await gateway.ops.getCurrentUser()
       const user: SystemUser = {
         id: current.userId,
         fullName: current.userName,
@@ -167,11 +165,11 @@ export const RolesArea = () => {
     })
 
   const onApply = async () => {
-    if (!selectedUser || !hasChanges(diff)) {
+    if (!selectedUser || !model.changeSet || !model.hasChanges) {
       toast.info('No security role changes to apply')
       return
     }
-    if (diff.disassociate.length > 0 && settings.securityRequireRemovalConfirmation) {
+    if (model.needsRemovalConfirmation) {
       const confirmed = await confirm({
         title: 'Remove security roles?',
         content: (
@@ -189,11 +187,7 @@ export const RolesArea = () => {
         return
       }
     }
-    apply.mutate({
-      systemUserId: selectedUser.id,
-      associateRoleIds: diff.associate,
-      disassociateRoleIds: diff.disassociate,
-    })
+    apply.mutate(model.changeSet)
   }
 
   const businessUnitLabel = businessUnits.data?.find((unit) => unit.id === businessUnitId)?.name ?? ''
@@ -225,14 +219,14 @@ export const RolesArea = () => {
           </MenuTrigger>
           <MenuPopover>
             <MenuList>
-              {gateway.getCurrentUser ? (
+              {gateway.mode === 'page' ? (
                 <MenuItem icon={<Person20Regular />} disabled={loadMyUser.running} onClick={() => void onLoadMyUser()}>
                   Load My User
                 </MenuItem>
               ) : null}
               <MenuItem
                 icon={<Checkmark20Regular />}
-                disabled={!selectedUser || apply.isPending || !hasChanges(diff)}
+                disabled={apply.isPending || !model.canApply}
                 onClick={() => void onApply()}
               >
                 Apply Changes
@@ -251,16 +245,16 @@ export const RolesArea = () => {
       {loadError ? <Text size={200}>{loadError.message}</Text> : null}
       <div className={styles.body}>
         <RoleTable
-          roles={roles}
-          assignedIds={assignedIds}
-          stagedIds={stagedIds}
+          roles={model.roles}
+          assignedIds={model.assignedIds}
+          stagedIds={model.stagedIds}
           enabled={!!selectedUser && !!businessUnitId && userRoles.isSuccess}
-          onStagedChange={(roleIds) => setStaged(key, roleIds)}
+          onStagedChange={(roleIds) => setStaged(model.stagingKey, roleIds)}
         />
         <PendingChangesList
-          roles={roles}
-          assignedIds={assignedIds}
-          stagedIds={stagedIds}
+          roles={model.roles}
+          assignedIds={model.assignedIds}
+          stagedIds={model.stagedIds}
           userSelected={!!selectedUser}
         />
       </div>

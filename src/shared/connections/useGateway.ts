@@ -6,10 +6,15 @@ import { useSessionStore } from '@/shared/stores'
 import { createGateway, type Gateway, type GatewayDefinition, type GatewayOperations } from './gateway'
 import { type ConnectionTarget } from './types'
 
-export const useGateway = <NS extends string, K extends string, Ops extends GatewayOperations<NS, K>>(
-  definition: GatewayDefinition<NS, K, Ops>,
+export const useGateway = <
+  NS extends string,
+  K extends string,
+  PK extends string,
+  Ops extends GatewayOperations<NS, K>,
+>(
+  definition: GatewayDefinition<NS, K, PK, Ops>,
   connection: ConnectionTarget,
-): Gateway<Ops, K> => {
+): Gateway<NS, K, PK> => {
   const tabId = useSessionStore((state) => state.tabId)
   const bridgeStatus = useSessionStore((state) => state.bridgeStatus)
   const environments = useStorageItem(environmentsItem)

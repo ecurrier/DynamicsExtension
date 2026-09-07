@@ -10,6 +10,10 @@ export const getXrm = (): Xrm.XrmStatic => {
   return xrm
 }
 
+export const requireModelDrivenApp = (): void => {
+  getXrm()
+}
+
 const getPage = (): Xrm.Page | null => (window.Xrm?.Page as Xrm.Page | undefined) ?? null
 
 export const getPageKind = (): PageKind => {

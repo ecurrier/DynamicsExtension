@@ -8,6 +8,7 @@ import {
   getFormContext,
   getXrm,
   labelText,
+  requireModelDrivenApp,
   retrieveMultiple,
   retrieveMultipleOData,
 } from '@/page/xrm'
@@ -202,16 +203,16 @@ export const webApiHandlers = defineHandlers({
     })
   },
   'webapi.getEntityInfo': ({ logicalName }) => {
-    getXrm()
+    requireModelDrivenApp()
     return getEntityInfo(requireIdentifier(logicalName, 'Table name'))
   },
   'webapi.searchRecords': async ({ entityLogicalName, query, top }) => {
-    getXrm()
+    requireModelDrivenApp()
     const info = await getEntityInfo(requireIdentifier(entityLogicalName, 'Table name'))
     return searchRecords(info, query, Math.min(Math.max(1, Math.trunc(top)), 100))
   },
   'webapi.executeFetchXml': async ({ fetchXml }) => {
-    getXrm()
+    requireModelDrivenApp()
     return retrieveMultiple(extractEntityName(fetchXml), fetchXml)
   },
 })

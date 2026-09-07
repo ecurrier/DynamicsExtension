@@ -1,6 +1,12 @@
 import { browser } from 'wxt/browser'
 
-import { type CommandArgs, type CommandEnvelope, type CommandName, type CommandResult } from '@/messaging/contract'
+import {
+  ALERT_COMMAND_TIMEOUT_MS,
+  type CommandArgs,
+  type CommandEnvelope,
+  type CommandName,
+  type CommandResult,
+} from '@/messaging/contract'
 
 import { ensurePageBridge } from './ensurePageBridge'
 import { PageCommandError } from './PageCommandError'
@@ -22,7 +28,8 @@ const COMMAND_TIMEOUTS: Partial<Record<CommandName, number>> = {
   'environmentVariables.setValue': 60_000,
   'pluginSteps.getSteps': 90_000,
   'pluginSteps.setState': 120_000,
-  'global.showEnvironmentAlert': 60_000,
+  'global.showEnvironmentAlert': ALERT_COMMAND_TIMEOUT_MS,
+  'global.clearEnvironmentAlert': ALERT_COMMAND_TIMEOUT_MS,
   'transport.listEntities': 90_000,
   'transport.getEntityMetadata': 90_000,
   'transport.retrievePage': 120_000,

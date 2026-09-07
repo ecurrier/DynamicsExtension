@@ -1,7 +1,7 @@
+import { APP_WAIT_MS } from '@/messaging/contract'
 import { defineHandlers } from '@/messaging/page'
 import { type EnvironmentAlertRequest, type EnvironmentAlertResult } from '@/shared/types'
 
-const APP_WAIT_MS = 45_000
 const APP_POLL_MS = 500
 
 const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))

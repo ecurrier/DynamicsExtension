@@ -41,8 +41,8 @@ describe('securityOperations', () => {
       },
     })
     const operations = securityOperations(http)
-    await expect(operations.searchSystemUsers('  ')).rejects.toBeInstanceOf(DataverseOperationError)
-    await expect(operations.searchSystemUsers('ja%ne')).resolves.toEqual([
+    await expect(operations.searchSystemUsers({ query: '  ' })).rejects.toBeInstanceOf(DataverseOperationError)
+    await expect(operations.searchSystemUsers({ query: 'ja%ne' })).resolves.toEqual([
       { id: USER, fullName: 'Jane', azureAdObjectId: ROLE_B, domainName: 'jane@contoso.com', isDisabled: false },
       { id: UNIT, fullName: 'App User', azureAdObjectId: null, domainName: null, isDisabled: true },
     ])
@@ -51,8 +51,12 @@ describe('securityOperations', () => {
 
   it('checks business unit membership before loading user roles', async () => {
     const { http } = createFakeHttp({ systemusers: { value: [] } })
-    await expect(securityOperations(http).getUserSecurityRoles(USER, UNIT)).rejects.toMatchObject({ code: 'NotFound' })
-    await expect(securityOperations(http).getUserSecurityRoles('nope', UNIT)).rejects.toMatchObject({
+    await expect(
+      securityOperations(http).getUserSecurityRoles({ systemUserId: USER, businessUnitId: UNIT }),
+    ).rejects.toMatchObject({ code: 'NotFound' })
+    await expect(
+      securityOperations(http).getUserSecurityRoles({ systemUserId: 'nope', businessUnitId: UNIT }),
+    ).rejects.toMatchObject({
       code: 'InvalidArgument',
     })
   })
@@ -61,13 +65,13 @@ describe('securityOperations', () => {
     const { http, calls } = createFakeHttp({
       'roles?fetchXml': { value: [{ roleid: ROLE_A, name: 'Admin', _businessunitid_value: UNIT }] },
     })
-    await expect(securityOperations(http).getSystemUserRoles(USER)).resolves.toEqual([
+    await expect(securityOperations(http).getSystemUserRoles({ systemUserId: USER })).resolves.toEqual([
       { id: ROLE_A, name: 'Admin', businessUnitId: UNIT },
     ])
     const fetchXml = decodeURIComponent(calls[0]?.path ?? '')
     expect(fetchXml).toContain(`<condition attribute="systemuserid" operator="eq" value="${USER}" />`)
     expect(fetchXml).not.toContain('attribute="businessunitid" operator')
-    await expect(securityOperations(http).getSystemUserRoles('nope')).rejects.toMatchObject({
+    await expect(securityOperations(http).getSystemUserRoles({ systemUserId: 'nope' })).rejects.toMatchObject({
       code: 'InvalidArgument',
     })
   })

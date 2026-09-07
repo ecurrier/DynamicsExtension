@@ -337,16 +337,25 @@ export interface CapturedControlState {
   requiredLevel: string
 }
 
+declare const formStateSnapshotBrand: unique symbol
+
+export interface FormStateSnapshot {
+  readonly [formStateSnapshotBrand]?: 'FormStateSnapshot'
+  entityLogicalName: string
+  formId: string | null
+  controls: CapturedControlState[]
+}
+
 export interface AdminModeResult {
   total: number
   hidden: CapturedControlState[]
   disabled: CapturedControlState[]
   required: CapturedControlState[]
-  snapshot: CapturedControlState[]
+  snapshot: FormStateSnapshot
 }
 
 export interface RestoreFormStateRequest {
-  snapshot: CapturedControlState[]
+  snapshot: FormStateSnapshot
 }
 
 export interface RestoreFormStateResult {

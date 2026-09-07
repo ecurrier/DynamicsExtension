@@ -22,9 +22,6 @@ export interface SecurityState {
   clearStaged: () => void
 }
 
-export const stagingKey = (userId: string | null | undefined, businessUnitId: string | null | undefined): string =>
-  `${userId ?? ''}:${businessUnitId ?? ''}`
-
 export const useSecurityStore = create<SecurityState>()((set) => ({
   connection: PAGE_CONNECTION,
   selectedBusinessUnitId: null,

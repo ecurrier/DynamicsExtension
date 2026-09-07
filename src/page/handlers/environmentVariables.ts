@@ -1,9 +1,9 @@
 import { defineHandlers } from '@/messaging/page'
-import { getXrm, pageHttp, runOperation } from '@/page/xrm'
+import { pageHttp, requireModelDrivenApp, runOperation } from '@/page/xrm'
 import { environmentVariableOperations } from '@/shared/lib'
 
 const operations = () => {
-  getXrm()
+  requireModelDrivenApp()
   return environmentVariableOperations(pageHttp())
 }
 

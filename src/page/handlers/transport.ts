@@ -1,11 +1,11 @@
 import { defineHandlers } from '@/messaging/page'
-import { getXrm, pageHttp, runOperation } from '@/page/xrm'
+import { pageHttp, requireModelDrivenApp, runOperation } from '@/page/xrm'
 import { transportOperations } from '@/shared/lib'
 
 const MAX_PAGE_SIZE = 1000
 
 const operations = () => {
-  getXrm()
+  requireModelDrivenApp()
   return transportOperations(pageHttp())
 }
 

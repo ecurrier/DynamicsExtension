@@ -19,13 +19,8 @@ import { type EntitySummary } from '@/shared/types'
 
 import { InvestigateConnection } from '../../components'
 import { useInvestigateGateway } from '../../hooks'
+import { type CountRow, recordCountsViewModel } from '../../lib'
 import { useInvestigateStore } from '../../store'
-
-interface CountRow {
-  logicalName: string
-  displayName: string
-  count: number
-}
 
 const useStyles = makeStyles({
   caption: {
@@ -61,24 +56,10 @@ export const RecordCountsArea = () => {
     onError: (error) => toast.error('Could not read row counts', error),
   })
 
-  const rows = useMemo<CountRow[]>(() => {
-    const names = new Map((tables.data ?? []).map((table) => [table.logicalName, table.displayName]))
-    return (counts.data?.counts ?? []).map((count) => ({
-      logicalName: count.entityLogicalName,
-      displayName: names.get(count.entityLogicalName) ?? count.entityLogicalName,
-      count: count.count,
-    }))
-  }, [counts.data, tables.data])
-
-  const filtered = useMemo(() => {
-    const term = filter.trim().toLowerCase()
-    if (!term) {
-      return rows
-    }
-    return rows.filter((row) => row.logicalName.includes(term) || row.displayName.toLowerCase().includes(term))
-  }, [rows, filter])
-
-  const total = useMemo(() => rows.reduce((sum, row) => sum + row.count, 0), [rows])
+  const model = useMemo(
+    () => recordCountsViewModel(tables.data ?? [], counts.data ?? null, filter),
+    [tables.data, counts.data, filter],
+  )
 
   const columns = useMemo<DataTableColumn<CountRow>[]>(
     () => [
@@ -116,7 +97,7 @@ export const RecordCountsArea = () => {
             placeholder="Filter tables..."
             value={filter}
             onChange={(_, data) => setFilter(data.value)}
-            disabled={rows.length === 0}
+            disabled={model.rows.length === 0}
           />
         </Grow>
         <Button
@@ -129,7 +110,7 @@ export const RecordCountsArea = () => {
         </Button>
       </AreaToolbar>
       {tables.isError ? <EmptyState intent="error" title={tables.error.message} /> : null}
-      {rows.length === 0 ? (
+      {model.rows.length === 0 ? (
         <EmptyState intent="info" title="Load row counts to see what is actually big in this environment.">
           The platform returns these from a snapshot taken within the last 24 hours, so a row you created a moment ago
           will not be reflected yet.
@@ -137,15 +118,15 @@ export const RecordCountsArea = () => {
       ) : (
         <>
           <DataTable
-            items={filtered}
+            items={model.filtered}
             columns={columns}
             getRowId={(row) => row.logicalName}
             maxHeight="360px"
             pageSize={100}
-            emptyMessage="No tables match the filter"
+            emptyMessage={model.emptyMessage}
           />
           <Text size={200} className={styles.caption}>
-            {`${filtered.length} of ${rows.length} tables · ${total.toLocaleString()} rows in total`}
+            {`${model.filtered.length} of ${model.rows.length} tables · ${model.total.toLocaleString()} rows in total`}
             {counts.data && counts.data.missing.length > 0
               ? ` · ${counts.data.missing.length} table(s) returned no count`
               : ''}

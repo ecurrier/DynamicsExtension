@@ -29,6 +29,8 @@ const factory = vi.fn((http: DataverseHttp) => ({
 const definition = defineGateway({
   namespace: 'security',
   operations: ['getSecurityRoles', 'searchSystemUsers'],
+  pageOnly: ['getCurrentUser'],
+  excluded: ['getBusinessUnits', 'getUserSecurityRoles', 'getSystemUserRoles', 'applySecurityRoleChanges'],
   factory,
   timeouts: { searchSystemUsers: 5_000 },
 })
@@ -69,7 +71,7 @@ describe('createGateway', () => {
     const gateway = createGateway(definition, { kind: 'environment', environment })
     await expect(gateway.ops.getSecurityRoles()).resolves.toEqual([{ ...ROLE, name: 'https://env' }])
     await expect(gateway.ops.searchSystemUsers({ query: 'jo' })).resolves.toEqual([{ ...USER, fullName: 'jo' }])
-    expect(mocks.getEnvironmentHttp).toHaveBeenCalledWith(environment)
+    expect(mocks.getEnvironmentHttp).toHaveBeenCalledWith(environment, { timeoutMs: undefined })
     expect(gateway.key('getSecurityRoles')).toEqual(['connection', 'env-1', 'security.getSecurityRoles', null])
     expect(gateway.environment).toBe(environment)
   })
@@ -78,5 +80,28 @@ describe('createGateway', () => {
     const gateway = createGateway(definition, { kind: 'missing' })
     expect(gateway.ready).toBe(false)
     await expect(gateway.ops.getSecurityRoles()).rejects.toThrow('The selected environment no longer exists')
+  })
+
+  it('applies the declared timeout to environment operations', async () => {
+    const gateway = createGateway(definition, { kind: 'environment', environment })
+    await gateway.ops.searchSystemUsers({ query: 'jo' })
+    expect(mocks.getEnvironmentHttp).toHaveBeenLastCalledWith(environment, { timeoutMs: 5_000 })
+  })
+
+  it('exposes page-only operations in page mode', async () => {
+    const gateway = createGateway(definition, { kind: 'page', tabId: 7, ready: true })
+    expect(gateway.mode).toBe('page')
+    if (gateway.mode !== 'page') {
+      return
+    }
+    await gateway.ops.getCurrentUser()
+    expect(mocks.invoke).toHaveBeenLastCalledWith(7, 'security.getCurrentUser', undefined, { timeoutMs: undefined })
+  })
+
+  it('omits page-only operations from environment and missing gateways', () => {
+    const withEnvironment = createGateway(definition, { kind: 'environment', environment })
+    const withoutEnvironment = createGateway(definition, { kind: 'missing' })
+    expect(Object.keys(withEnvironment.ops)).toEqual(['getSecurityRoles', 'searchSystemUsers'])
+    expect(Object.keys(withoutEnvironment.ops)).toEqual(['getSecurityRoles', 'searchSystemUsers'])
   })
 })

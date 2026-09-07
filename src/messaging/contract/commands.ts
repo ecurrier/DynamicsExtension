@@ -61,74 +61,83 @@ import {
 } from '@/shared/types'
 
 export interface CommandMap {
-  'global.getPageContext': { args: void; result: PageContext | null }
-  'global.getSolutions': { args: void; result: Solution[] }
-  'global.showEnvironmentAlert': { args: EnvironmentAlertRequest; result: EnvironmentAlertResult }
-  'global.clearEnvironmentAlert': { args: void; result: void }
-  'settings.getEnvironmentDetails': { args: void; result: EnvironmentDetails }
-  'utilities.refreshCommandBar': { args: void; result: void }
-  'utilities.generateFetchXml': { args: void; result: NamedFetchXml[] }
-  'utilities.generateUrls': { args: void; result: GeneratedUrls }
-  'utilities.getWebApiUrl': { args: void; result: string }
-  'utilities.toggleControlLogicalNames': { args: void; result: { mode: 'logical' | 'label' } }
-  'utilities.enableAdminMode': { args: void; result: AdminModeResult }
-  'utilities.restoreFormState': { args: RestoreFormStateRequest; result: RestoreFormStateResult }
-  'utilities.getSessionSnapshot': { args: void; result: SessionSnapshot }
-  'utilities.getPageTarget': { args: void; result: PageTarget }
-  'utilities.getChoiceMetadata': { args: void; result: ChoiceMetadata }
-  'utilities.getControlDetails': { args: void; result: ControlDetails }
-  'templates.captureFormValues': { args: void; result: Record<string, unknown> }
+  'global.getPageContext': { args: void; result: PageContext | null; kind: 'query' }
+  'global.getSolutions': { args: void; result: Solution[]; kind: 'query' }
+  'global.showEnvironmentAlert': { args: EnvironmentAlertRequest; result: EnvironmentAlertResult; kind: 'mutation' }
+  'global.clearEnvironmentAlert': { args: void; result: void; kind: 'mutation' }
+  'settings.getEnvironmentDetails': { args: void; result: EnvironmentDetails; kind: 'query' }
+  'utilities.refreshCommandBar': { args: void; result: void; kind: 'mutation' }
+  'utilities.generateFetchXml': { args: void; result: NamedFetchXml[]; kind: 'query' }
+  'utilities.generateUrls': { args: void; result: GeneratedUrls; kind: 'query' }
+  'utilities.getWebApiUrl': { args: void; result: string; kind: 'query' }
+  'utilities.toggleControlLogicalNames': { args: void; result: { mode: 'logical' | 'label' }; kind: 'mutation' }
+  'utilities.enableAdminMode': { args: void; result: AdminModeResult; kind: 'mutation' }
+  'utilities.restoreFormState': { args: RestoreFormStateRequest; result: RestoreFormStateResult; kind: 'mutation' }
+  'utilities.getSessionSnapshot': { args: void; result: SessionSnapshot; kind: 'query' }
+  'utilities.getPageTarget': { args: void; result: PageTarget; kind: 'query' }
+  'utilities.getChoiceMetadata': { args: void; result: ChoiceMetadata; kind: 'query' }
+  'utilities.getControlDetails': { args: void; result: ControlDetails; kind: 'query' }
+  'templates.captureFormValues': { args: void; result: Record<string, unknown>; kind: 'query' }
   'templates.applyFormValues': {
     args: { fields: Record<string, unknown> }
     result: { applied: number; skipped: string[] }
+    kind: 'mutation'
   }
-  'webapi.getAttributeMetadata': { args: void; result: AttributeMetadataBundle }
-  'webapi.getRecordValues': { args: void; result: RecordValues }
-  'webapi.updateField': { args: UpdateFieldRequest; result: void }
-  'webapi.clearLookup': { args: ClearLookupRequest; result: void }
-  'webapi.getEntityInfo': { args: { logicalName: string }; result: EntityInfo }
-  'webapi.searchRecords': { args: RecordSearchRequest; result: RecordSearchResult[] }
-  'webapi.executeFetchXml': { args: { fetchXml: string }; result: Record<string, unknown>[] }
-  'forms.getForms': { args: void; result: SystemForm[] }
-  'forms.getFormXml': { args: { formId: string }; result: string }
-  'forms.updateFormXml': { args: UpdateFormXmlRequest; result: void }
-  'forms.getFormDiagnostics': { args: void; result: FormDiagnostics }
-  'traces.query': { args: TraceQuery; result: PluginTraceLog[] }
-  'traces.delete': { args: { ids: string[] }; result: TraceDeleteResult }
-  'traces.getSetting': { args: void; result: TraceLogSetting }
-  'traces.setSetting': { args: { value: TraceLogSetting }; result: void }
-  'security.getCurrentUser': { args: void; result: CurrentUser }
-  'security.getSecurityRoles': { args: void; result: SecurityRole[] }
-  'security.getBusinessUnits': { args: void; result: BusinessUnit[] }
-  'security.searchSystemUsers': { args: { query: string }; result: SystemUser[] }
-  'security.getUserSecurityRoles': { args: { systemUserId: string; businessUnitId: string }; result: SecurityRole[] }
-  'security.getSystemUserRoles': { args: { systemUserId: string }; result: SecurityRole[] }
-  'security.applySecurityRoleChanges': { args: RoleChangeSet; result: void }
-  'environmentVariables.getDefinitions': { args: void; result: EnvironmentVariable[] }
+  'webapi.getAttributeMetadata': { args: void; result: AttributeMetadataBundle; kind: 'query' }
+  'webapi.getRecordValues': { args: void; result: RecordValues; kind: 'query' }
+  'webapi.updateField': { args: UpdateFieldRequest; result: void; kind: 'mutation' }
+  'webapi.clearLookup': { args: ClearLookupRequest; result: void; kind: 'mutation' }
+  'webapi.getEntityInfo': { args: { logicalName: string }; result: EntityInfo; kind: 'query' }
+  'webapi.searchRecords': { args: RecordSearchRequest; result: RecordSearchResult[]; kind: 'query' }
+  'webapi.executeFetchXml': { args: { fetchXml: string }; result: Record<string, unknown>[]; kind: 'query' }
+  'forms.getForms': { args: void; result: SystemForm[]; kind: 'query' }
+  'forms.getFormXml': { args: { formId: string }; result: string; kind: 'query' }
+  'forms.updateFormXml': { args: UpdateFormXmlRequest; result: void; kind: 'mutation' }
+  'forms.getFormDiagnostics': { args: void; result: FormDiagnostics; kind: 'query' }
+  'traces.query': { args: TraceQuery; result: PluginTraceLog[]; kind: 'query' }
+  'traces.delete': { args: { ids: string[] }; result: TraceDeleteResult; kind: 'mutation' }
+  'traces.getSetting': { args: void; result: TraceLogSetting; kind: 'query' }
+  'traces.setSetting': { args: { value: TraceLogSetting }; result: void; kind: 'mutation' }
+  'security.getCurrentUser': { args: void; result: CurrentUser; kind: 'query' }
+  'security.getSecurityRoles': { args: void; result: SecurityRole[]; kind: 'query' }
+  'security.getBusinessUnits': { args: void; result: BusinessUnit[]; kind: 'query' }
+  'security.searchSystemUsers': { args: { query: string }; result: SystemUser[]; kind: 'query' }
+  'security.getUserSecurityRoles': {
+    args: { systemUserId: string; businessUnitId: string }
+    result: SecurityRole[]
+    kind: 'query'
+  }
+  'security.getSystemUserRoles': { args: { systemUserId: string }; result: SecurityRole[]; kind: 'query' }
+  'security.applySecurityRoleChanges': { args: RoleChangeSet; result: void; kind: 'mutation' }
+  'environmentVariables.getDefinitions': { args: void; result: EnvironmentVariable[]; kind: 'query' }
   'environmentVariables.setValue': {
     args: SetEnvironmentVariableValueRequest
     result: EnvironmentVariableValueResult
+    kind: 'mutation'
   }
-  'environmentVariables.clearValue': { args: ClearEnvironmentVariableValueRequest; result: void }
-  'pluginSteps.getSteps': { args: void; result: PluginStep[] }
-  'pluginSteps.get': { args: { id: string }; result: PluginStep | null }
-  'pluginSteps.setState': { args: PluginStepStateChange; result: PluginStepStateResult }
-  'transport.listEntities': { args: void; result: EntitySummary[] }
-  'transport.listViews': { args: { entityLogicalName: string }; result: SavedView[] }
-  'transport.getEntityMetadata': { args: { logicalName: string }; result: TransportEntityMetadata }
-  'transport.retrievePage': { args: RetrievePageRequest; result: RetrievePageResult }
-  'investigate.getTableAutomation': { args: { entityLogicalName: string }; result: TableAutomation }
-  'investigate.getRecordAccess': { args: RecordAccessRequest; result: RecordAccessReport }
-  'investigate.getRecordHistory': { args: RecordHistoryRequest; result: RecordHistory }
-  'investigate.getAuditDetail': { args: AuditDetailRequest; result: AuditDetail }
-  'investigate.getSolutionLayers': { args: SolutionLayerRequest; result: SolutionLayers }
-  'investigate.getColumnUsage': { args: ColumnUsageRequest; result: ColumnUsage }
-  'investigate.getTableMetadata': { args: { entityLogicalName: string }; result: TableMetadata }
-  'investigate.getRecordCounts': { args: RecordCountRequest; result: RecordCounts }
-  'investigate.listTables': { args: void; result: EntitySummary[] }
-  'investigate.getTableColumns': { args: { entityLogicalName: string }; result: TransportEntityMetadata }
+  'environmentVariables.clearValue': { args: ClearEnvironmentVariableValueRequest; result: void; kind: 'mutation' }
+  'pluginSteps.getSteps': { args: void; result: PluginStep[]; kind: 'query' }
+  'pluginSteps.get': { args: { id: string }; result: PluginStep | null; kind: 'query' }
+  'pluginSteps.setState': { args: PluginStepStateChange; result: PluginStepStateResult; kind: 'mutation' }
+  'transport.listEntities': { args: void; result: EntitySummary[]; kind: 'query' }
+  'transport.listViews': { args: { entityLogicalName: string }; result: SavedView[]; kind: 'query' }
+  'transport.getEntityMetadata': { args: { logicalName: string }; result: TransportEntityMetadata; kind: 'query' }
+  'transport.retrievePage': { args: RetrievePageRequest; result: RetrievePageResult; kind: 'query' }
+  'investigate.getTableAutomation': { args: { entityLogicalName: string }; result: TableAutomation; kind: 'query' }
+  'investigate.getRecordAccess': { args: RecordAccessRequest; result: RecordAccessReport; kind: 'query' }
+  'investigate.getRecordHistory': { args: RecordHistoryRequest; result: RecordHistory; kind: 'query' }
+  'investigate.getAuditDetail': { args: AuditDetailRequest; result: AuditDetail; kind: 'query' }
+  'investigate.getSolutionLayers': { args: SolutionLayerRequest; result: SolutionLayers; kind: 'query' }
+  'investigate.getColumnUsage': { args: ColumnUsageRequest; result: ColumnUsage; kind: 'query' }
+  'investigate.getTableMetadata': { args: { entityLogicalName: string }; result: TableMetadata; kind: 'query' }
+  'investigate.getRecordCounts': { args: RecordCountRequest; result: RecordCounts; kind: 'query' }
+  'investigate.listTables': { args: void; result: EntitySummary[]; kind: 'query' }
+  'investigate.getTableColumns': { args: { entityLogicalName: string }; result: TransportEntityMetadata; kind: 'query' }
 }
 
 export type CommandName = keyof CommandMap
 export type CommandArgs<N extends CommandName> = CommandMap[N]['args']
 export type CommandResult<N extends CommandName> = CommandMap[N]['result']
+
+export type QueryCommandName = { [N in CommandName]: CommandMap[N]['kind'] extends 'query' ? N : never }[CommandName]
+export type MutationCommandName = Exclude<CommandName, QueryCommandName>

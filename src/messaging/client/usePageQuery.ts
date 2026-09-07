@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { type CommandArgs, type CommandName, type CommandResult } from '@/messaging/contract'
+import { type CommandArgs, type CommandResult, type QueryCommandName } from '@/messaging/contract'
 import { invoke, PageCommandError } from '@/messaging/tab'
 import { useSessionStore } from '@/shared/stores'
 
@@ -8,19 +8,51 @@ import { pageKeys } from './queryKeys'
 
 const FIVE_MINUTES = 5 * 60 * 1000
 
-const STALE_TIMES: Partial<Record<CommandName, number>> = {
+const STALE_TIMES: Record<QueryCommandName, number> = {
   'global.getPageContext': FIVE_MINUTES,
   'global.getSolutions': Infinity,
   'settings.getEnvironmentDetails': FIVE_MINUTES,
+  'utilities.generateFetchXml': 0,
+  'utilities.generateUrls': 0,
+  'utilities.getWebApiUrl': 0,
+  'utilities.getSessionSnapshot': 0,
+  'utilities.getPageTarget': 0,
+  'utilities.getChoiceMetadata': Infinity,
+  'utilities.getControlDetails': 0,
+  'templates.captureFormValues': 0,
+  'webapi.getAttributeMetadata': Infinity,
+  'webapi.getRecordValues': 0,
+  'webapi.getEntityInfo': Infinity,
+  'webapi.searchRecords': 0,
+  'webapi.executeFetchXml': 0,
+  'forms.getForms': Infinity,
+  'forms.getFormXml': 0,
+  'forms.getFormDiagnostics': 0,
+  'traces.query': 0,
+  'traces.getSetting': FIVE_MINUTES,
   'security.getCurrentUser': FIVE_MINUTES,
   'security.getSecurityRoles': Infinity,
   'security.getBusinessUnits': Infinity,
-  'webapi.getAttributeMetadata': Infinity,
-  'webapi.getEntityInfo': Infinity,
-  'forms.getForms': Infinity,
-  'traces.getSetting': FIVE_MINUTES,
+  'security.searchSystemUsers': 0,
+  'security.getUserSecurityRoles': 0,
+  'security.getSystemUserRoles': 0,
+  'environmentVariables.getDefinitions': 0,
+  'pluginSteps.getSteps': 0,
   'pluginSteps.get': FIVE_MINUTES,
-  'utilities.getChoiceMetadata': Infinity,
+  'transport.listEntities': 0,
+  'transport.listViews': 0,
+  'transport.getEntityMetadata': 0,
+  'transport.retrievePage': 0,
+  'investigate.getTableAutomation': 0,
+  'investigate.getRecordAccess': 0,
+  'investigate.getRecordHistory': 0,
+  'investigate.getAuditDetail': 0,
+  'investigate.getSolutionLayers': 0,
+  'investigate.getColumnUsage': 0,
+  'investigate.getTableMetadata': 0,
+  'investigate.getRecordCounts': 0,
+  'investigate.listTables': 0,
+  'investigate.getTableColumns': 0,
 }
 
 export interface PageQueryOptions {
@@ -29,7 +61,11 @@ export interface PageQueryOptions {
   refetchInterval?: number | false
 }
 
-export const usePageQuery = <N extends CommandName>(name: N, args: CommandArgs<N>, options: PageQueryOptions = {}) => {
+export const usePageQuery = <N extends QueryCommandName>(
+  name: N,
+  args: CommandArgs<N>,
+  options: PageQueryOptions = {},
+) => {
   const tabId = useSessionStore((state) => state.tabId)
   const bridgeStatus = useSessionStore((state) => state.bridgeStatus)
   const enabled = tabId !== null && bridgeStatus === 'ready' && (options.enabled ?? true)
@@ -42,7 +78,7 @@ export const usePageQuery = <N extends CommandName>(name: N, args: CommandArgs<N
       return invoke(tabId, name, args)
     },
     enabled,
-    staleTime: options.staleTime ?? STALE_TIMES[name] ?? 0,
+    staleTime: options.staleTime ?? STALE_TIMES[name],
     refetchInterval: options.refetchInterval ?? false,
     retry: false,
   })

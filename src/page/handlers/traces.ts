@@ -1,5 +1,5 @@
 import { defineHandlers, PageError } from '@/messaging/page'
-import { getXrm, pageHttp } from '@/page/xrm'
+import { pageHttp, requireModelDrivenApp } from '@/page/xrm'
 import { buildTraceQuery, isGuid, mapTraceLog, normalizeGuid, type PluginTraceLogRecord } from '@/shared/lib'
 import { type PluginTraceLog, type TraceDeleteResult, type TraceLogSetting } from '@/shared/types'
 
@@ -25,12 +25,12 @@ const isTraceLogSetting = (value: number): value is TraceLogSetting => value ===
 
 export const tracesHandlers = defineHandlers({
   'traces.query': async (query): Promise<PluginTraceLog[]> => {
-    getXrm()
+    requireModelDrivenApp()
     const response = await pageHttp().get<{ value?: PluginTraceLogRecord[] }>(buildTraceQuery(query))
     return (response.value ?? []).map(mapTraceLog)
   },
   'traces.delete': async ({ ids }): Promise<TraceDeleteResult> => {
-    getXrm()
+    requireModelDrivenApp()
     const valid = ids.filter(isGuid).map(normalizeGuid)
     let deleted = 0
     for (let index = 0; index < valid.length; index += DELETE_CONCURRENCY) {
@@ -41,12 +41,12 @@ export const tracesHandlers = defineHandlers({
     return { deleted }
   },
   'traces.getSetting': async (): Promise<TraceLogSetting> => {
-    getXrm()
+    requireModelDrivenApp()
     const record = await readOrganization()
     return isTraceLogSetting(record.plugintracelogsetting) ? record.plugintracelogsetting : 0
   },
   'traces.setSetting': async ({ value }) => {
-    getXrm()
+    requireModelDrivenApp()
     const record = await readOrganization()
     await pageHttp().patch(`organizations(${normalizeGuid(record.organizationid)})`, { plugintracelogsetting: value })
   },

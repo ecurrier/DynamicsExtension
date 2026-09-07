@@ -133,9 +133,9 @@ export const fetchXmlPath = (entitySet: string, fetchXml: string): string =>
 export interface SecurityOperations {
   getSecurityRoles: () => Promise<SecurityRole[]>
   getBusinessUnits: () => Promise<BusinessUnit[]>
-  searchSystemUsers: (query: string) => Promise<SystemUser[]>
-  getUserSecurityRoles: (systemUserId: string, businessUnitId: string) => Promise<SecurityRole[]>
-  getSystemUserRoles: (systemUserId: string) => Promise<SecurityRole[]>
+  searchSystemUsers: (args: { query: string }) => Promise<SystemUser[]>
+  getUserSecurityRoles: (args: { systemUserId: string; businessUnitId: string }) => Promise<SecurityRole[]>
+  getSystemUserRoles: (args: { systemUserId: string }) => Promise<SecurityRole[]>
   applySecurityRoleChanges: (changes: RoleChangeSet) => Promise<void>
 }
 
@@ -151,7 +151,7 @@ export const securityOperations = (http: DataverseHttp): SecurityOperations => {
         id: normalizeGuid(record.businessunitid),
         name: record.name,
       })),
-    searchSystemUsers: async (query) => {
+    searchSystemUsers: async ({ query }) => {
       const term = escapeFetchXmlLike(query.trim())
       if (!term) {
         throw new DataverseOperationError('InvalidArgument', 'Enter a name or email address to search for')
@@ -159,7 +159,7 @@ export const securityOperations = (http: DataverseHttp): SecurityOperations => {
       const users = await retrieve<SystemUserRecord>('systemusers', systemUserSearchFetchXml(term))
       return users.map(toSystemUser)
     },
-    getUserSecurityRoles: async (systemUserId, businessUnitId) => {
+    getUserSecurityRoles: async ({ systemUserId, businessUnitId }) => {
       const userId = requireGuid(systemUserId, 'User')
       const unitId = requireGuid(businessUnitId, 'Business unit')
       const members = await retrieve<SystemUserRecord>('systemusers', userInBusinessUnitFetchXml(userId, unitId))
@@ -168,7 +168,7 @@ export const securityOperations = (http: DataverseHttp): SecurityOperations => {
       }
       return (await retrieve<RoleRecord>('roles', userRolesFetchXml(userId, unitId))).map(toRole)
     },
-    getSystemUserRoles: async (systemUserId) => {
+    getSystemUserRoles: async ({ systemUserId }) => {
       const userId = requireGuid(systemUserId, 'User')
       return (await retrieve<RoleRecord>('roles', systemUserRolesFetchXml(userId))).map(toRole)
     },

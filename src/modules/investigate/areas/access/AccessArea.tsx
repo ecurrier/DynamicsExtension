@@ -71,7 +71,7 @@ export const AccessArea = () => {
   const [selectedUser, setSelectedUser] = useState<SystemUser | null>(null)
 
   const search = useMutation({
-    mutationFn: (query: string) => security.searchSystemUsers(query),
+    mutationFn: (query: string) => security.ops.searchSystemUsers({ query }),
     onSuccess: (results) => {
       setUsers(results)
       if (results.length === 0) {
