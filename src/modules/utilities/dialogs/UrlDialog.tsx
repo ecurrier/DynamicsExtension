@@ -96,8 +96,7 @@ const UrlDialogBody = ({ urls, onClose }: UrlDialogBodyProps) => {
             <Textarea value={selectedUrl} readOnly resize="vertical" rows={3} />
           </Field>
           <Text size={200} className={styles.caption}>
-            Debug links open the same record with a platform diagnostic switched on — the command checker for ribbon
-            rules, the forms monitor for event timings, and the performance centre for load breakdowns.
+            Debug links open the same record with platform diagnostics query parameter(s) added.
           </Text>
         </FormStack>
       </DialogContent>

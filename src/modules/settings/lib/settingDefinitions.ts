@@ -1,12 +1,37 @@
-import { type ExtensionSettings } from '@/shared/storage'
+import { type ExtensionSettings, type ThemePreference } from '@/shared/storage'
 
-export interface SettingDefinition {
-  key: keyof ExtensionSettings
+type KeysOfType<T> = {
+  [K in keyof ExtensionSettings]: ExtensionSettings[K] extends T ? K : never
+}[keyof ExtensionSettings]
+
+export type ToggleSettingKey = KeysOfType<boolean>
+export type ThemeSettingKey = KeysOfType<ThemePreference>
+
+interface SettingBase {
   section: string
   title: string
   label: string
   tooltip: string
 }
+
+export interface ToggleSetting extends SettingBase {
+  kind: 'toggle'
+  key: ToggleSettingKey
+}
+
+export interface ChoiceOptionDefinition<T extends string> {
+  value: T
+  label: string
+  description: string
+}
+
+export interface ThemeSetting extends SettingBase {
+  kind: 'choice'
+  key: ThemeSettingKey
+  options: ChoiceOptionDefinition<ThemePreference>[]
+}
+
+export type SettingDefinition = ToggleSetting | ThemeSetting
 
 export const SETTING_SECTIONS = [
   'Extension',
@@ -19,6 +44,21 @@ export const SETTING_SECTIONS = [
 
 export const SETTING_DEFINITIONS: SettingDefinition[] = [
   {
+    kind: 'choice',
+    key: 'themeMode',
+    section: 'Extension',
+    title: 'Appearance',
+    label: 'Colour theme used by every Power Tools window',
+    tooltip:
+      'Match browser follows your browser and operating system setting, which means light unless you have asked for dark. Light and Dark ignore that and stay put.',
+    options: [
+      { value: 'system', label: 'Match browser', description: 'Follow your browser and system preference' },
+      { value: 'light', label: 'Light', description: 'Always use the light theme' },
+      { value: 'dark', label: 'Dark', description: 'Always use the dark theme' },
+    ],
+  },
+  {
+    kind: 'toggle',
     key: 'openLastVisitedArea',
     section: 'Extension',
     title: 'Open Last Visited Page',
@@ -26,6 +66,7 @@ export const SETTING_DEFINITIONS: SettingDefinition[] = [
     tooltip: 'When enabled, the last area you visited is loaded automatically when the extension opens',
   },
   {
+    kind: 'toggle',
     key: 'makerPortalUseCurrentEnvironment',
     section: 'Utilities',
     title: 'Open Maker Portal',
@@ -34,6 +75,7 @@ export const SETTING_DEFINITIONS: SettingDefinition[] = [
       'When enabled, the Maker Portal URL is selected automatically from your current environment instead of prompting',
   },
   {
+    kind: 'toggle',
     key: 'controlEditorUseDefaultSolution',
     section: 'Utilities',
     title: 'Open Form/View Editor',
@@ -42,6 +84,7 @@ export const SETTING_DEFINITIONS: SettingDefinition[] = [
       'When enabled, controls open in the Default Solution. When disabled, you are prompted to pick an unmanaged solution',
   },
   {
+    kind: 'toggle',
     key: 'adminCenterUseCurrentEnvironment',
     section: 'Utilities',
     title: 'Open Admin Center',
@@ -50,6 +93,7 @@ export const SETTING_DEFINITIONS: SettingDefinition[] = [
       'When enabled, the Power Platform Admin Center URL is selected automatically from your current environment',
   },
   {
+    kind: 'toggle',
     key: 'formsRequireSaveConfirmation',
     section: 'Forms',
     title: 'Save Form XML',
@@ -57,6 +101,7 @@ export const SETTING_DEFINITIONS: SettingDefinition[] = [
     tooltip: 'When enabled, a confirmation dialog appears before the form XML is overwritten in Dataverse',
   },
   {
+    kind: 'toggle',
     key: 'securityRequireRemovalConfirmation',
     section: 'Security Management',
     title: 'Apply Security Role Changes',
@@ -64,6 +109,7 @@ export const SETTING_DEFINITIONS: SettingDefinition[] = [
     tooltip: 'When enabled, a confirmation dialog appears before security roles are removed from a user',
   },
   {
+    kind: 'toggle',
     key: 'environmentVariablesRequireSaveConfirmation',
     section: 'Environment Variables',
     title: 'Save Variable Values',
@@ -72,6 +118,7 @@ export const SETTING_DEFINITIONS: SettingDefinition[] = [
       'When enabled, a confirmation dialog appears before a current value is written to or removed from Dataverse',
   },
   {
+    kind: 'toggle',
     key: 'pluginStepsRequireToggleConfirmation',
     section: 'Plugin Steps',
     title: 'Enable or Disable Steps',

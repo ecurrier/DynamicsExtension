@@ -48,7 +48,7 @@ export const snapshotSections = (
           snapshot.organization.backgroundProcessingDisabled === null
             ? '—'
             : snapshot.organization.backgroundProcessingDisabled
-              ? 'Disabled — asynchronous jobs will not run'
+              ? 'Disabled. Asynchronous jobs will not run'
               : 'Enabled',
       },
     ],

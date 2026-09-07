@@ -198,7 +198,7 @@ export const AdminArea = () => {
         />
         <TaskCard
           title="Environment & Session"
-          description="Environment, current user, org diagnostic switches, and page context — copyable for a ticket."
+          description="Environment, current user, platform diagnostic, and session/app context."
           icon={Info20Regular}
           actionLabel="Show"
           loading={environmentDetails.running}

@@ -276,7 +276,7 @@ export const PluginStepsArea = () => {
       </AreaToolbar>
       {focusStepId ? (
         <MessageBar intent="info">
-          <MessageBarBody>Showing the one step you opened from Table Automation, already ticked.</MessageBarBody>
+          <MessageBarBody>Auto-selected the step you opened from Table Automation.</MessageBarBody>
           <MessageBarActions>
             <Button
               size="small"

@@ -55,7 +55,7 @@ export const DeveloperArea = () => {
       <TaskGrid>
         <TaskCard
           title="Generate Query"
-          description="Fetch XML for the current record, its subgrids, or the view as displayed — plus Web API and JavaScript equivalents."
+          description="Fetch XML for the current record, its subgrids, or the view as displayed. Plus Web API and JavaScript equivalents."
           icon={Code20Regular}
           loading={generateFetchXml.isPending}
           onAction={() => generateFetchXml.mutate(undefined)}

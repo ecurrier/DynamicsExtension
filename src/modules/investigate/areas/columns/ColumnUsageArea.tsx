@@ -248,7 +248,7 @@ export const ColumnUsageArea = () => {
                 />
                 {scanFlows ? (
                   <Text size={200} className={styles.caption}>
-                    {`Scanned ${result.flowsScanned} cloud flow definition${result.flowsScanned === 1 ? '' : 's'} as text — verify each match before acting on it.`}
+                    {`Scanned ${result.flowsScanned} cloud flow definition${result.flowsScanned === 1 ? '' : 's'} as text.`}
                   </Text>
                 ) : null}
               </FormStack>

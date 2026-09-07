@@ -1,5 +1,5 @@
 import { Hamburger, makeStyles, Text, tokens, Toolbar, ToolbarButton, Tooltip } from '@fluentui/react-components'
-import { ArrowClockwise20Regular, Pin20Regular } from '@fluentui/react-icons'
+import { ArrowClockwise20Regular, Pin20Regular, TabDesktop20Regular } from '@fluentui/react-icons'
 import { type ReactNode } from 'react'
 
 import { AreaBreadcrumb } from '../AreaBreadcrumb'
@@ -43,6 +43,9 @@ interface AppShellProps {
   onOpenNav: () => void
   onRefresh: () => void
   onPin?: () => void
+  onFocusTab?: () => void
+  focusTabTooltip?: string
+  focusTabDisabled?: boolean
   environmentName?: string | null
   actions?: ReactNode
   banner?: ReactNode
@@ -55,6 +58,9 @@ export const AppShell = ({
   onOpenNav,
   onRefresh,
   onPin,
+  onFocusTab,
+  focusTabTooltip = 'Go to the tab this window follows',
+  focusTabDisabled = false,
   environmentName,
   actions,
   banner,
@@ -77,6 +83,16 @@ export const AppShell = ({
           <Text size={200} className={styles.title} title={environmentName}>
             {environmentName}
           </Text>
+        ) : null}
+        {onFocusTab ? (
+          <Tooltip content={focusTabTooltip} relationship="label">
+            <ToolbarButton
+              icon={<TabDesktop20Regular />}
+              onClick={onFocusTab}
+              disabled={focusTabDisabled}
+              aria-label={focusTabTooltip}
+            />
+          </Tooltip>
         ) : null}
         {onPin ? (
           <Tooltip content="Open in a window that stays open when you click away" relationship="label">

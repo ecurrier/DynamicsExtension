@@ -4,6 +4,13 @@
     new URLSearchParams(location.search).get('granted') === '1' ? ['https://org12345.crm.dynamics.com/*'] : [],
   )
   const permissionListeners = { added: [] }
+  // Add ?closedTab=<id> to the harness URL to exercise the "tab has been closed" path.
+  const closedTabs = new Set(
+    (new URLSearchParams(location.search).get('closedTab') ?? '')
+      .split(',')
+      .map((value) => Number(value))
+      .filter((value) => Number.isInteger(value) && value > 0),
+  )
   const makeArea = (initial, areaName = 'local') => {
     const store = { ...initial }
     return {
@@ -1361,10 +1368,24 @@
         return { id: 2 }
       },
       reload: async (tabId) => console.log('[harness] tabs.reload', tabId),
-      get: async (tabId) => ({
-        id: tabId,
-        url: 'https://org12345.crm.dynamics.com/main.aspx?appid=1&pagetype=entityrecord&etn=account&id=abc',
-      }),
+      get: async (tabId) => {
+        if (closedTabs.has(tabId)) {
+          throw new Error(`harness: tab ${tabId} is not open`)
+        }
+        return {
+          id: tabId,
+          windowId: 1,
+          title: 'Contoso Ltd - Account: Sales Hub',
+          url: 'https://org12345.crm.dynamics.com/main.aspx?appid=1&pagetype=entityrecord&etn=account&id=abc',
+        }
+      },
+      update: async (tabId, properties) => {
+        if (closedTabs.has(tabId)) {
+          throw new Error(`harness: tab ${tabId} is not open`)
+        }
+        console.log('[harness] tabs.update', tabId, properties)
+        return { id: tabId }
+      },
       onRemoved: { addListener() {}, removeListener() {} },
       onUpdated: { addListener() {}, removeListener() {} },
     },
@@ -1375,8 +1396,12 @@
         window.open(harnessUrl, '_blank', `popup,width=${width},height=${height}`)
         return { id: 7 }
       },
-      update: async (windowId) => {
-        throw new Error(`harness: window ${windowId} is not open`)
+      update: async (windowId, properties) => {
+        if (windowId !== 1) {
+          throw new Error(`harness: window ${windowId} is not open`)
+        }
+        console.log('[harness] windows.update', windowId, properties)
+        return { id: windowId }
       },
     },
     permissions: {

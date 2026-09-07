@@ -44,7 +44,12 @@ export interface Template {
 
 export type TemplatesByContext = Record<PageContext, Record<string, Template>>
 
+export type ThemePreference = 'system' | 'light' | 'dark'
+
+export const THEME_PREFERENCES: readonly ThemePreference[] = ['system', 'light', 'dark']
+
 export interface ExtensionSettings {
+  themeMode: ThemePreference
   openLastVisitedArea: boolean
   makerPortalUseCurrentEnvironment: boolean
   adminCenterUseCurrentEnvironment: boolean
@@ -56,6 +61,7 @@ export interface ExtensionSettings {
 }
 
 export const DEFAULT_SETTINGS: ExtensionSettings = {
+  themeMode: 'system',
   openLastVisitedArea: false,
   makerPortalUseCurrentEnvironment: false,
   adminCenterUseCurrentEnvironment: false,

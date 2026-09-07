@@ -83,8 +83,7 @@ export const AdminModeDialog = ({ result, restoring, onRestore, onClose }: Admin
                 </Text>
                 {findings.length === 0 ? (
                   <EmptyState intent="info" title="Nothing on this form was hidden, read-only, or required.">
-                    If a save is still failing, the cause is server side — a plug-in, a business rule with a server
-                    scope, or field-level security rather than the form itself.
+                    Nothing on this form was hidden, read-only, or required.
                   </EmptyState>
                 ) : (
                   <DataTable
