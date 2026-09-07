@@ -19,8 +19,8 @@ import { getEnvironmentHttp, PAGE_CONNECTION, requestEnvironmentAccess } from '@
 import { useAsyncAction } from '@/shared/hooks'
 import { findEnvironmentByOrigin, whoAmI } from '@/shared/lib'
 import { type Environment } from '@/shared/storage'
+import { type TransporterLaunch } from '@/shared/types'
 
-import { type TransporterStatus } from '../hooks'
 import { useTransporterStore } from '../store'
 
 const PAGE_OPTION = '__page__'
@@ -38,20 +38,19 @@ const useStyles = makeStyles({
 })
 
 interface ConnectionsStepProps {
-  status: Extract<TransporterStatus, { kind: 'ready' }>
+  launch: TransporterLaunch
+  pageAvailable: boolean
   environments: Environment[]
 }
 
-export const ConnectionsStep = ({ status, environments }: ConnectionsStepProps) => {
+export const ConnectionsStep = ({ launch, pageAvailable, environments }: ConnectionsStepProps) => {
   const styles = useStyles()
   const toast = useAppToast()
   const { source, targetEnvironmentId, setSource, setTarget, setStep } = useTransporterStore()
   const [tested, setTested] = useState<Record<string, string>>({})
   const test = useAsyncAction('Connection test failed')
 
-  const pageEnvironment = status.launch.orgOrigin
-    ? findEnvironmentByOrigin(environments, status.launch.orgOrigin)
-    : null
+  const pageEnvironment = launch.orgOrigin ? findEnvironmentByOrigin(environments, launch.orgOrigin) : null
   const sourceEnvironmentId = source?.kind === 'environment' ? source.environmentId : null
   const sourceEnvironment = sourceEnvironmentId
     ? (environments.find((e) => e.id === sourceEnvironmentId) ?? null)
@@ -61,7 +60,7 @@ export const ConnectionsStep = ({ status, environments }: ConnectionsStepProps) 
       environment.id !== sourceEnvironmentId && !(source?.kind === 'page' && pageEnvironment?.id === environment.id),
   )
   const target = targetEnvironmentId ? (environments.find((e) => e.id === targetEnvironmentId) ?? null) : null
-  const pageLabel = `Current page (${status.launch.environmentName ?? 'unknown org'})`
+  const pageLabel = `Current page (${launch.environmentName ?? 'unknown org'})`
   const sourceValue = source === null ? '' : source.kind === 'page' ? PAGE_OPTION : source.environmentId
   const sourceLabel =
     source === null ? '' : source.kind === 'page' ? pageLabel : (sourceEnvironment?.name ?? 'Removed environment')
@@ -86,7 +85,7 @@ export const ConnectionsStep = ({ status, environments }: ConnectionsStepProps) 
           point to must already exist in the target.
         </MessageBarBody>
       </MessageBar>
-      {status.launch.tabId !== null && !status.pageAvailable ? (
+      {launch.tabId !== null && !pageAvailable ? (
         <MessageBar intent="warning">
           <MessageBarBody>
             The Dynamics tab this tool was opened from is no longer available, so only saved environments can be the
@@ -115,7 +114,7 @@ export const ConnectionsStep = ({ status, environments }: ConnectionsStepProps) 
                 }
               }}
             >
-              {status.pageAvailable ? (
+              {pageAvailable ? (
                 <Option value={PAGE_OPTION} text={pageLabel}>
                   {pageLabel}
                 </Option>

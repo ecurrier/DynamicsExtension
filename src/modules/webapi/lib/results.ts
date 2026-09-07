@@ -1,5 +1,5 @@
 import { generateGuid } from '@/shared/lib'
-import { type ResultsShare } from '@/shared/storage'
+import { type ResultsShare } from '@/shared/types'
 
 export const MAX_SHARED_ROWS = 5000
 

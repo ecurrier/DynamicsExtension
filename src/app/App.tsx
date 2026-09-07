@@ -1,15 +1,16 @@
 import { Spinner } from '@fluentui/react-components'
 import { useQueryClient } from '@tanstack/react-query'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { pageKeys, usePageQuery } from '@/messaging/client'
 import { modules, resolveArea } from '@/modules'
 import { ImpersonationIndicator } from '@/modules/impersonation'
 import { AppNavDrawer, AppShell, HostAccessBanner } from '@/shared/components'
-import { describeTab, focusTab, openPinnedWindow, readPopupLaunch, type TabSummary } from '@/shared/extension'
-import { useAsyncAction } from '@/shared/hooks'
+import { describeTab, focusTab, openPinnedWindow, type TabSummary } from '@/shared/extension'
+import { useAsyncAction, usePopupLaunch } from '@/shared/hooks'
 import { resolveOrgOrigin, tabTooltip } from '@/shared/lib'
 import { useNavigationStore, useSessionStore } from '@/shared/stores'
+import { WorkspaceOutlet } from '@/workspaces'
 
 import { AreaOutlet } from './AreaOutlet'
 import { useSessionBootstrap } from './useSessionBootstrap'
@@ -20,13 +21,15 @@ const WINDOW_ACCESS_REASON =
 export const App = () => {
   const ready = useSessionBootstrap()
   const queryClient = useQueryClient()
-  const launch = useMemo(() => readPopupLaunch(), [])
+  const launch = usePopupLaunch()
   const tabId = useSessionStore((state) => state.tabId)
   const tabUrl = useSessionStore((state) => state.tabUrl)
   const currentAreaId = useNavigationStore((state) => state.currentAreaId)
   const drawerOpen = useNavigationStore((state) => state.drawerOpen)
+  const workspace = useNavigationStore((state) => state.workspace)
   const navigate = useNavigationStore((state) => state.navigate)
   const setDrawerOpen = useNavigationStore((state) => state.setDrawerOpen)
+  const closeWorkspace = useNavigationStore((state) => state.closeWorkspace)
   const environment = usePageQuery('settings.getEnvironmentDetails', undefined)
   const pin = useAsyncAction('Could not open Power Tools in a window')
   const goToTab = useAsyncAction('Could not switch to the tab this window follows')
@@ -88,8 +91,10 @@ export const App = () => {
       />
       <AppShell
         breadcrumb={area.breadcrumb}
-        tooltip={area.tooltip}
+        tooltip={workspace ? undefined : area.tooltip}
         onOpenNav={() => setDrawerOpen(true)}
+        onBack={workspace ? closeWorkspace : undefined}
+        backLabel={`Back to ${area.label}`}
         onRefresh={() => {
           if (tabId !== null) {
             void queryClient.invalidateQueries({ queryKey: pageKeys.tab(tabId) })
@@ -116,7 +121,11 @@ export const App = () => {
         actions={<ImpersonationIndicator />}
         banner={launch.mode === 'window' ? <HostAccessBanner origin={orgOrigin} reason={WINDOW_ACCESS_REASON} /> : null}
       >
-        <AreaOutlet key={area.id} area={area} />
+        {workspace ? (
+          <WorkspaceOutlet key={workspace.id} workspace={workspace} />
+        ) : (
+          <AreaOutlet key={area.id} area={area} />
+        )}
       </AppShell>
     </>
   )

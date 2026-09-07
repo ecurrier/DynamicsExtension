@@ -1,10 +1,9 @@
-import { Button, makeStyles, Text } from '@fluentui/react-components'
-import { Open20Regular } from '@fluentui/react-icons'
+import { makeStyles, Text } from '@fluentui/react-components'
 import { useMemo } from 'react'
 
 import { DataTable, type DataTableColumn, useAppToast } from '@/shared/components'
-import { openExtensionPage } from '@/shared/extension'
-import { resultsShareItem } from '@/shared/storage'
+import { type WorkspaceTarget } from '@/shared/types'
+import { useWorkspaceLauncher, WorkspaceLaunchButton } from '@/workspaces'
 
 import { buildResultsShare, cellText, columnsFromRows, type ResultRow } from '../../lib'
 
@@ -25,6 +24,7 @@ interface ResultsPreviewProps {
 export const ResultsPreview = ({ entityName, rows }: ResultsPreviewProps) => {
   const styles = useStyles()
   const toast = useAppToast()
+  const workspaces = useWorkspaceLauncher()
   const columns = useMemo(() => columnsFromRows(rows), [rows])
   const tableColumns = useMemo<DataTableColumn<ResultRow>[]>(
     () =>
@@ -37,11 +37,10 @@ export const ResultsPreview = ({ entityName, rows }: ResultsPreviewProps) => {
     [columns],
   )
 
-  const openViewer = async () => {
+  const openViewer = async (target: WorkspaceTarget) => {
     try {
       const share = buildResultsShare(entityName, rows)
-      await resultsShareItem.setValue(share)
-      await openExtensionPage('/results-viewer.html')
+      await workspaces.open({ id: 'results-viewer', share }, target)
       if (share.truncated) {
         toast.info('Results truncated', `The viewer shows the first ${share.rows.length} records.`)
       }
@@ -57,9 +56,13 @@ export const ResultsPreview = ({ entityName, rows }: ResultsPreviewProps) => {
         <Text size={200}>
           {rows.length} record{rows.length === 1 ? '' : 's'} retrieved
         </Text>
-        <Button size="small" icon={<Open20Regular />} disabled={rows.length === 0} onClick={() => void openViewer()}>
-          Open in viewer
-        </Button>
+        <WorkspaceLaunchButton
+          label="Open in viewer"
+          size="small"
+          canOpenInWindow={workspaces.canOpenInWindow}
+          disabled={rows.length === 0}
+          onOpen={(target) => void openViewer(target)}
+        />
       </div>
     </>
   )

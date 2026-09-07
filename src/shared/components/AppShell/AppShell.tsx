@@ -1,5 +1,5 @@
 import { Hamburger, makeStyles, Text, tokens, Toolbar, ToolbarButton, Tooltip } from '@fluentui/react-components'
-import { ArrowClockwise20Regular, Pin20Regular, TabDesktop20Regular } from '@fluentui/react-icons'
+import { ArrowClockwise20Regular, ArrowLeft20Regular, Pin20Regular, TabDesktop20Regular } from '@fluentui/react-icons'
 import { type ReactNode } from 'react'
 
 import { AreaBreadcrumb } from '../AreaBreadcrumb'
@@ -41,6 +41,8 @@ interface AppShellProps {
   breadcrumb: string[]
   tooltip?: string
   onOpenNav: () => void
+  onBack?: () => void
+  backLabel?: string
   onRefresh: () => void
   onPin?: () => void
   onFocusTab?: () => void
@@ -56,6 +58,8 @@ export const AppShell = ({
   breadcrumb,
   tooltip,
   onOpenNav,
+  onBack,
+  backLabel = 'Back',
   onRefresh,
   onPin,
   onFocusTab,
@@ -74,6 +78,11 @@ export const AppShell = ({
           <Tooltip content="Navigation" relationship="label">
             <Hamburger onClick={onOpenNav} />
           </Tooltip>
+          {onBack ? (
+            <Tooltip content={backLabel} relationship="label">
+              <ToolbarButton icon={<ArrowLeft20Regular />} onClick={onBack} aria-label={backLabel} />
+            </Tooltip>
+          ) : null}
         </Toolbar>
         <div className={styles.breadcrumb}>
           <AreaBreadcrumb path={breadcrumb} tooltip={tooltip} />

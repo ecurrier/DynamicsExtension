@@ -1,6 +1,11 @@
 import { storage, type WxtStorageItem } from 'wxt/utils/storage'
 
-import { type ImpersonationStates, type TraceViewerLaunch, type TransporterLaunch } from '@/shared/types'
+import {
+  type ImpersonationStates,
+  type ResultsShare,
+  type TraceViewerLaunch,
+  type TransporterLaunch,
+} from '@/shared/types'
 
 import {
   type AccessTokens,
@@ -9,7 +14,6 @@ import {
   type Environment,
   type Environments,
   type ExtensionSettings,
-  type ResultsShare,
   type ServicePrincipals,
   type TemplatesByContext,
 } from './schema'

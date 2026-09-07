@@ -76,12 +76,3 @@ export const EMPTY_TEMPLATES: TemplatesByContext = {
   'model-driven-app': {},
   portal: {},
 }
-
-export interface ResultsShare {
-  id: string
-  entityName: string
-  columns: string[]
-  rows: Record<string, unknown>[]
-  truncated: boolean
-  createdAt: string
-}

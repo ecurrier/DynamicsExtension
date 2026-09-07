@@ -1,3 +1,4 @@
+export * from './DataTransporter'
 export * from './DataTransporterApp'
 export * from './hooks'
 export * from './lib'

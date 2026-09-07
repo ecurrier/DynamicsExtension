@@ -71,6 +71,8 @@ const useStyles = makeStyles({
     minHeight: 0,
   },
   table: {
+    display: 'flex',
+    flexDirection: 'column',
     minWidth: 0,
     minHeight: 0,
   },
@@ -228,7 +230,7 @@ export const TraceViewer = ({ launch }: TraceViewerProps) => {
             columns={columns}
             getRowId={(row) => row.id}
             pageSize={100}
-            maxHeight="calc(100vh - 280px)"
+            fill
             selectionMode="multiselect"
             autoFitColumns={false}
             selectedIds={selectedIds}

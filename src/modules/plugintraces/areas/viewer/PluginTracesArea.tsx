@@ -1,5 +1,4 @@
 import {
-  Button,
   Dropdown,
   Field,
   makeStyles,
@@ -10,16 +9,20 @@ import {
   Text,
   tokens,
 } from '@fluentui/react-components'
-import { Open20Regular } from '@fluentui/react-icons'
 
 import { pageKeys, usePageMutation, usePageQuery } from '@/messaging/client'
 import { AreaContainer, FormRow, FormStack, Grow, HostAccessBanner, useAppToast } from '@/shared/components'
-import { ensureHostAccess, openExtensionPage } from '@/shared/extension'
+import { ensureHostAccess } from '@/shared/extension'
 import { useAsyncAction } from '@/shared/hooks'
 import { resolveOrgOrigin } from '@/shared/lib'
-import { traceViewerLaunchItem } from '@/shared/storage'
 import { useSessionStore } from '@/shared/stores'
-import { TRACE_LOG_SETTING_LABELS, TRACE_LOG_SETTINGS, type TraceLogSetting } from '@/shared/types'
+import {
+  TRACE_LOG_SETTING_LABELS,
+  TRACE_LOG_SETTINGS,
+  type TraceLogSetting,
+  type WorkspaceTarget,
+} from '@/shared/types'
+import { useWorkspaceLauncher, WorkspaceLaunchButton } from '@/workspaces'
 
 const useStyles = makeStyles({
   hint: {
@@ -29,6 +32,12 @@ const useStyles = makeStyles({
 
 const ACCESS_REASON =
   'The viewer reads traces through this tab, and can only reconnect after the page navigates with access to the site.'
+
+const OPENS_IN_TAB =
+  'The viewer opens in its own tab and reads trace logs through this Dynamics tab, so keep it open while you work.'
+
+const OPENS_IN_WINDOW =
+  'The viewer fills this window, or opens in its own tab from the button menu. It reads trace logs through the Dynamics tab this window follows, so keep that tab open while you work.'
 
 const SETTING_HINTS: Record<TraceLogSetting, string> = {
   0: 'Plug-ins write no trace logs. Turn this on before reproducing an issue.',
@@ -47,22 +56,28 @@ export const PluginTracesArea = () => {
     invalidates: () => (tabId === null ? [] : [pageKeys.command(tabId, 'traces.getSetting', null)]),
     onSuccess: (_, args) => toast.success(`Plug-in trace logging set to ${TRACE_LOG_SETTING_LABELS[args.value]}`),
   })
+  const workspaces = useWorkspaceLauncher()
   const launch = useAsyncAction('Could not open the trace viewer')
   const orgOrigin = resolveOrgOrigin(details.data?.modelDrivenAppUrl ?? null, tabUrl)
 
-  const openViewer = () =>
+  const openViewer = (target: WorkspaceTarget) =>
     launch.run(async () => {
       if (tabId === null || !orgOrigin) {
         throw new Error('Open a model-driven app in the active tab first')
       }
       const granted = await ensureHostAccess([`${orgOrigin}/*`])
-      await traceViewerLaunchItem.setValue({
-        tabId,
-        orgOrigin,
-        environmentName: details.data?.environmentName ?? orgOrigin,
-        launchedAt: new Date().toISOString(),
-      })
-      await openExtensionPage('/plugin-traces.html')
+      await workspaces.open(
+        {
+          id: 'plugin-traces',
+          launch: {
+            tabId,
+            orgOrigin,
+            environmentName: details.data?.environmentName ?? orgOrigin,
+            launchedAt: new Date().toISOString(),
+          },
+        },
+        target,
+      )
       if (!granted) {
         toast.info(
           'Viewer opened with limited access',
@@ -78,9 +93,8 @@ export const PluginTracesArea = () => {
         <MessageBar intent="info" layout="multiline">
           <MessageBarBody>
             <MessageBarTitle>Plug-in trace logs</MessageBarTitle>
-            The viewer opens in its own tab and reads trace logs through this Dynamics tab, so keep it open while you
-            work. Filter by type, message, entity, time, or correlation id, inspect message blocks and exceptions, and
-            delete logs you no longer need.
+            {workspaces.canOpenInWindow ? OPENS_IN_WINDOW : OPENS_IN_TAB} Filter by type, message, entity, time, or
+            correlation id, inspect message blocks and exceptions, and delete logs you no longer need.
           </MessageBarBody>
         </MessageBar>
         <FormRow>
@@ -105,14 +119,13 @@ export const PluginTracesArea = () => {
               </Dropdown>
             </Field>
           </Grow>
-          <Button
+          <WorkspaceLaunchButton
+            label={launch.running ? 'Opening...' : 'Open Trace Viewer'}
             appearance="primary"
-            icon={<Open20Regular />}
+            canOpenInWindow={workspaces.canOpenInWindow}
             disabled={launch.running || tabId === null}
-            onClick={() => void openViewer()}
-          >
-            {launch.running ? 'Opening...' : 'Open Trace Viewer'}
-          </Button>
+            onOpen={(target) => void openViewer(target)}
+          />
         </FormRow>
         {setting.isError ? <Text size={200}>{setting.error.message}</Text> : null}
         {setting.data !== undefined ? (

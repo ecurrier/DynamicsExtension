@@ -1390,6 +1390,7 @@
       onUpdated: { addListener() {}, removeListener() {} },
     },
     windows: {
+      getCurrent: async () => ({ id: 1, state: 'normal', width: window.outerWidth, height: window.outerHeight }),
       create: async ({ url, width, height }) => {
         const harnessUrl = url.replace('popup.html', 'harness')
         console.log('[harness] windows.create', url, '->', harnessUrl)
