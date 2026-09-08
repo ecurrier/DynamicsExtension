@@ -12,6 +12,26 @@ _Avoid_: Tool, feature, plugin, section
 A single screen within a Module, and the unit the user navigates to and the extension remembers between sessions.
 _Avoid_: Page, screen, tab, view
 
+**Utility**:
+A one-shot action on a Utilities Area, shown as a card, that acts on the open page or shows its result in a dialog.
+_Avoid_: Task, card, shortcut, helper, tool
+
+**Template**:
+A user-authored pattern in logic-less, Mustache-style syntax that a generator fills in with a table, its columns, or a choice, so the output matches how the user's codebase is written. It carries a kind (table or choice), a language, settings with defaults, and a filename pattern.
+_Avoid_: Code template, blueprint, scaffold, snippet
+
+**Form Preset**:
+Saved form values that are applied to a new record of the same Table.
+_Avoid_: Template (that is code generation), prefill, snapshot
+
+**Dialect**:
+The syntax a generator emits for one place its output will be used: Fetch XML, Web API, C#, JavaScript, or Flow.
+_Avoid_: Flavour, target, format, language (language is a property of a Template, not of an output)
+
+**Flow**:
+A Power Automate cloud flow, and the Dialect whose output is pasted into one: List rows fields, row bodies, and expressions.
+_Avoid_: Automation (that is the wider term), workflow, Logic App
+
 **Workspace**:
 A full-window experience opened from an Area for one long-running job: the Data Transporter, the Trace Viewer, and the Results Viewer. It opens in its own browser tab, or, when Power Tools is pinned in a window, fills that window in place of the Areas until the user goes back.
 _Avoid_: Tool page, full-page tool, viewer tab, standalone page

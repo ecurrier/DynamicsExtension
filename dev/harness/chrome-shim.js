@@ -487,6 +487,57 @@
   })
   const transportPageLink = 'https://org12345.crm.dynamics.com/api/data/v9.2/accounts?$skiptoken=page2'
 
+  const harnessFormAttributes = [
+    {
+      logicalName: 'name',
+      displayName: 'Account Name',
+      attributeType: 'string',
+      controls: [
+        {
+          name: 'name',
+          label: 'Account Name',
+          controlType: 'standard',
+          tab: 'General',
+          section: 'Account Information',
+          visible: true,
+          disabled: false,
+        },
+      ],
+    },
+    {
+      logicalName: 'telephone1',
+      displayName: 'Main Phone',
+      attributeType: 'string',
+      controls: [
+        {
+          name: 'telephone1',
+          label: 'Main Phone',
+          controlType: 'standard',
+          tab: 'General',
+          section: 'Account Information',
+          visible: false,
+          disabled: false,
+        },
+      ],
+    },
+    {
+      logicalName: 'new_status',
+      displayName: 'Onboarding Status',
+      attributeType: 'optionset',
+      controls: [
+        {
+          name: 'new_status',
+          label: 'Onboarding Status',
+          controlType: 'optionset',
+          tab: 'Details',
+          section: 'Onboarding',
+          visible: true,
+          disabled: true,
+        },
+      ],
+    },
+    { logicalName: 'new_creditlimit', displayName: 'Credit Limit', attributeType: 'money', controls: [] },
+  ]
   const responses = {
     'global.getPageContext': () => 'model-driven-app',
     'global.showEnvironmentAlert': (args) => ({
@@ -495,6 +546,193 @@
     }),
     'global.clearEnvironmentAlert': () => undefined,
     'transport.listEntities': () => transportEntities.map((entity) => ({ ...entity })),
+    'codegen.getTableModel': ({ entityLogicalName }) => {
+      const col = (o) => ({
+        typeName: `${o.attributeType}Type`,
+        attributeOf: null,
+        isPrimaryId: false,
+        isPrimaryName: false,
+        isCustom: o.logicalName.startsWith('new_'),
+        isLogical: false,
+        isValidForCreate: true,
+        isValidForUpdate: true,
+        isValidForRead: true,
+        requiredLevel: 'None',
+        maxLength: null,
+        precision: null,
+        dateTimeBehavior: null,
+        dateTimeFormat: null,
+        targets: [],
+        optionSet: null,
+        ...o,
+      })
+      const name = entityLogicalName || 'account'
+      const title = name.charAt(0).toUpperCase() + name.slice(1)
+      const status = {
+        name: `new_${name}_new_status`,
+        displayName: `new_${name}_new_status`,
+        isGlobal: false,
+        options: [
+          { value: 100000000, label: 'New' },
+          { value: 100000001, label: 'In Progress' },
+          { value: 100000002, label: 'Done' },
+        ],
+      }
+      const industry = {
+        name: 'industrycode',
+        displayName: 'Industry',
+        isGlobal: true,
+        options: [
+          { value: 1, label: 'Accounting' },
+          { value: 2, label: 'Agriculture and Non-petrol Natural Resource Extraction' },
+        ],
+      }
+      return {
+        logicalName: name,
+        schemaName: title,
+        displayName: title,
+        displayCollectionName: `${title}s`,
+        entitySetName: `${name}s`,
+        primaryIdAttribute: `${name}id`,
+        primaryNameAttribute: 'name',
+        isCustom: name.startsWith('new_'),
+        columns: [
+          col({
+            logicalName: `${name}id`,
+            schemaName: `${title}Id`,
+            displayName: title,
+            attributeType: 'Uniqueidentifier',
+            isPrimaryId: true,
+            requiredLevel: 'SystemRequired',
+            isValidForUpdate: false,
+          }),
+          col({
+            logicalName: 'name',
+            schemaName: 'Name',
+            displayName: `${title} Name`,
+            attributeType: 'String',
+            isPrimaryName: true,
+            requiredLevel: 'ApplicationRequired',
+            maxLength: 160,
+          }),
+          col({
+            logicalName: 'new_creditlimit',
+            schemaName: 'new_CreditLimit',
+            displayName: 'Credit Limit',
+            attributeType: 'Money',
+            precision: 2,
+          }),
+          col({
+            logicalName: 'new_status',
+            schemaName: 'new_Status',
+            displayName: 'Onboarding Status',
+            attributeType: 'Picklist',
+            optionSet: status,
+          }),
+          col({
+            logicalName: 'industrycode',
+            schemaName: 'IndustryCode',
+            displayName: 'Industry',
+            attributeType: 'Picklist',
+            optionSet: industry,
+          }),
+          col({
+            logicalName: 'new_tags',
+            schemaName: 'new_Tags',
+            displayName: 'Tags',
+            attributeType: 'Virtual',
+            typeName: 'MultiSelectPicklistType',
+            optionSet: {
+              name: `new_${name}_new_tags`,
+              displayName: `new_${name}_new_tags`,
+              isGlobal: false,
+              options: [
+                { value: 1, label: 'Key Account' },
+                { value: 2, label: 'Partner' },
+              ],
+            },
+          }),
+          col({
+            logicalName: 'new_renewaldate',
+            schemaName: 'new_RenewalDate',
+            displayName: 'Renewal Date',
+            attributeType: 'DateTime',
+            dateTimeBehavior: 'DateOnly',
+            dateTimeFormat: 'DateOnly',
+          }),
+          col({
+            logicalName: 'createdon',
+            schemaName: 'CreatedOn',
+            displayName: 'Created On',
+            attributeType: 'DateTime',
+            dateTimeBehavior: 'UserLocal',
+            dateTimeFormat: 'DateAndTime',
+            isValidForCreate: false,
+            isValidForUpdate: false,
+          }),
+          col({
+            logicalName: 'ownerid',
+            schemaName: 'OwnerId',
+            displayName: 'Owner',
+            attributeType: 'Owner',
+            requiredLevel: 'SystemRequired',
+            targets: [
+              { logicalName: 'systemuser', navigationProperty: 'ownerid', entitySetName: 'systemusers' },
+              { logicalName: 'team', navigationProperty: 'ownerid', entitySetName: 'teams' },
+            ],
+          }),
+          col({
+            logicalName: 'parentaccountid',
+            schemaName: 'ParentAccountId',
+            displayName: 'Parent Account',
+            attributeType: 'Lookup',
+            targets: [{ logicalName: 'account', navigationProperty: 'parentaccountid', entitySetName: 'accounts' }],
+          }),
+          col({
+            logicalName: 'parentaccountidname',
+            schemaName: 'ParentAccountIdName',
+            displayName: 'Parent Account',
+            attributeType: 'String',
+            attributeOf: 'parentaccountid',
+            isLogical: true,
+          }),
+          col({
+            logicalName: 'versionnumber',
+            schemaName: 'VersionNumber',
+            displayName: 'Version Number',
+            attributeType: 'BigInt',
+            isValidForCreate: false,
+            isValidForUpdate: false,
+          }),
+        ],
+      }
+    },
+    'codegen.getGlobalChoices': () => [
+      {
+        name: 'budgetstatus',
+        displayName: 'Budget Status',
+        isGlobal: true,
+        tableLogicalName: null,
+        columnLogicalName: null,
+        options: [
+          { value: 0, label: 'No Committed Budget' },
+          { value: 1, label: 'May Buy' },
+          { value: 2, label: 'Can Buy' },
+          { value: 3, label: 'Will Buy' },
+        ],
+      },
+      {
+        name: 'industrycode',
+        displayName: 'Industry',
+        isGlobal: true,
+        tableLogicalName: null,
+        columnLogicalName: null,
+        options: [
+          { value: 1, label: 'Accounting' },
+          { value: 2, label: 'Agriculture and Non-petrol Natural Resource Extraction' },
+        ],
+      },
+    ],
     'investigate.listTables': () => transportEntities.map((entity) => ({ ...entity })),
     'investigate.getTableColumns': (args) => ({
       info: transportEntities.find((entity) => entity.logicalName === args.entityLogicalName) ?? transportEntities[0],
@@ -696,7 +934,13 @@
       dependents: [
         { id: guid(940), componentType: 60, componentTypeLabel: 'Form', name: 'Account Main Form', parentName: null },
         { id: guid(941), componentType: 26, componentTypeLabel: 'View', name: 'Active Accounts', parentName: null },
-        { id: guid(942), componentType: 29, componentTypeLabel: 'Process', name: 'Require credit limit', parentName: null },
+        {
+          id: guid(942),
+          componentType: 29,
+          componentTypeLabel: 'Process',
+          name: 'Require credit limit',
+          parentName: null,
+        },
       ],
       dependentsUnavailable: null,
       flows: args.scanFlows
@@ -848,6 +1092,49 @@
       businessRulesUnavailable: null,
       formXmlUnavailable: null,
     }),
+    'utilities.getFormAttributes': () => harnessFormAttributes,
+    'utilities.revealFormColumn': ({ logicalName, show }) => {
+      const attribute = harnessFormAttributes.find((candidate) => candidate.logicalName === logicalName)
+      if (!attribute) {
+        return {
+          logicalName,
+          displayName: logicalName,
+          attributeType: '',
+          requiredLevel: 'none',
+          value: null,
+          onForm: false,
+          controls: [],
+        }
+      }
+      console.log('[harness] revealFormColumn', logicalName, show)
+      return {
+        ...attribute,
+        requiredLevel: logicalName === 'name' ? 'required' : 'none',
+        value: logicalName === 'name' ? 'Contoso Ltd' : logicalName === 'new_status' ? 'In Progress (100000001)' : null,
+        onForm: attribute.controls.length > 0,
+        controls: attribute.controls.map((control) => ({ ...control, visible: show || control.visible })),
+      }
+    },
+    'utilities.getRecordPayloadSource': () => ({
+      entityLogicalName: 'account',
+      recordId: guid(960),
+      values: {
+        accountid: guid(960),
+        name: 'Contoso Ltd',
+        new_creditlimit: 5000,
+        'new_creditlimit@OData.Community.Display.V1.FormattedValue': '$5,000.00',
+        new_status: 100000001,
+        new_tags: '1,2',
+        new_renewaldate: '2026-01-31',
+        createdon: '2026-01-01T00:00:00Z',
+        _parentaccountid_value: guid(961),
+        '_parentaccountid_value@Microsoft.Dynamics.CRM.lookuplogicalname': 'account',
+        _ownerid_value: guid(301),
+        '_ownerid_value@Microsoft.Dynamics.CRM.lookuplogicalname': 'systemuser',
+        numberofemployees: 120,
+        versionnumber: 99,
+      },
+    }),
     'utilities.getPageTarget': () => ({
       kind: 'form',
       entityLogicalName: 'account',
@@ -959,43 +1246,14 @@
         snapshot,
       }
     },
-    'utilities.getChoiceMetadata': () => ({
-      entityName: 'account',
-      choices: [
-        {
-          name: 'Account Type',
-          scope: 'account',
-          options: [
-            { value: 1, label: 'Customer' },
-            { value: 2, label: 'Partner (Gold)' },
-          ],
-        },
-        {
-          name: 'Do not email',
-          scope: 'account',
-          options: [
-            { value: 0, label: 'Allow' },
-            { value: 1, label: 'Do Not Allow' },
-          ],
-        },
-        {
-          name: 'Global Status',
-          scope: 'global',
-          options: [
-            { value: 100000000, label: 'Open' },
-            { value: 100000001, label: 'Closed' },
-          ],
-        },
-      ],
-    }),
     'utilities.getControlDetails': () => ({ entityName: 'account', controlType: 'form/edit', id: 'form-1' }),
-    'templates.captureFormValues': () => ({
+    'formPresets.captureFormValues': () => ({
       name: 'Contoso',
       telephone1: '555-0100',
       revenue: 1000,
       primarycontactid: [{ id: 'x', entityType: 'contact', name: 'Jane' }],
     }),
-    'templates.applyFormValues': (args) => ({
+    'formPresets.applyFormValues': (args) => ({
       applied: Object.keys(args.fields).length - 1,
       skipped: [Object.keys(args.fields)[0]],
     }),
@@ -1289,9 +1547,46 @@
   const local = makeArea(
     {
       'Settings.extension': legacy['Settings.extension'],
-      'Templates.model-driven-app.33333333-3333-4333-8333-333333333333':
-        legacy['Templates.model-driven-app.33333333-3333-4333-8333-333333333333'],
-      schemaVersion: 3,
+      formPresets: {
+        'model-driven-app': {
+          '33333333-3333-4333-8333-333333333333': {
+            id: '33333333-3333-4333-8333-333333333333',
+            name: 'Contact defaults',
+            fields: { firstname: 'Test', lastname: 'User', donotemail: true },
+          },
+        },
+        portal: {},
+      },
+      formPresets$: { v: 1 },
+      codeTemplates: {
+        'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa': {
+          id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+          name: 'Contoso model',
+          kind: 'table',
+          language: 'csharp',
+          filenamePattern: '{{table.identifier}}.cs',
+          settings: [
+            { key: 'namespace', label: 'Namespace', default: 'Contoso.Models' },
+            { key: 'prefix', label: 'Publisher prefixes to strip', default: 'new' },
+          ],
+          text: [
+            'namespace {{settings.namespace}};',
+            '',
+            'public sealed class {{table.identifier}} : ContosoEntity',
+            '{',
+            '{{#columns}}',
+            '    public {{type}} {{identifier}} { get; set; }',
+            '{{/columns}}',
+            '}',
+            '',
+          ].join('\n'),
+          builtIn: false,
+          updatedAt: '2026-09-07T00:00:00.000Z',
+        },
+      },
+      codeTemplates$: { v: 1 },
+      codeTemplateDefaults: { table: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' },
+      schemaVersion: 4,
       environments: seededEnvironments,
       environments$: { v: 3 },
       servicePrincipals: seededPrincipals,

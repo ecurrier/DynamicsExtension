@@ -17,9 +17,10 @@ const STALE_TIMES: Record<QueryCommandName, number> = {
   'utilities.getWebApiUrl': 0,
   'utilities.getSessionSnapshot': 0,
   'utilities.getPageTarget': 0,
-  'utilities.getChoiceMetadata': Infinity,
   'utilities.getControlDetails': 0,
-  'templates.captureFormValues': 0,
+  'utilities.getFormAttributes': 0,
+  'utilities.getRecordPayloadSource': 0,
+  'formPresets.captureFormValues': 0,
   'webapi.getAttributeMetadata': Infinity,
   'webapi.getRecordValues': 0,
   'webapi.getEntityInfo': Infinity,
@@ -53,6 +54,8 @@ const STALE_TIMES: Record<QueryCommandName, number> = {
   'investigate.getRecordCounts': 0,
   'investigate.listTables': 0,
   'investigate.getTableColumns': 0,
+  'codegen.getTableModel': Infinity,
+  'codegen.getGlobalChoices': Infinity,
 }
 
 export interface PageQueryOptions {

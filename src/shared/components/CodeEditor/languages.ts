@@ -5,7 +5,7 @@ import { StreamLanguage } from '@codemirror/language'
 import { csharp } from '@codemirror/legacy-modes/mode/clike'
 import { type Extension } from '@codemirror/state'
 
-export type CodeLanguage = 'json' | 'xml' | 'javascript' | 'csharp'
+export type CodeLanguage = 'json' | 'xml' | 'javascript' | 'typescript' | 'csharp'
 
 export const languageExtension = (language: CodeLanguage): Extension => {
   switch (language) {
@@ -15,6 +15,8 @@ export const languageExtension = (language: CodeLanguage): Extension => {
       return xml()
     case 'javascript':
       return javascript()
+    case 'typescript':
+      return javascript({ typescript: true })
     case 'csharp':
       return StreamLanguage.define(csharp)
   }
@@ -24,5 +26,6 @@ export const CODE_LANGUAGE_LABELS: Record<CodeLanguage, string> = {
   json: 'JSON',
   xml: 'XML',
   javascript: 'JavaScript',
+  typescript: 'TypeScript',
   csharp: 'C#',
 }

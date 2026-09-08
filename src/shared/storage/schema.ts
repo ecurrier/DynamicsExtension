@@ -2,7 +2,8 @@ import { type CloudType, type EnvironmentAlert, type PageContext } from '@/share
 
 export const LEGACY_SCHEMA_VERSION = 2
 export const SERVICE_PRINCIPAL_SCHEMA_VERSION = 3
-export const SCHEMA_VERSION = SERVICE_PRINCIPAL_SCHEMA_VERSION
+export const FORM_PRESET_SCHEMA_VERSION = 4
+export const SCHEMA_VERSION = FORM_PRESET_SCHEMA_VERSION
 
 export interface ServicePrincipal {
   id: string
@@ -36,13 +37,13 @@ export interface AccessTokenEntry {
 
 export type AccessTokens = Record<string, AccessTokenEntry>
 
-export interface Template {
+export interface FormPreset {
   id: string
   name: string
   fields: Record<string, unknown>
 }
 
-export type TemplatesByContext = Record<PageContext, Record<string, Template>>
+export type FormPresetsByContext = Record<PageContext, Record<string, FormPreset>>
 
 export type ThemePreference = 'system' | 'light' | 'dark'
 
@@ -72,7 +73,7 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
   pluginStepsRequireToggleConfirmation: true,
 }
 
-export const EMPTY_TEMPLATES: TemplatesByContext = {
+export const EMPTY_FORM_PRESETS: FormPresetsByContext = {
   'model-driven-app': {},
   portal: {},
 }

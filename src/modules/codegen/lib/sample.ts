@@ -1,0 +1,212 @@
+import { type CodegenChoice, type CodegenColumn, type CodegenTable } from '@/shared/types'
+
+type ColumnSeed = Partial<CodegenColumn> &
+  Pick<CodegenColumn, 'logicalName' | 'schemaName' | 'displayName' | 'attributeType'>
+
+const column = (seed: ColumnSeed): CodegenColumn => ({
+  typeName: `${seed.attributeType}Type`,
+  attributeOf: null,
+  isPrimaryId: false,
+  isPrimaryName: false,
+  isCustom: seed.logicalName.startsWith('new_'),
+  isLogical: false,
+  isValidForCreate: true,
+  isValidForUpdate: true,
+  isValidForRead: true,
+  requiredLevel: 'None',
+  maxLength: null,
+  precision: null,
+  dateTimeBehavior: null,
+  dateTimeFormat: null,
+  targets: [],
+  optionSet: null,
+  ...seed,
+})
+
+export const SAMPLE_INDUSTRY: CodegenChoice = {
+  name: 'industrycode',
+  displayName: 'Industry',
+  isGlobal: true,
+  tableLogicalName: null,
+  columnLogicalName: null,
+  options: [
+    { value: 1, label: 'Accounting' },
+    { value: 2, label: 'Agriculture and Non-petrol Natural Resource Extraction' },
+    { value: 3, label: 'Broadcasting Printing and Publishing' },
+  ],
+}
+
+export const SAMPLE_TABLE: CodegenTable = {
+  logicalName: 'account',
+  schemaName: 'Account',
+  displayName: 'Account',
+  displayCollectionName: 'Accounts',
+  entitySetName: 'accounts',
+  primaryIdAttribute: 'accountid',
+  primaryNameAttribute: 'name',
+  isCustom: false,
+  columns: [
+    column({
+      logicalName: 'accountid',
+      schemaName: 'AccountId',
+      displayName: 'Account',
+      attributeType: 'Uniqueidentifier',
+      isPrimaryId: true,
+      requiredLevel: 'SystemRequired',
+      isValidForUpdate: false,
+    }),
+    column({
+      logicalName: 'name',
+      schemaName: 'Name',
+      displayName: 'Account Name',
+      attributeType: 'String',
+      isPrimaryName: true,
+      requiredLevel: 'ApplicationRequired',
+      maxLength: 160,
+    }),
+    column({
+      logicalName: 'new_creditlimit',
+      schemaName: 'new_CreditLimit',
+      displayName: 'Credit Limit',
+      attributeType: 'Money',
+      precision: 2,
+    }),
+    column({
+      logicalName: 'new_customerscore',
+      schemaName: 'new_CustomerScore',
+      displayName: 'Customer Score',
+      attributeType: 'Decimal',
+      precision: 2,
+    }),
+    column({
+      logicalName: 'new_status',
+      schemaName: 'new_Status',
+      displayName: 'Onboarding Status',
+      attributeType: 'Picklist',
+      optionSet: {
+        name: 'new_account_new_status',
+        displayName: 'new_account_new_status',
+        isGlobal: false,
+        options: [
+          { value: 100000000, label: 'New' },
+          { value: 100000001, label: 'In Progress' },
+          { value: 100000002, label: 'Done' },
+        ],
+      },
+    }),
+    column({
+      logicalName: 'industrycode',
+      schemaName: 'IndustryCode',
+      displayName: 'Industry',
+      attributeType: 'Picklist',
+      optionSet: { name: 'industrycode', displayName: 'Industry', isGlobal: true, options: SAMPLE_INDUSTRY.options },
+    }),
+    column({
+      logicalName: 'new_tags',
+      schemaName: 'new_Tags',
+      displayName: 'Tags',
+      attributeType: 'Virtual',
+      typeName: 'MultiSelectPicklistType',
+      optionSet: {
+        name: 'new_account_new_tags',
+        displayName: 'new_account_new_tags',
+        isGlobal: false,
+        options: [
+          { value: 1, label: 'Key Account' },
+          { value: 2, label: 'Partner' },
+        ],
+      },
+    }),
+    column({
+      logicalName: 'new_renewaldate',
+      schemaName: 'new_RenewalDate',
+      displayName: 'Renewal Date',
+      attributeType: 'DateTime',
+      dateTimeBehavior: 'DateOnly',
+      dateTimeFormat: 'DateOnly',
+    }),
+    column({
+      logicalName: 'createdon',
+      schemaName: 'CreatedOn',
+      displayName: 'Created On',
+      attributeType: 'DateTime',
+      dateTimeBehavior: 'UserLocal',
+      dateTimeFormat: 'DateAndTime',
+      isValidForCreate: false,
+      isValidForUpdate: false,
+    }),
+    column({
+      logicalName: 'parentaccountid',
+      schemaName: 'ParentAccountId',
+      displayName: 'Parent Account',
+      attributeType: 'Lookup',
+      targets: [{ logicalName: 'account', navigationProperty: 'parentaccountid', entitySetName: 'accounts' }],
+    }),
+    column({
+      logicalName: 'ownerid',
+      schemaName: 'OwnerId',
+      displayName: 'Owner',
+      attributeType: 'Owner',
+      requiredLevel: 'SystemRequired',
+      targets: [
+        { logicalName: 'systemuser', navigationProperty: 'ownerid', entitySetName: 'systemusers' },
+        { logicalName: 'team', navigationProperty: 'ownerid', entitySetName: 'teams' },
+      ],
+    }),
+    column({
+      logicalName: 'donotemail',
+      schemaName: 'DoNotEMail',
+      displayName: 'Do not allow Emails',
+      attributeType: 'Boolean',
+      optionSet: {
+        name: 'account_donotemail',
+        displayName: 'account_donotemail',
+        isGlobal: false,
+        options: [
+          { value: 0, label: 'Allow' },
+          { value: 1, label: 'Do Not Allow' },
+        ],
+      },
+    }),
+    column({
+      logicalName: 'numberofemployees',
+      schemaName: 'NumberOfEmployees',
+      displayName: 'Number of Employees',
+      attributeType: 'Integer',
+    }),
+    column({
+      logicalName: 'parentaccountidname',
+      schemaName: 'ParentAccountIdName',
+      displayName: 'Parent Account',
+      attributeType: 'String',
+      attributeOf: 'parentaccountid',
+      isLogical: true,
+      isValidForCreate: false,
+      isValidForUpdate: false,
+    }),
+    column({
+      logicalName: 'versionnumber',
+      schemaName: 'VersionNumber',
+      displayName: 'Version Number',
+      attributeType: 'BigInt',
+      isValidForCreate: false,
+      isValidForUpdate: false,
+    }),
+    column({
+      logicalName: 'entityimage',
+      schemaName: 'EntityImage',
+      displayName: 'Entity Image',
+      attributeType: 'Virtual',
+      typeName: 'ImageType',
+    }),
+    column({
+      logicalName: 'new_contract',
+      schemaName: 'new_Contract',
+      displayName: 'Contract',
+      attributeType: 'Virtual',
+      typeName: 'FileType',
+    }),
+  ],
+}
+
+export const SAMPLE_CHOICES: CodegenChoice[] = [SAMPLE_INDUSTRY]

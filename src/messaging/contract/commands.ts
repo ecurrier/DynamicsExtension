@@ -4,9 +4,10 @@ import {
   type AuditDetail,
   type AuditDetailRequest,
   type BusinessUnit,
-  type ChoiceMetadata,
   type ClearEnvironmentVariableValueRequest,
   type ClearLookupRequest,
+  type CodegenChoice,
+  type CodegenTable,
   type ColumnUsage,
   type ColumnUsageRequest,
   type ControlDetails,
@@ -18,6 +19,8 @@ import {
   type EnvironmentDetails,
   type EnvironmentVariable,
   type EnvironmentVariableValueResult,
+  type FormAttributeInfo,
+  type FormColumnDetails,
   type FormDiagnostics,
   type GeneratedUrls,
   type NamedFetchXml,
@@ -33,6 +36,7 @@ import {
   type RecordCounts,
   type RecordHistory,
   type RecordHistoryRequest,
+  type RecordPayloadSource,
   type RecordSearchRequest,
   type RecordSearchResult,
   type RecordValues,
@@ -40,6 +44,7 @@ import {
   type RestoreFormStateResult,
   type RetrievePageRequest,
   type RetrievePageResult,
+  type RevealFormColumnRequest,
   type RoleChangeSet,
   type SavedView,
   type SecurityRole,
@@ -75,10 +80,12 @@ export interface CommandMap {
   'utilities.restoreFormState': { args: RestoreFormStateRequest; result: RestoreFormStateResult; kind: 'mutation' }
   'utilities.getSessionSnapshot': { args: void; result: SessionSnapshot; kind: 'query' }
   'utilities.getPageTarget': { args: void; result: PageTarget; kind: 'query' }
-  'utilities.getChoiceMetadata': { args: void; result: ChoiceMetadata; kind: 'query' }
   'utilities.getControlDetails': { args: void; result: ControlDetails; kind: 'query' }
-  'templates.captureFormValues': { args: void; result: Record<string, unknown>; kind: 'query' }
-  'templates.applyFormValues': {
+  'utilities.getFormAttributes': { args: void; result: FormAttributeInfo[]; kind: 'query' }
+  'utilities.revealFormColumn': { args: RevealFormColumnRequest; result: FormColumnDetails; kind: 'mutation' }
+  'utilities.getRecordPayloadSource': { args: void; result: RecordPayloadSource; kind: 'query' }
+  'formPresets.captureFormValues': { args: void; result: Record<string, unknown>; kind: 'query' }
+  'formPresets.applyFormValues': {
     args: { fields: Record<string, unknown> }
     result: { applied: number; skipped: string[] }
     kind: 'mutation'
@@ -132,6 +139,8 @@ export interface CommandMap {
   'investigate.getTableMetadata': { args: { entityLogicalName: string }; result: TableMetadata; kind: 'query' }
   'investigate.getRecordCounts': { args: RecordCountRequest; result: RecordCounts; kind: 'query' }
   'investigate.listTables': { args: void; result: EntitySummary[]; kind: 'query' }
+  'codegen.getTableModel': { args: { entityLogicalName: string }; result: CodegenTable; kind: 'query' }
+  'codegen.getGlobalChoices': { args: void; result: CodegenChoice[]; kind: 'query' }
   'investigate.getTableColumns': { args: { entityLogicalName: string }; result: TransportEntityMetadata; kind: 'query' }
 }
 

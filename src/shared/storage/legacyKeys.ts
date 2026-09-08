@@ -6,7 +6,7 @@ export const LEGACY_TEMPLATE_PREFIX = 'Templates.'
 export const LEGACY_TARGET_TO_AREA: Record<string, string> = {
   '#utilities-admin-content': 'utilities.admin',
   '#utilities-developer-content': 'utilities.developer',
-  '#templates-content': 'templates.templates',
+  '#templates-content': 'formpresets.presets',
   '#webapi-update-fields-content': 'webapi.update-fields',
   '#webapi-retrieve-records-content': 'webapi.retrieve-records',
   '#security-content': 'security.roles',

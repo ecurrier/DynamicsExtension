@@ -1,4 +1,6 @@
+import { codegenModule } from './codegen'
 import { environmentVariablesModule } from './environmentvariables'
+import { formPresetsModule } from './formpresets'
 import { formsModule } from './forms'
 import { impersonationModule } from './impersonation'
 import { investigateModule } from './investigate'
@@ -6,7 +8,6 @@ import { pluginStepsModule } from './pluginsteps'
 import { pluginTracesModule } from './plugintraces'
 import { securityModule } from './security'
 import { settingsModule } from './settings'
-import { templatesModule } from './templates'
 import { transporterModule } from './transporter'
 import { type AreaDefinition, type ModuleDefinition } from './types'
 import { utilitiesModule } from './utilities'
@@ -15,8 +16,9 @@ import { webApiModule } from './webapi'
 export const modules: ModuleDefinition[] = [
   utilitiesModule,
   investigateModule,
-  templatesModule,
+  formPresetsModule,
   webApiModule,
+  codegenModule,
   formsModule,
   securityModule,
   impersonationModule,

@@ -1,6 +1,7 @@
 export * from './audit'
 export * from './auth'
 export * from './automation'
+export * from './codegen'
 export * from './columnUsage'
 export * from './entityRef'
 export * from './environmentVariables'

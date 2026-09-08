@@ -3,7 +3,7 @@ import { makeStyles, mergeClasses, tokens } from '@fluentui/react-components'
 import CodeMirror from '@uiw/react-codemirror'
 import { useMemo } from 'react'
 
-import { useSystemTheme } from '@/shared/theme'
+import { useResolvedTheme } from '@/shared/theme'
 
 import { type CodeLanguage, languageExtension } from './languages'
 
@@ -49,7 +49,7 @@ export const CodeEditor = ({
   fill = false,
 }: CodeEditorProps) => {
   const styles = useStyles()
-  const mode = useSystemTheme()
+  const mode = useResolvedTheme()
   const extensions = useMemo(
     () => [languageExtension(language), ...(lineWrapping ? [EditorView.lineWrapping] : [])],
     [language, lineWrapping],

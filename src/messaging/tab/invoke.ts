@@ -18,7 +18,6 @@ export interface InvokeOptions {
 const DEFAULT_TIMEOUT_MS = 30_000
 
 const COMMAND_TIMEOUTS: Partial<Record<CommandName, number>> = {
-  'utilities.getChoiceMetadata': 90_000,
   'webapi.executeFetchXml': 90_000,
   'webapi.getAttributeMetadata': 60_000,
   'forms.updateFormXml': 120_000,

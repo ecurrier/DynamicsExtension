@@ -2,9 +2,9 @@
 
 Browser extension (Manifest V3) with productivity utilities for model-driven apps and Power Pages.
 
-**Do things:** admin shortcuts, Fetch XML and URL generation, choice code snippets, form templates, Web API field updates and queries, security role management, plug-in step and environment variable management, and record transport between environments.
+**Do things:** admin shortcuts, Fetch XML and URL generation, a column browser, find-column-on-form, Web API record payloads, code generation from your own Templates (classes and enums for tables and choices), form presets, Web API field updates and queries, security role management, plug-in step and environment variable management, and record transport between environments.
 
-**Understand things:** read-only investigation tools that answer *why* the platform is behaving as it is — what automation runs on a table, why a user can or cannot see a record, what changed on a record and when, which solution layer is winning, what depends on a column (including cloud flows), and which scripts and control states are in play on the open form.
+**Understand things:** read-only investigation tools that answer _why_ the platform is behaving as it is — what automation runs on a table, why a user can or cannot see a record, what changed on a record and when, which solution layer is winning, what depends on a column (including cloud flows), and which scripts and control states are in play on the open form.
 
 Built with [WXT](https://wxt.dev), React, TypeScript, Fluent UI v9, TanStack Query, Zustand, and CodeMirror 6.
 
@@ -27,12 +27,31 @@ Then open `chrome://extensions`, enable Developer mode, choose **Load unpacked**
 
 Other scripts:
 
-| Script | Purpose |
-| --- | --- |
-| `npm run typecheck` | TypeScript project check |
-| `npm run lint` | ESLint |
-| `npm test` | Vitest unit tests |
-| `npm run zip` | Store-ready archive in `.output` |
+| Script              | Purpose                          |
+| ------------------- | -------------------------------- |
+| `npm run typecheck` | TypeScript project check         |
+| `npm run lint`      | ESLint                           |
+| `npm test`          | Vitest unit tests                |
+| `npm run zip`       | Store-ready archive in `.output` |
+
+## Code generation
+
+The Code Generation module renders a **Template** against a table or a choice read from the open environment. Templates are logic-less and Mustache-style: `{{path}}` inserts a value, `{{#list}}...{{/list}}` repeats a block per item (or once for a truthy value), `{{^flag}}...{{/flag}}` renders when a value is false or empty, and `{{! text }}` is a comment. Built-in Templates (C# early-bound class, TypeScript interface, C# enum, JavaScript object) are read-only; clone one under Code Generation > Templates, edit it with the live preview, star it as the default for its kind, and export the JSON to share it. The Developer utilities Generate Table Class and Generate Choice Code Snippet open Generate with the current table selected.
+
+Data available to a table Template:
+
+| Path                                                                                                                                                                                           | Meaning                                                                                                                                                                     |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `table.logicalName`, `table.schemaName`, `table.displayName`, `table.displayCollectionName`, `table.entitySetName`, `table.primaryIdAttribute`, `table.primaryNameAttribute`, `table.isCustom` | Table metadata                                                                                                                                                              |
+| `table.identifier`, `table.identifierCamel`                                                                                                                                                    | PascalCase and camelCase names from the schema name, minus the `prefix` setting (one or more publisher prefixes, comma separated)                                           |
+| `columns[]`                                                                                                                                                                                    | One entry per column: primary id, primary name, then alphabetical; helper and bookkeeping columns are excluded unless Show system columns is on                             |
+| `logicalName`, `schemaName`, `displayName`, `identifier`, `identifierCamel`                                                                                                                    | Column names                                                                                                                                                                |
+| `type`, `csType`, `tsType`, `kind`, `attributeType`                                                                                                                                            | `type` follows the Template language; the map is fixed: lookups are `EntityReference`, choices `OptionSetValue`, DateOnly-behaviour dates `DateOnly?`, value types nullable |
+| `isPrimaryId`, `isPrimaryName`, `isRequired`, `isCustom`, `isLookup`, `isChoice`, `isMultiChoice`, `isDateOnly`, `isValidForCreate`, `isValidForUpdate`, `isFirst`, `isLast`                   | Flags for sections                                                                                                                                                          |
+| `maxLength`, `precision`, `targets[]` (`logicalName`, `navigationProperty`, `entitySetName`, `identifier`), `choiceName`, `choiceIdentifier`                                                   | Type-specific details                                                                                                                                                       |
+| `settings.<key>`                                                                                                                                                                               | The Template's settings, prefilled with their defaults in Generate                                                                                                          |
+
+A choice Template sees `choice.name`, `choice.displayName`, `choice.identifier`, `choice.identifierCamel`, `choice.identifierPlural`, `choice.scope`, `choice.tableLogicalName`, `choice.options[]` (`label`, `identifier`, `identifierUnderscored`, `value`, `isFirst`, `isLast`), and `settings`. `choiceIdentifier` on a column matches `choice.identifier` for the same choice, so a table class can reference the enum a choice Template generates.
 
 ## Project layout
 

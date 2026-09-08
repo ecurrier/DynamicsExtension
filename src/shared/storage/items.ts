@@ -1,8 +1,12 @@
 import { storage, type WxtStorageItem } from 'wxt/utils/storage'
 
 import {
+  type CodegenPreferences,
+  EMPTY_CODEGEN_PREFERENCES,
   type ImpersonationStates,
   type ResultsShare,
+  type TemplateDefaults,
+  type Templates,
   type TraceViewerLaunch,
   type TransporterLaunch,
 } from '@/shared/types'
@@ -10,12 +14,12 @@ import {
 import {
   type AccessTokens,
   DEFAULT_SETTINGS,
-  EMPTY_TEMPLATES,
+  EMPTY_FORM_PRESETS,
   type Environment,
   type Environments,
   type ExtensionSettings,
+  type FormPresetsByContext,
   type ServicePrincipals,
-  type TemplatesByContext,
 } from './schema'
 
 export type StorageItem<T> = WxtStorageItem<T, Record<string, unknown>>
@@ -57,11 +61,11 @@ export const servicePrincipalsItem: StorageItem<ServicePrincipals> = storage.def
   version: 1,
 })
 
-export const templatesItem: StorageItem<TemplatesByContext> = storage.defineItem<
-  TemplatesByContext,
+export const formPresetsItem: StorageItem<FormPresetsByContext> = storage.defineItem<
+  FormPresetsByContext,
   Record<string, unknown>
->('local:templates', {
-  fallback: EMPTY_TEMPLATES,
+>('local:formPresets', {
+  fallback: EMPTY_FORM_PRESETS,
   version: 1,
 })
 
@@ -109,3 +113,18 @@ export const transporterLaunchItem: StorageItem<TransporterLaunch | null> = stor
   TransporterLaunch | null,
   Record<string, unknown>
 >('session:transporterLaunch', { fallback: null })
+
+export const codeTemplatesItem: StorageItem<Templates> = storage.defineItem<Templates, Record<string, unknown>>(
+  'local:codeTemplates',
+  { fallback: {}, version: 1 },
+)
+
+export const codeTemplateDefaultsItem: StorageItem<TemplateDefaults> = storage.defineItem<
+  TemplateDefaults,
+  Record<string, unknown>
+>('local:codeTemplateDefaults', { fallback: {} })
+
+export const codegenPreferencesItem: StorageItem<CodegenPreferences> = storage.defineItem<
+  CodegenPreferences,
+  Record<string, unknown>
+>('local:codegenPreferences', { fallback: EMPTY_CODEGEN_PREFERENCES })

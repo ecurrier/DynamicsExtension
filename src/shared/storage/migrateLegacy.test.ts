@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 
-import { environmentsItem, lastVisitedAreaItem, schemaVersionItem, settingsItem, templatesItem } from './items'
+import { environmentsItem, formPresetsItem, lastVisitedAreaItem, schemaVersionItem, settingsItem } from './items'
 import { LEGACY_TARGET_TO_AREA } from './legacyKeys'
 import { buildSchemaFromLegacy, migrateLegacyStorage } from './migrateLegacy'
 import { DEFAULT_SETTINGS, LEGACY_SCHEMA_VERSION } from './schema'
@@ -66,12 +66,12 @@ describe('buildSchemaFromLegacy', () => {
       securityRequireRemovalConfirmation: false,
     })
     expect(migrated.lastVisitedArea).toBe('webapi.retrieve-records')
-    expect(migrated.templates['model-driven-app']['44444444-4444-4444-8444-444444444444']).toEqual({
+    expect(migrated.formPresets['model-driven-app']['44444444-4444-4444-8444-444444444444']).toEqual({
       id: '44444444-4444-4444-8444-444444444444',
       name: 'Contact defaults',
       fields: { firstname: 'Test', donotemail: true },
     })
-    expect(migrated.templates.portal['55555555-5555-4555-8555-555555555555']?.name).toBe('Portal defaults')
+    expect(migrated.formPresets.portal['55555555-5555-4555-8555-555555555555']?.name).toBe('Portal defaults')
     expect(migrated.legacyKeys).not.toContain('unrelated')
     expect(migrated.legacyKeys).toHaveLength(7)
   })
@@ -100,7 +100,7 @@ describe('migrateLegacyStorage', () => {
     expect(Object.keys(await environmentsItem.getValue())).toHaveLength(2)
     expect((await settingsItem.getValue()).openLastVisitedArea).toBe(true)
     expect(await lastVisitedAreaItem.getValue()).toBe('webapi.retrieve-records')
-    expect(Object.keys((await templatesItem.getValue())['model-driven-app'])).toHaveLength(1)
+    expect(Object.keys((await formPresetsItem.getValue())['model-driven-app'])).toHaveLength(1)
     const remaining = await fakeBrowser.storage.local.get(null)
     expect(
       Object.keys(remaining).filter(

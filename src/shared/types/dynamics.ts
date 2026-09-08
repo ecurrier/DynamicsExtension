@@ -51,17 +51,6 @@ export interface ChoiceOption {
   label: string
 }
 
-export interface ChoiceSet {
-  name: string
-  scope: string
-  options: ChoiceOption[]
-}
-
-export interface ChoiceMetadata {
-  entityName: string | null
-  choices: ChoiceSet[]
-}
-
 export type AttributeType =
   | 'BigInt'
   | 'Boolean'

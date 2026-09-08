@@ -8,7 +8,7 @@ export const environmentVariablesModule: ModuleDefinition = {
   id: 'environmentvariables',
   label: 'Environment Variables',
   icon: Braces20Regular,
-  order: 9,
+  order: 10,
   areas: [
     {
       id: 'environmentvariables.manager',

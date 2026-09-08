@@ -3,7 +3,7 @@ import { storage } from 'wxt/utils/storage'
 
 import { CLOUD_TYPES, type CloudType, type PageContext } from '@/shared/types'
 
-import { environmentsItem, lastVisitedAreaItem, schemaVersionItem, settingsItem, templatesItem } from './items'
+import { environmentsItem, formPresetsItem, lastVisitedAreaItem, schemaVersionItem, settingsItem } from './items'
 import {
   LEGACY_ENVIRONMENT_PREFIX,
   LEGACY_EXTENSION_SETTINGS_KEY,
@@ -13,16 +13,16 @@ import {
 } from './legacyKeys'
 import {
   DEFAULT_SETTINGS,
-  EMPTY_TEMPLATES,
+  EMPTY_FORM_PRESETS,
   type Environments,
   type ExtensionSettings,
+  type FormPresetsByContext,
   LEGACY_SCHEMA_VERSION,
-  type TemplatesByContext,
 } from './schema'
 
 export interface MigratedSchema {
   environments: Environments
-  templates: TemplatesByContext
+  formPresets: FormPresetsByContext
   settings: ExtensionSettings
   lastVisitedArea: string | null
   legacyKeys: string[]
@@ -49,7 +49,7 @@ const isPageContext = (value: string): value is PageContext => value === 'model-
 
 export const buildSchemaFromLegacy = (raw: LegacyRecord): MigratedSchema => {
   const environments: Environments = {}
-  const templates: TemplatesByContext = { 'model-driven-app': {}, portal: {} }
+  const formPresets: FormPresetsByContext = { 'model-driven-app': {}, portal: {} }
   let settings: ExtensionSettings = { ...DEFAULT_SETTINGS }
   let lastVisitedArea: string | null = null
   const legacyKeys: string[] = []
@@ -111,7 +111,7 @@ export const buildSchemaFromLegacy = (raw: LegacyRecord): MigratedSchema => {
     if (key.startsWith(LEGACY_TEMPLATE_PREFIX) && isRecord(value)) {
       const [context, id] = key.slice(LEGACY_TEMPLATE_PREFIX.length).split('.')
       if (context && id && isPageContext(context)) {
-        templates[context][id] = {
+        formPresets[context][id] = {
           id,
           name: asString(value.templateName),
           fields: isRecord(value.fields) ? value.fields : {},
@@ -121,7 +121,7 @@ export const buildSchemaFromLegacy = (raw: LegacyRecord): MigratedSchema => {
     }
   }
 
-  return { environments, templates, settings, lastVisitedArea, legacyKeys }
+  return { environments, formPresets, settings, lastVisitedArea, legacyKeys }
 }
 
 export const migrateLegacyStorage = async (): Promise<boolean> => {
@@ -135,11 +135,13 @@ export const migrateLegacyStorage = async (): Promise<boolean> => {
     await storage.setItems([
       { item: environmentsItem, value: migrated.environments },
       {
-        item: templatesItem,
+        item: formPresetsItem,
         value:
-          Object.keys(migrated.templates['model-driven-app']).length + Object.keys(migrated.templates.portal).length > 0
-            ? migrated.templates
-            : EMPTY_TEMPLATES,
+          Object.keys(migrated.formPresets['model-driven-app']).length +
+            Object.keys(migrated.formPresets.portal).length >
+          0
+            ? migrated.formPresets
+            : EMPTY_FORM_PRESETS,
       },
       { item: settingsItem, value: migrated.settings },
       { item: lastVisitedAreaItem, value: migrated.lastVisitedArea },
