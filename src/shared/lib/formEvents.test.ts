@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from "vitest";
 
-import { parseFormEvents } from './formEvents'
+import { parseFormEvents } from "./formEvents";
 
 const formXml = `
 <form>
@@ -25,41 +25,41 @@ const formXml = `
       <Handlers />
     </event>
   </events>
-</form>`
+</form>`;
 
-describe('parseFormEvents', () => {
-  it('reads the libraries in declaration order', () => {
-    expect(parseFormEvents(formXml).libraries).toEqual([
-      { name: 'new_account.js', order: 1 },
-      { name: 'new_shared.js', order: 2 },
-    ])
-  })
+describe("parseFormEvents", () => {
+	it("reads the libraries in declaration order", () => {
+		expect(parseFormEvents(formXml).libraries).toEqual([
+			{ name: "new_account.js", order: 1 },
+			{ name: "new_shared.js", order: 2 },
+		]);
+	});
 
-  it('reads handlers with their execution order within the event', () => {
-    const { handlers } = parseFormEvents(formXml)
-    expect(handlers).toHaveLength(3)
-    expect(handlers[0]).toEqual({
-      event: 'onload',
-      target: null,
-      library: 'new_account.js',
-      functionName: 'Contoso.Account.onLoad',
-      enabled: true,
-      passExecutionContext: true,
-      parameters: null,
-      order: 1,
-    })
-    expect(handlers[1]?.order).toBe(2)
-    expect(handlers[1]?.enabled).toBe(false)
-    expect(handlers[1]?.parameters).toBe('42')
-  })
+	it("reads handlers with their execution order within the event", () => {
+		const { handlers } = parseFormEvents(formXml);
+		expect(handlers).toHaveLength(3);
+		expect(handlers[0]).toEqual({
+			event: "onload",
+			target: null,
+			library: "new_account.js",
+			functionName: "Contoso.Account.onLoad",
+			enabled: true,
+			passExecutionContext: true,
+			parameters: null,
+			order: 1,
+		});
+		expect(handlers[1]?.order).toBe(2);
+		expect(handlers[1]?.enabled).toBe(false);
+		expect(handlers[1]?.parameters).toBe("42");
+	});
 
-  it('captures the column an onchange handler is bound to', () => {
-    const onChange = parseFormEvents(formXml).handlers.find((handler) => handler.event === 'onchange')
-    expect(onChange?.target).toBe('statuscode')
-    expect(onChange?.order).toBe(1)
-  })
+	it("captures the column an onchange handler is bound to", () => {
+		const onChange = parseFormEvents(formXml).handlers.find((handler) => handler.event === "onchange");
+		expect(onChange?.target).toBe("statuscode");
+		expect(onChange?.order).toBe(1);
+	});
 
-  it('returns nothing for malformed XML instead of throwing', () => {
-    expect(parseFormEvents('<form><events>')).toEqual({ libraries: [], handlers: [] })
-  })
-})
+	it("returns nothing for malformed XML instead of throwing", () => {
+		expect(parseFormEvents("<form><events>")).toEqual({ libraries: [], handlers: [] });
+	});
+});

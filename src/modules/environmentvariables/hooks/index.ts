@@ -1,1 +1,1 @@
-export * from './useEnvironmentVariablesGateway'
+export * from "./useEnvironmentVariablesGateway";

@@ -1,2 +1,2 @@
-export * from './useInvestigateGateway'
-export * from './usePageTarget'
+export * from "./useInvestigateGateway";
+export * from "./usePageTarget";

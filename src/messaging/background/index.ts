@@ -1,1 +1,1 @@
-export * from './defineBackgroundHandlers'
+export * from "./defineBackgroundHandlers";

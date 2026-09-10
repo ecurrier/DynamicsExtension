@@ -1,11 +1,11 @@
-import { create } from 'zustand'
+import { create } from "zustand";
 
 export interface WebApiState {
-  fetchXml: string
-  setFetchXml: (fetchXml: string) => void
+	fetchXml: string;
+	setFetchXml: (fetchXml: string) => void;
 }
 
 export const useWebApiStore = create<WebApiState>()((set) => ({
-  fetchXml: '',
-  setFetchXml: (fetchXml) => set({ fetchXml }),
-}))
+	fetchXml: "",
+	setFetchXml: (fetchXml) => set({ fetchXml }),
+}));

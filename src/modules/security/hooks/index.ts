@@ -1,1 +1,1 @@
-export * from './useSecurityGateway'
+export * from "./useSecurityGateway";

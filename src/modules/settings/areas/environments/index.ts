@@ -1,1 +1,1 @@
-export * from './EnvironmentsArea'
+export * from "./EnvironmentsArea";

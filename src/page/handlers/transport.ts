@@ -1,20 +1,18 @@
-import { defineHandlers } from '@/messaging/page'
-import { pageHttp, requireModelDrivenApp, runOperation } from '@/page/xrm'
-import { transportOperations } from '@/shared/lib'
+import { defineHandlers } from "@/messaging/page";
+import { pageHttp, requireModelDrivenApp, runOperation } from "@/page/xrm";
+import { transportOperations } from "@/shared/lib";
 
-const MAX_PAGE_SIZE = 1000
+const MAX_PAGE_SIZE = 1000;
 
 const operations = () => {
-  requireModelDrivenApp()
-  return transportOperations(pageHttp())
-}
+	requireModelDrivenApp();
+	return transportOperations(pageHttp());
+};
 
 export const transportHandlers = defineHandlers({
-  'transport.listEntities': () => runOperation(() => operations().listEntities()),
-  'transport.listViews': (request) => runOperation(() => operations().listViews(request)),
-  'transport.getEntityMetadata': (request) => runOperation(() => operations().getEntityMetadata(request)),
-  'transport.retrievePage': (request) =>
-    runOperation(() =>
-      operations().retrievePage({ ...request, pageSize: Math.min(Math.max(1, request.pageSize), MAX_PAGE_SIZE) }),
-    ),
-})
+	"transport.listEntities": () => runOperation(() => operations().listEntities()),
+	"transport.listViews": (request) => runOperation(() => operations().listViews(request)),
+	"transport.getEntityMetadata": (request) => runOperation(() => operations().getEntityMetadata(request)),
+	"transport.retrievePage": (request) =>
+		runOperation(() => operations().retrievePage({ ...request, pageSize: Math.min(Math.max(1, request.pageSize), MAX_PAGE_SIZE) })),
+});

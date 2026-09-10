@@ -1,1 +1,1 @@
-export * from './AdminArea'
+export * from "./AdminArea";

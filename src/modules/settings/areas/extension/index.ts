@@ -1,1 +1,1 @@
-export * from './ExtensionSettingsArea'
+export * from "./ExtensionSettingsArea";

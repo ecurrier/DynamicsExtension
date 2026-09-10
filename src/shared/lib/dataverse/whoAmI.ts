@@ -1,5 +1,5 @@
-import { type WhoAmIResponse } from '@/shared/types'
+import { type WhoAmIResponse } from "@/shared/types";
 
-import { type DataverseHttp } from './http'
+import { type DataverseHttp } from "./http";
 
-export const whoAmI = (http: DataverseHttp): Promise<WhoAmIResponse> => http.get<WhoAmIResponse>('WhoAmI')
+export const whoAmI = (http: DataverseHttp): Promise<WhoAmIResponse> => http.get<WhoAmIResponse>("WhoAmI");

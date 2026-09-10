@@ -1,9 +1,9 @@
-import { migrateFormPresets } from './migrateFormPresets'
-import { migrateLegacyStorage } from './migrateLegacy'
-import { migrateServicePrincipals } from './migrateServicePrincipals'
+import { migrateFormPresets } from "./migrateFormPresets";
+import { migrateLegacyStorage } from "./migrateLegacy";
+import { migrateServicePrincipals } from "./migrateServicePrincipals";
 
 export const runStorageMigrations = async (): Promise<void> => {
-  await migrateLegacyStorage()
-  await migrateServicePrincipals()
-  await migrateFormPresets()
-}
+	await migrateLegacyStorage();
+	await migrateServicePrincipals();
+	await migrateFormPresets();
+};

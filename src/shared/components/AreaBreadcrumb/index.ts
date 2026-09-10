@@ -1,1 +1,1 @@
-export * from './AreaBreadcrumb'
+export * from "./AreaBreadcrumb";

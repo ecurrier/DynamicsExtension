@@ -1,1 +1,1 @@
-export * from './TemplatesArea'
+export * from "./TemplatesArea";

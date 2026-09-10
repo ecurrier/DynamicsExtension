@@ -1,2 +1,2 @@
-export * from './PluginTracesApp'
-export * from './TraceViewer'
+export * from "./PluginTracesApp";
+export * from "./TraceViewer";

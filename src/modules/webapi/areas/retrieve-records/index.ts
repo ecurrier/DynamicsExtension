@@ -1,1 +1,1 @@
-export * from './RetrieveRecordsArea'
+export * from "./RetrieveRecordsArea";

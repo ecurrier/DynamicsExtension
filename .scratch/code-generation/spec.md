@@ -18,23 +18,23 @@ Terms from `CONTEXT.md`: Template, Form Preset, Dialect, Utility, Table, Column,
 3. **Template properties**: `id`, `name`, `kind` (`table` | `choice`), `language` (`csharp` | `typescript` | `javascript`), `text`, `settings` (ordered list of `{ key, label, default }`, text only), `filenamePattern` (rendered with the same engine, for example `{{table.identifier}}.cs`), `builtIn` flag. JavaScript shares the TypeScript type map and typically emits no types.
 4. **Fixed, metadata-driven type map**, not user-editable. Nullable value types. Lookups, Customer, Owner are always `EntityReference`. `DateOnly?` when the column's date-time behaviour is DateOnly, else `DateTime?`. Choices are `OptionSetValue`; `{{choiceName}}` and `{{choiceIdentifier}}` are exposed on the column so a Template can use the enum a choice Template generates, which we want to encourage.
 
-   | Dataverse type | C# | TypeScript |
-   |---|---|---|
-   | String, Memo | `string` | `string` |
-   | Integer | `int?` | `number` |
-   | BigInt | `long?` | `number` |
-   | Decimal | `decimal?` | `number` |
-   | Double | `double?` | `number` |
-   | Money | `Money` | `number` |
-   | Boolean | `bool?` | `boolean` |
-   | DateTime (DateOnly behaviour) | `DateOnly?` | `string` |
-   | DateTime (other) | `DateTime?` | `string` |
-   | Lookup, Customer, Owner | `EntityReference` | `string` |
-   | Picklist, State, Status | `OptionSetValue` | `number` |
-   | MultiSelectPicklist | `OptionSetValueCollection` | `number[]` |
-   | Uniqueidentifier | `Guid?` | `string` |
-   | Image | `byte[]` | `string` |
-   | File | `Guid?` | `string` |
+    | Dataverse type                | C#                         | TypeScript |
+    | ----------------------------- | -------------------------- | ---------- |
+    | String, Memo                  | `string`                   | `string`   |
+    | Integer                       | `int?`                     | `number`   |
+    | BigInt                        | `long?`                    | `number`   |
+    | Decimal                       | `decimal?`                 | `number`   |
+    | Double                        | `double?`                  | `number`   |
+    | Money                         | `Money`                    | `number`   |
+    | Boolean                       | `bool?`                    | `boolean`  |
+    | DateTime (DateOnly behaviour) | `DateOnly?`                | `string`   |
+    | DateTime (other)              | `DateTime?`                | `string`   |
+    | Lookup, Customer, Owner       | `EntityReference`          | `string`   |
+    | Picklist, State, Status       | `OptionSetValue`           | `number`   |
+    | MultiSelectPicklist           | `OptionSetValueCollection` | `number[]` |
+    | Uniqueidentifier              | `Guid?`                    | `string`   |
+    | Image                         | `byte[]`                   | `string`   |
+    | File                          | `Guid?`                    | `string`   |
 
 5. **Identifiers**: `identifier` is PascalCase of the schema name with the publisher prefix stripped when the Template's `prefix` setting matches (`new_CustomField` with prefix `new` gives `CustomField`). Also exposed: `identifierCamel`, `schemaName`, `logicalName`, `displayName`.
 6. **Column set**: system columns (`importsequencenumber`, `overriddencreatedon`, `timezoneruleversionnumber`, `utcconversiontimezonecode`, `versionnumber`, `*_name`/`*yominame` companions, any `attributeOf` column) are excluded by default; Generate has a "Show system columns" toggle. Order: primary id, primary name, then alphabetical by logical name. Each column carries `isFirst`/`isLast`.

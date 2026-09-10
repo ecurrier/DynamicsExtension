@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
+import { useMemo } from "react";
 
-import { type PopupLaunch, readPopupLaunch } from '@/shared/extension'
+import { type PopupLaunch, readPopupLaunch } from "@/shared/extension";
 
-export const usePopupLaunch = (): PopupLaunch => useMemo(() => readPopupLaunch(), [])
+export const usePopupLaunch = (): PopupLaunch => useMemo(() => readPopupLaunch(), []);

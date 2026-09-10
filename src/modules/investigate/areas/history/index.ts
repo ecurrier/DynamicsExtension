@@ -1,1 +1,1 @@
-export * from './HistoryArea'
+export * from "./HistoryArea";

@@ -1,1 +1,1 @@
-export * from './UpdateFieldsArea'
+export * from "./UpdateFieldsArea";

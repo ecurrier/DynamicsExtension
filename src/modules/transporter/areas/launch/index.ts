@@ -1,1 +1,1 @@
-export * from './TransporterArea'
+export * from "./TransporterArea";

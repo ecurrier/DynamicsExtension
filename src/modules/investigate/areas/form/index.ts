@@ -1,1 +1,1 @@
-export * from './FormDiagnosticsArea'
+export * from "./FormDiagnosticsArea";

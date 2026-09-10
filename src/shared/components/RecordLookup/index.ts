@@ -1,3 +1,3 @@
-export * from './highlightSegments'
-export * from './RecordLookup'
-export * from './useRecordSearch'
+export * from "./highlightSegments";
+export * from "./RecordLookup";
+export * from "./useRecordSearch";

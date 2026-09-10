@@ -1,1 +1,1 @@
-export * from './GenerateArea'
+export * from "./GenerateArea";

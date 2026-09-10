@@ -1,1 +1,1 @@
-export * from './PluginTracesArea'
+export * from "./PluginTracesArea";

@@ -1,9 +1,9 @@
 {
-  "extends": "./.wxt/tsconfig.json",
-  "compilerOptions": {
-    "jsx": "react-jsx",
-    "types": ["node", "xrm"]
-  },
-  "include": ["src/**/*", ".wxt/wxt.d.ts", "wxt.config.ts", "vitest.config.ts"],
-  "exclude": ["node_modules", ".output", "scripts", "pages", "styles"]
+	"extends": "./.wxt/tsconfig.json",
+	"compilerOptions": {
+		"jsx": "react-jsx",
+		"types": ["node", "xrm"]
+	},
+	"include": ["src/**/*", ".wxt/wxt.d.ts", "wxt.config.ts", "vitest.config.ts"],
+	"exclude": ["node_modules", ".output", "scripts", "pages", "styles"]
 }

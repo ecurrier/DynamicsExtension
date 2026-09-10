@@ -1,1 +1,1 @@
-export * from './FormXmlArea'
+export * from "./FormXmlArea";

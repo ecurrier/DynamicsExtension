@@ -1,1 +1,1 @@
-export * from './AutomationArea'
+export * from "./AutomationArea";

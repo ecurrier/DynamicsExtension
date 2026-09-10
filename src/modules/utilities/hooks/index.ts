@@ -1,1 +1,1 @@
-export * from './useEnvironmentPicker'
+export * from "./useEnvironmentPicker";

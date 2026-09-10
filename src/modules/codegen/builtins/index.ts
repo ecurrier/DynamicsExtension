@@ -1,25 +1,25 @@
-import { type Template } from '@/shared/types'
+import { type Template } from "@/shared/types";
 
-const BUILT_IN_UPDATED_AT = '2026-09-07T00:00:00.000Z'
+const BUILT_IN_UPDATED_AT = "2026-09-07T00:00:00.000Z";
 
-const builtIn = (template: Omit<Template, 'builtIn' | 'updatedAt'>): Template => ({
-  ...template,
-  builtIn: true,
-  updatedAt: BUILT_IN_UPDATED_AT,
-})
+const builtIn = (template: Omit<Template, "builtIn" | "updatedAt">): Template => ({
+	...template,
+	builtIn: true,
+	updatedAt: BUILT_IN_UPDATED_AT,
+});
 
 export const CSHARP_TABLE_TEMPLATE = builtIn({
-  id: 'builtin:csharp-table',
-  name: 'C# early-bound class',
-  kind: 'table',
-  language: 'csharp',
-  filenamePattern: '{{table.identifier}}.cs',
-  settings: [
-    { key: 'namespace', label: 'Namespace', default: '' },
-    { key: 'baseClass', label: 'Base class', default: 'Entity' },
-    { key: 'prefix', label: 'Publisher prefixes to strip', default: '' },
-  ],
-  text: `using System;
+	id: "builtin:csharp-table",
+	name: "C# early-bound class",
+	kind: "table",
+	language: "csharp",
+	filenamePattern: "{{table.identifier}}.cs",
+	settings: [
+		{ key: "namespace", label: "Namespace", default: "" },
+		{ key: "baseClass", label: "Base class", default: "Entity" },
+		{ key: "prefix", label: "Publisher prefixes to strip", default: "" },
+	],
+	text: `using System;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Client;
 
@@ -74,16 +74,16 @@ public partial class {{table.identifier}}{{#settings.baseClass}} : {{settings.ba
 {{/columns}}
 }
 `,
-})
+});
 
 export const TYPESCRIPT_TABLE_TEMPLATE = builtIn({
-  id: 'builtin:typescript-table',
-  name: 'TypeScript interface',
-  kind: 'table',
-  language: 'typescript',
-  filenamePattern: '{{table.identifierCamel}}.ts',
-  settings: [{ key: 'prefix', label: 'Publisher prefixes to strip', default: '' }],
-  text: `export interface {{table.identifier}} {
+	id: "builtin:typescript-table",
+	name: "TypeScript interface",
+	kind: "table",
+	language: "typescript",
+	filenamePattern: "{{table.identifierCamel}}.ts",
+	settings: [{ key: "prefix", label: "Publisher prefixes to strip", default: "" }],
+	text: `export interface {{table.identifier}} {
 {{#columns}}
   {{logicalName}}?: {{type}} | null
 {{/columns}}
@@ -101,40 +101,35 @@ export const {{table.identifier}}Metadata = {
   primaryIdAttribute: '{{table.primaryIdAttribute}}',
 } as const
 `,
-})
+});
 
 export const CSHARP_CHOICE_TEMPLATE = builtIn({
-  id: 'builtin:csharp-choice',
-  name: 'C# enum',
-  kind: 'choice',
-  language: 'csharp',
-  filenamePattern: '{{choice.identifier}}.cs',
-  settings: [],
-  text: `public enum {{choice.identifier}}
+	id: "builtin:csharp-choice",
+	name: "C# enum",
+	kind: "choice",
+	language: "csharp",
+	filenamePattern: "{{choice.identifier}}.cs",
+	settings: [],
+	text: `public enum {{choice.identifier}}
 {
 {{#choice.options}}
 \t{{identifierUnderscored}} = {{value}},
 {{/choice.options}}
 }`,
-})
+});
 
 export const JAVASCRIPT_CHOICE_TEMPLATE = builtIn({
-  id: 'builtin:javascript-choice',
-  name: 'JavaScript object',
-  kind: 'choice',
-  language: 'javascript',
-  filenamePattern: '{{choice.identifierPlural}}.js',
-  settings: [],
-  text: `const {{choice.identifierPlural}} = {
+	id: "builtin:javascript-choice",
+	name: "JavaScript object",
+	kind: "choice",
+	language: "javascript",
+	filenamePattern: "{{choice.identifierPlural}}.js",
+	settings: [],
+	text: `const {{choice.identifierPlural}} = {
 {{#choice.options}}
 \t{{identifier}}: {{value}},
 {{/choice.options}}
 };`,
-})
+});
 
-export const BUILTIN_TEMPLATES: Template[] = [
-  CSHARP_TABLE_TEMPLATE,
-  TYPESCRIPT_TABLE_TEMPLATE,
-  CSHARP_CHOICE_TEMPLATE,
-  JAVASCRIPT_CHOICE_TEMPLATE,
-]
+export const BUILTIN_TEMPLATES: Template[] = [CSHARP_TABLE_TEMPLATE, TYPESCRIPT_TABLE_TEMPLATE, CSHARP_CHOICE_TEMPLATE, JAVASCRIPT_CHOICE_TEMPLATE];

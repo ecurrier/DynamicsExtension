@@ -1,2 +1,2 @@
-export * from './splitGuids'
-export * from './traceRows'
+export * from "./splitGuids";
+export * from "./traceRows";

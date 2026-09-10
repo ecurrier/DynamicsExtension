@@ -1,1 +1,1 @@
-export * from './ColumnUsageArea'
+export * from "./ColumnUsageArea";

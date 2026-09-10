@@ -1,2 +1,2 @@
-export * from './ResultsViewer'
-export * from './ResultsViewerApp'
+export * from "./ResultsViewer";
+export * from "./ResultsViewerApp";

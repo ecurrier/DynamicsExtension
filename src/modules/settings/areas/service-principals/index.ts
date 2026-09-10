@@ -1,1 +1,1 @@
-export * from './ServicePrincipalsArea'
+export * from "./ServicePrincipalsArea";

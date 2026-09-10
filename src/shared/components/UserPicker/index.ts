@@ -1,1 +1,1 @@
-export * from './UserPicker'
+export * from "./UserPicker";

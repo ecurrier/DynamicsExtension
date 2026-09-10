@@ -1,1 +1,1 @@
-export * from './AccessArea'
+export * from "./AccessArea";

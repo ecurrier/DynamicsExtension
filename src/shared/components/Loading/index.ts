@@ -1,2 +1,2 @@
-export * from './LoadingBar'
-export * from './LoadingOverlay'
+export * from "./LoadingBar";
+export * from "./LoadingOverlay";

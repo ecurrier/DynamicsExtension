@@ -1,44 +1,44 @@
-import { Spinner } from '@fluentui/react-components'
-import { type ReactNode } from 'react'
+import { Spinner } from "@fluentui/react-components";
+import { type ReactNode } from "react";
 
-import { usePageQuery } from '@/messaging/client'
-import { useSessionStore } from '@/shared/stores'
-import { type PageRequirement } from '@/shared/types'
+import { usePageQuery } from "@/messaging/client";
+import { useSessionStore } from "@/shared/stores";
+import { type PageRequirement } from "@/shared/types";
 
-import { EmptyState } from '../EmptyState'
+import { EmptyState } from "../EmptyState";
 
 interface PageRequirementGateProps {
-  requires: PageRequirement
-  children: ReactNode
+	requires: PageRequirement;
+	children: ReactNode;
 }
 
 export const PageRequirementGate = ({ requires, children }: PageRequirementGateProps) => {
-  const bridgeStatus = useSessionStore((state) => state.bridgeStatus)
-  const pageContext = usePageQuery('global.getPageContext', undefined)
+	const bridgeStatus = useSessionStore((state) => state.bridgeStatus);
+	const pageContext = usePageQuery("global.getPageContext", undefined);
 
-  if (bridgeStatus === 'pending') {
-    return <Spinner label="Connecting to the page..." style={{ padding: '24px' }} />
-  }
-  if (bridgeStatus === 'unavailable') {
-    return (
-      <EmptyState title="This page cannot be used with Power Tools" intent="warning">
-        Open a model-driven app or Power Pages site in the active tab, then reopen the extension.
-      </EmptyState>
-    )
-  }
-  if (requires === 'model-driven-app' && pageContext.isSuccess && pageContext.data !== 'model-driven-app') {
-    return (
-      <EmptyState title="Model-driven app required" intent="warning">
-        This area works on model-driven app forms and views. Open one in the active tab, then reopen the extension.
-      </EmptyState>
-    )
-  }
-  if (requires === 'portal' && pageContext.isSuccess && pageContext.data !== 'portal') {
-    return (
-      <EmptyState title="Power Pages site required" intent="warning">
-        This area works on Power Pages forms. Open one in the active tab, then reopen the extension.
-      </EmptyState>
-    )
-  }
-  return <>{children}</>
-}
+	if (bridgeStatus === "pending") {
+		return <Spinner label="Connecting to the page..." style={{ padding: "24px" }} />;
+	}
+	if (bridgeStatus === "unavailable") {
+		return (
+			<EmptyState title="This page cannot be used with Power Tools" intent="warning">
+				Open a model-driven app or Power Pages site in the active tab, then reopen the extension.
+			</EmptyState>
+		);
+	}
+	if (requires === "model-driven-app" && pageContext.isSuccess && pageContext.data !== "model-driven-app") {
+		return (
+			<EmptyState title="Model-driven app required" intent="warning">
+				This area works on model-driven app forms and views. Open one in the active tab, then reopen the extension.
+			</EmptyState>
+		);
+	}
+	if (requires === "portal" && pageContext.isSuccess && pageContext.data !== "portal") {
+		return (
+			<EmptyState title="Power Pages site required" intent="warning">
+				This area works on Power Pages forms. Open one in the active tab, then reopen the extension.
+			</EmptyState>
+		);
+	}
+	return <>{children}</>;
+};

@@ -1,1 +1,1 @@
-export * from './PageRequirementGate'
+export * from "./PageRequirementGate";

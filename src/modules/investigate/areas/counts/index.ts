@@ -1,1 +1,1 @@
-export * from './RecordCountsArea'
+export * from "./RecordCountsArea";

@@ -1,1 +1,1 @@
-export * from './ImpersonationArea'
+export * from "./ImpersonationArea";

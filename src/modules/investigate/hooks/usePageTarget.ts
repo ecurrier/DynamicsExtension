@@ -1,3 +1,3 @@
-import { usePageQuery } from '@/messaging/client'
+import { usePageQuery } from "@/messaging/client";
 
-export const usePageTarget = () => usePageQuery('utilities.getPageTarget', undefined)
+export const usePageTarget = () => usePageQuery("utilities.getPageTarget", undefined);

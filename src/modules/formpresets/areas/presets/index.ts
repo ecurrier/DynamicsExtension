@@ -1,1 +1,1 @@
-export * from './FormPresetsArea'
+export * from "./FormPresetsArea";

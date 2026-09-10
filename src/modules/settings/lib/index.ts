@@ -1,3 +1,3 @@
-export * from './environmentDraft'
-export * from './servicePrincipalDraft'
-export * from './settingDefinitions'
+export * from "./environmentDraft";
+export * from "./servicePrincipalDraft";
+export * from "./settingDefinitions";

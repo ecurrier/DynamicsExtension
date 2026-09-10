@@ -1,1 +1,2 @@
-export * from './AreaContainer'
+export * from "./AreaContainer";
+export * from "./FillAccordion";

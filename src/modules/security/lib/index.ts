@@ -1,2 +1,2 @@
-export * from './roleDiff'
-export * from './rolesViewModel'
+export * from "./roleDiff";
+export * from "./rolesViewModel";

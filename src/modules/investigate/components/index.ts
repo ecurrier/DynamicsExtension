@@ -1,2 +1,2 @@
-export * from './InvestigateConnection'
-export * from './TablePicker'
+export * from "./InvestigateConnection";
+export * from "./TablePicker";
