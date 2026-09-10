@@ -11,6 +11,7 @@ export * from "./http";
 export * from "./impersonationRule";
 export * from "./investigate";
 export * from "./lookupTargets";
+export * from "./pluginPackages";
 export * from "./pluginSteps";
 export * from "./paging";
 export * from "./recordAccess";

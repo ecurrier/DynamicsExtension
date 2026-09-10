@@ -106,6 +106,18 @@ _Avoid_: Process, trigger, logic, side effect
 A single registered plug-in execution, described by its message, stage, mode, and filtering columns.
 _Avoid_: SDK message processing step, registration, handler
 
+**Package**:
+A NuGet package registered in an Environment that carries one or more Assemblies, and the unit a new build is uploaded to.
+_Avoid_: Nupkg (that is the file it is updated from), bundle, deployment
+
+**Assembly**:
+A compiled plug-in library registered in an Environment, on its own or inside a Package, that owns the Plug-in Types the platform can run.
+_Avoid_: DLL, library
+
+**Plug-in Type**:
+A class inside an Assembly that a Plug-in Step is registered against.
+_Avoid_: Class, handler, type, plug-in on its own
+
 **Trace Log**:
 One execution record the platform writes while plug-in tracing is on.
 _Avoid_: Telemetry, diagnostic, log entry

@@ -21,13 +21,11 @@ import { ArrowClockwise20Regular, Pause20Regular, Play20Regular, Search20Regular
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 
-import { useConnectableEnvironments, useExtensionSettings } from "@/modules/settings";
+import { useExtensionSettings } from "@/modules/settings";
 import { AreaContainer, AreaToolbar, ConnectionPicker, FormRow, FormStack, Grow, PageRequirementGate, useAppToast, useConfirm } from "@/shared/components";
-import { type ConnectionTarget, requestEnvironmentAccess } from "@/shared/connections";
-import { useAsyncAction } from "@/shared/hooks";
 import { type PluginStep, type PluginStepStateChange } from "@/shared/types";
 
-import { usePluginStepsGateway } from "../../hooks";
+import { usePluginsConnection, usePluginStepsGateway } from "../../hooks";
 import {
 	allGroupValues,
 	assemblyValue,
@@ -43,7 +41,7 @@ import {
 	typeValue,
 	visibleStepIds,
 } from "../../lib";
-import { usePluginStepsStore } from "../../store";
+import { usePluginsStore } from "../../store";
 
 const STATE_LABELS: Record<StepStateFilter, string> = { all: "All steps", enabled: "Enabled", disabled: "Disabled" };
 
@@ -94,24 +92,10 @@ export const PluginStepsArea = () => {
 	const confirm = useConfirm();
 	const queryClient = useQueryClient();
 	const { settings } = useExtensionSettings();
-	const { environments, byId } = useConnectableEnvironments();
-	const {
-		connection,
-		filter,
-		stateFilter,
-		checkedIds,
-		openItems,
-		setConnection,
-		setFilter,
-		setStateFilter,
-		setChecked,
-		clearChecked,
-		setOpenItems,
-		focusStepId,
-		clearFocus,
-	} = usePluginStepsStore();
+	const { connection, environments, switching, onConnectionChange } = usePluginsConnection();
+	const { filter, stateFilter, checkedIds, openItems, setFilter, setStateFilter, setChecked, clearChecked, setOpenItems, focusStepId, clearFocus } =
+		usePluginsStore();
 	const gateway = usePluginStepsGateway(connection);
-	const connect = useAsyncAction("Could not switch connection");
 
 	const steps = useQuery({
 		queryKey: gateway.key("getSteps"),
@@ -145,20 +129,6 @@ export const PluginStepsArea = () => {
 			}
 		},
 	});
-
-	const onConnectionChange = (target: ConnectionTarget) =>
-		connect.run(async () => {
-			if (target.kind === "environment") {
-				const environment = byId[target.environmentId];
-				if (!environment) {
-					throw new Error("The selected environment no longer exists");
-				}
-				if (!(await requestEnvironmentAccess(environment))) {
-					throw new Error("Power Tools needs permission to contact the environment and the Microsoft login service");
-				}
-			}
-			setConnection(target);
-		});
 
 	const applyState = async (ids: string[], enabled: boolean) => {
 		if (ids.length === 0) {
@@ -366,7 +336,7 @@ export const PluginStepsArea = () => {
 					<ConnectionPicker
 						value={connection}
 						environments={environments}
-						disabled={connect.running}
+						disabled={switching}
 						onChange={(target) => void onConnectionChange(target)}
 					/>
 				</Grow>

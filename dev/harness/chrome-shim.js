@@ -196,6 +196,28 @@
 		if (method === "POST" && path.startsWith("environmentvariablevalues")) {
 			return jsonResponse({ environmentvariablevalueid: guid(870) }, 201);
 		}
+		if (path.startsWith("pluginpackages?")) {
+			return jsonResponse({ value: pluginPackages.map(toPackageRecord) });
+		}
+		if (path.startsWith("pluginpackages(")) {
+			const pkg = pluginPackages.find((candidate) => path.includes(candidate.id));
+			if (!pkg) {
+				return jsonResponse({ error: { message: "Not found" } }, 404);
+			}
+			if (method === "PATCH") {
+				const body = JSON.parse(init?.body ?? "{}");
+				recordUpload(pkg, String(body.content ?? "").length);
+				return new Response(null, { status: 204 });
+			}
+			return jsonResponse(toPackageRecord(pkg));
+		}
+		if (path.startsWith("plugintypes?")) {
+			return jsonResponse({ value: pluginTypes.map(toPluginTypeRecord) });
+		}
+		if (path.startsWith("msdyn_componentlayers?") && path.includes("PluginPackage")) {
+			const pkg = pluginPackages.find((candidate) => path.includes(candidate.id));
+			return jsonResponse({ value: pkg ? pkg.layers.map((layer) => toLayerRecord(pkg, layer)) : [] });
+		}
 		if (path.startsWith("sdkmessageprocessingsteps?")) {
 			return jsonResponse({ value: pluginSteps.map(toStepRecord) });
 		}
@@ -361,15 +383,60 @@
 	});
 
 	const pluginAssemblies = [
-		{ id: guid(4100), name: "Contoso.Plugins", version: "1.0.0.0" },
-		{ id: guid(4101), name: "Contoso.Workflows", version: "2.3.0.0" },
-		{ id: guid(4102), name: "Fabrikam.Integration", version: "1.2.0.0" },
+		{ id: guid(4100), name: "Contoso.Plugins", version: "1.0.0.0", packageId: guid(4300) },
+		{ id: guid(4101), name: "Contoso.Workflows", version: "2.3.0.0", packageId: guid(4302) },
+		{ id: guid(4102), name: "Fabrikam.Integration", version: "1.2.0.0", packageId: guid(4301) },
+		{ id: guid(4103), name: "Legacy.Plugins", version: "0.9.0.0", packageId: null },
 	];
 	const pluginTypes = [
 		{ id: guid(4200), name: "Contoso.Plugins.AccountPreCreate", assemblyId: guid(4100) },
 		{ id: guid(4201), name: "Contoso.Plugins.ContactPostUpdate", assemblyId: guid(4100) },
 		{ id: guid(4202), name: "Contoso.Workflows.SendNotification", assemblyId: guid(4101) },
 		{ id: guid(4203), name: "Fabrikam.Integration.SyncOrders", assemblyId: guid(4102) },
+	];
+	const pluginPackages = [
+		{
+			id: guid(4300),
+			name: "Contoso.Plugins",
+			uniqueName: "contoso_Contoso.Plugins",
+			version: "1.4.0",
+			modifiedOn: "2026-09-08T14:12:00Z",
+			modifiedBy: "Jane Doe",
+			isManaged: true,
+			layers: [
+				{ order: 1, solutionName: "Active", publisherName: "Contoso", isManaged: false, version: null, changedOn: "2026-09-08T14:12:00Z" },
+				{ order: 2, solutionName: "ContosoPlugins", publisherName: "Contoso", isManaged: true, version: "1.4.0.0", changedOn: "2026-08-20T09:00:00Z" },
+			],
+		},
+		{
+			id: guid(4301),
+			name: "Fabrikam.Integration",
+			uniqueName: "fabrikam_Fabrikam.Integration",
+			version: "2.0.1",
+			modifiedOn: "2026-07-30T08:45:00Z",
+			modifiedBy: "Fabrikam Deploy",
+			isManaged: true,
+			layers: [
+				{
+					order: 1,
+					solutionName: "FabrikamIntegration",
+					publisherName: "Fabrikam",
+					isManaged: true,
+					version: "2.0.1.0",
+					changedOn: "2026-07-30T08:45:00Z",
+				},
+			],
+		},
+		{
+			id: guid(4302),
+			name: "Contoso.Workflows",
+			uniqueName: "contoso_Contoso.Workflows",
+			version: "2.3.0",
+			modifiedOn: "2026-09-09T16:20:00Z",
+			modifiedBy: "Jane Doe",
+			isManaged: false,
+			layers: [{ order: 1, solutionName: "Active", publisherName: "Contoso", isManaged: false, version: null, changedOn: "2026-09-09T16:20:00Z" }],
+		},
 	];
 	const stepMessages = ["Create", "Update", "Delete", "Retrieve"];
 	const stepEntities = ["account", "contact", "opportunity"];
@@ -397,10 +464,66 @@
 			assemblyVersion: assembly.version,
 		};
 	});
+	const composePackages = () =>
+		pluginPackages.map((pkg) => ({
+			id: pkg.id,
+			name: pkg.name,
+			uniqueName: pkg.uniqueName,
+			version: pkg.version,
+			modifiedOn: pkg.modifiedOn,
+			modifiedBy: pkg.modifiedBy,
+			isManaged: pkg.isManaged,
+			assemblies: pluginAssemblies
+				.filter((assembly) => assembly.packageId === pkg.id)
+				.map((assembly) => ({
+					id: assembly.id,
+					name: assembly.name,
+					version: assembly.version,
+					types: pluginTypes
+						.filter((type) => type.assemblyId === assembly.id)
+						.map((type) => ({
+							id: type.id,
+							typeName: type.name,
+							friendlyName: null,
+							stepCount: pluginSteps.filter((step) => step.pluginTypeId === type.id).length,
+						})),
+				})),
+		}));
+	const recordUpload = (pkg, length) => {
+		console.log("[harness] package upload", pkg.name, length);
+		pkg.modifiedOn = new Date().toISOString();
+		pkg.modifiedBy = "Harness User";
+	};
+	const toPackageRecord = (pkg) => ({
+		pluginpackageid: pkg.id,
+		name: pkg.name,
+		uniquename: pkg.uniqueName,
+		version: pkg.version,
+		modifiedon: pkg.modifiedOn,
+		ismanaged: pkg.isManaged,
+		_modifiedby_value: guid(301),
+		"_modifiedby_value@OData.Community.Display.V1.FormattedValue": pkg.modifiedBy,
+	});
+	const toPluginTypeRecord = (type) => ({
+		plugintypeid: type.id,
+		typename: type.name,
+		friendlyname: type.name.includes("Contact") ? "{9931d7aa-6062-4c4c-bfc8-ecd0302e164c}" : null,
+		_pluginassemblyid_value: type.assemblyId,
+	});
+	const toLayerRecord = (pkg, layer) => ({
+		msdyn_name: pkg.name,
+		msdyn_solutionname: layer.solutionName,
+		msdyn_publishername: layer.publisherName,
+		msdyn_order: layer.order,
+		msdyn_ismanaged: layer.isManaged,
+		msdyn_solutionversion: layer.version,
+		msdyn_changedon: layer.changedOn,
+	});
 	const toAssemblyRecord = (assembly) => ({
 		pluginassemblyid: assembly.id,
 		name: assembly.name,
 		version: assembly.version,
+		_packageid_value: assembly.packageId ?? null,
 	});
 	const toStepRecord = (step) => ({
 		sdkmessageprocessingstepid: step.id,
@@ -414,6 +537,7 @@
 		filteringattributes: step.filteringAttributes,
 		description: step.description,
 		asyncautodelete: step.asyncAutoDelete,
+		_plugintypeid_value: step.pluginTypeId,
 		plugintypeid: {
 			plugintypeid: step.pluginTypeId,
 			typename: step.pluginTypeName,
@@ -1497,6 +1621,26 @@
 				}
 			});
 			return { updated: args.ids.length, failed: [] };
+		},
+		"pluginPackages.list": () => composePackages(),
+		"pluginPackages.get": (args) => composePackages().find((pkg) => pkg.id === args.id) ?? null,
+		"pluginPackages.update": (args) => {
+			const pkg = pluginPackages.find((candidate) => candidate.id === args.id);
+			if (pkg) {
+				recordUpload(pkg, args.content.length);
+			}
+			return { id: args.id };
+		},
+		"pluginPackages.getLayers": (args) => {
+			const pkg = pluginPackages.find((candidate) => candidate.id === args.id);
+			return {
+				componentId: args.id,
+				solutionComponentName: "PluginPackage",
+				componentName: pkg ? pkg.name : null,
+				layers: pkg ? pkg.layers.map((layer) => ({ ...layer })) : [],
+				hasUnmanagedLayer: pkg ? pkg.layers.some((layer) => !layer.isManaged) : false,
+				unavailable: null,
+			};
 		},
 	};
 

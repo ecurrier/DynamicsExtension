@@ -3,7 +3,7 @@ import { ArrowClockwise20Regular, Search20Regular } from "@fluentui/react-icons"
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
 
-import { usePluginStepsStore } from "@/modules/pluginsteps";
+import { usePluginsStore } from "@/modules/plugins";
 import {
 	AreaContainer,
 	AreaToolbar,
@@ -49,13 +49,13 @@ export const AutomationArea = () => {
 	const table = useInvestigateStore((state) => state.table);
 	const gateway = useInvestigateGateway(connection);
 	const navigate = useNavigationStore((state) => state.navigate);
-	const focusStep = usePluginStepsStore((state) => state.focusStep);
+	const focusStep = usePluginsStore((state) => state.focusStep);
 	const [filter, setFilter] = useState("");
 
 	const openPluginStep = useCallback(
 		(item: AutomationItem) => {
 			focusStep({ id: item.id, name: item.name }, connection);
-			navigate("pluginsteps.steps");
+			navigate("plugins.steps");
 		},
 		[focusStep, navigate, connection]
 	);
@@ -79,7 +79,7 @@ export const AutomationArea = () => {
 				width: 220,
 				render: (item) =>
 					item.kind === "plugin" ? (
-						<Link as="button" title={`Open ${item.name} in Plugin Steps`} onClick={() => openPluginStep(item)}>
+						<Link as="button" title={`Open ${item.name} in Plug-in Steps`} onClick={() => openPluginStep(item)}>
 							{item.name}
 						</Link>
 					) : (

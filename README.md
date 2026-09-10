@@ -2,7 +2,7 @@
 
 Browser extension (Manifest V3) with productivity utilities for model-driven apps and Power Pages.
 
-**Do things:** admin shortcuts, Fetch XML and URL generation, a column browser, find-column-on-form, Web API record payloads, code generation from your own Templates (classes and enums for tables and choices), form presets, Web API field updates and queries, security role management, plug-in step and environment variable management, and record transport between environments.
+**Do things:** admin shortcuts, Fetch XML and URL generation, a column browser, find-column-on-form, Web API record payloads, code generation from your own Templates (classes and enums for tables and choices), form presets, Web API field updates and queries, security role management, plug-in step and package management, environment variable management, and record transport between environments.
 
 **Understand things:** read-only investigation tools that answer _why_ the platform is behaving as it is — what automation runs on a table, why a user can or cannot see a record, what changed on a record and when, which solution layer is winning, what depends on a column (including cloud flows), and which scripts and control states are in play on the open form.
 

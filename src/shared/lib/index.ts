@@ -1,3 +1,4 @@
+export * from "./base64";
 export * from "./chunk";
 export * from "./clipboard";
 export * from "./controlState";
@@ -5,6 +6,8 @@ export * from "./dataverse";
 export * from "./download";
 export * from "./environmentMatch";
 export * from "./fetchXmlEscape";
+export * from "./fileHandles";
+export * from "./filePicker";
 export * from "./formatXml";
 export * from "./formEvents";
 export * from "./guid";

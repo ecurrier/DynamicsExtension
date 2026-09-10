@@ -3,6 +3,7 @@ export * from "./impersonation";
 export * from "./traces";
 export * from "./environmentVariables";
 export * from "./pluginSteps";
+export * from "./pluginPackages";
 export * from "./transport";
 export * from "./investigate";
 export * from "./results";

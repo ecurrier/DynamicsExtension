@@ -26,6 +26,9 @@ import {
 	type NamedFetchXml,
 	type PageContext,
 	type PageTarget,
+	type PluginPackage,
+	type PluginPackageUpdate,
+	type PluginPackageUpdateResult,
 	type PluginStep,
 	type PluginStepStateChange,
 	type PluginStepStateResult,
@@ -126,6 +129,10 @@ export interface CommandMap {
 	"pluginSteps.getSteps": { args: void; result: PluginStep[]; kind: "query" };
 	"pluginSteps.get": { args: { id: string }; result: PluginStep | null; kind: "query" };
 	"pluginSteps.setState": { args: PluginStepStateChange; result: PluginStepStateResult; kind: "mutation" };
+	"pluginPackages.list": { args: void; result: PluginPackage[]; kind: "query" };
+	"pluginPackages.get": { args: { id: string }; result: PluginPackage | null; kind: "query" };
+	"pluginPackages.update": { args: PluginPackageUpdate; result: PluginPackageUpdateResult; kind: "mutation" };
+	"pluginPackages.getLayers": { args: { id: string }; result: SolutionLayers; kind: "query" };
 	"transport.listEntities": { args: void; result: EntitySummary[]; kind: "query" };
 	"transport.listViews": { args: { entityLogicalName: string }; result: SavedView[]; kind: "query" };
 	"transport.getEntityMetadata": { args: { logicalName: string }; result: TransportEntityMetadata; kind: "query" };

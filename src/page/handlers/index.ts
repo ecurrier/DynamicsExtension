@@ -7,6 +7,7 @@ import { formPresetsHandlers } from "./formPresets";
 import { formsHandlers } from "./forms";
 import { globalHandlers } from "./global";
 import { investigateHandlers } from "./investigate";
+import { pluginPackagesHandlers } from "./pluginPackages";
 import { pluginStepsHandlers } from "./pluginSteps";
 import { securityHandlers } from "./security";
 import { settingsHandlers } from "./settings";
@@ -26,6 +27,7 @@ export const handlers: HandlerMap = {
 	...tracesHandlers,
 	...environmentVariablesHandlers,
 	...pluginStepsHandlers,
+	...pluginPackagesHandlers,
 	...alertHandlers,
 	...transportHandlers,
 	...investigateHandlers,

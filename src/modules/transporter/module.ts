@@ -8,7 +8,7 @@ export const transporterModule: ModuleDefinition = {
 	id: "transporter",
 	label: "Data Transporter",
 	icon: ArrowSwap20Regular,
-	order: 12,
+	order: 11,
 	areas: [
 		{
 			id: "transporter.launch",

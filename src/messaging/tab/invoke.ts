@@ -21,6 +21,8 @@ const COMMAND_TIMEOUTS: Partial<Record<CommandName, number>> = {
 	"environmentVariables.setValue": 60_000,
 	"pluginSteps.getSteps": 90_000,
 	"pluginSteps.setState": 120_000,
+	"pluginPackages.list": 90_000,
+	"pluginPackages.update": 180_000,
 	"global.showEnvironmentAlert": ALERT_COMMAND_TIMEOUT_MS,
 	"global.clearEnvironmentAlert": ALERT_COMMAND_TIMEOUT_MS,
 	"transport.listEntities": 90_000,

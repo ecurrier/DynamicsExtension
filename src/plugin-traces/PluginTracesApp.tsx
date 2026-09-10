@@ -13,7 +13,7 @@ export const PluginTracesApp = () => {
 	if (status.kind === "missing") {
 		return (
 			<EmptyState title="No Dynamics tab to read traces from">
-				Open Power Tools on a model-driven app, then use Plugin Traces and choose Open Trace Viewer.
+				Open Power Tools on a model-driven app, then open Traces under Plug-ins and choose Open Trace Viewer.
 			</EmptyState>
 		);
 	}

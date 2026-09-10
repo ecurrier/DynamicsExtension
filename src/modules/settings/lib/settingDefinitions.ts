@@ -33,7 +33,7 @@ export interface ThemeSetting extends SettingBase {
 
 export type SettingDefinition = ToggleSetting | ThemeSetting;
 
-export const SETTING_SECTIONS = ["Extension", "Utilities", "Forms", "Security Management", "Environment Variables", "Plugin Steps"] as const;
+export const SETTING_SECTIONS = ["Extension", "Utilities", "Forms", "Security Management", "Environment Variables", "Plug-ins"] as const;
 
 export const SETTING_DEFINITIONS: SettingDefinition[] = [
 	{
@@ -109,7 +109,7 @@ export const SETTING_DEFINITIONS: SettingDefinition[] = [
 	{
 		kind: "toggle",
 		key: "pluginStepsRequireToggleConfirmation",
-		section: "Plugin Steps",
+		section: "Plug-ins",
 		title: "Enable or Disable Steps",
 		label: "Require confirmation before enabling or disabling plug-in steps",
 		tooltip: "When enabled, a confirmation dialog appears before plug-in steps are switched on or off for every user",
