@@ -1,5 +1,6 @@
 export * from "./AdminModeDialog";
 export * from "./ColumnBrowserDialog";
+export * from "./DirtyColumnsDialog";
 export * from "./EnvironmentDetailsDialog";
 export * from "./FetchXmlDialog";
 export * from "./FindColumnDialog";

@@ -1245,6 +1245,31 @@
 			formXmlUnavailable: null,
 		}),
 		"utilities.getFormAttributes": () => harnessFormAttributes,
+		"utilities.getDirtyColumns": () => {
+			const controlsOf = (logicalName) => harnessFormAttributes.find((candidate) => candidate.logicalName === logicalName)?.controls ?? [];
+			const column = (logicalName, displayName, attributeType, requiredLevel, submitMode, value) => ({
+				logicalName,
+				displayName,
+				attributeType,
+				requiredLevel,
+				submitMode,
+				value,
+				onForm: controlsOf(logicalName).length > 0,
+				controls: controlsOf(logicalName),
+			});
+			return {
+				entityLogicalName: "account",
+				recordId: guid(960),
+				isNew: false,
+				total: 38,
+				columns: [
+					column("name", "Account Name", "string", "required", "dirty", "Contoso Ltd (Renamed)"),
+					column("telephone1", "Main Phone", "string", "none", "dirty", "+1 425 555 0100"),
+					column("new_status", "Onboarding Status", "optionset", "none", "never", "Completed (100000002)"),
+					column("new_creditlimit", "Credit Limit", "money", "none", "always", "7500"),
+				],
+			};
+		},
 		"utilities.revealFormColumn": ({ logicalName, show }) => {
 			const attribute = harnessFormAttributes.find((candidate) => candidate.logicalName === logicalName);
 			if (!attribute) {

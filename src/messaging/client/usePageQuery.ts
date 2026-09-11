@@ -19,6 +19,7 @@ const STALE_TIMES: Record<QueryCommandName, number> = {
 	"utilities.getPageTarget": 0,
 	"utilities.getControlDetails": 0,
 	"utilities.getFormAttributes": 0,
+	"utilities.getDirtyColumns": 0,
 	"utilities.getRecordPayloadSource": 0,
 	"formPresets.captureFormValues": 0,
 	"webapi.getAttributeMetadata": Infinity,

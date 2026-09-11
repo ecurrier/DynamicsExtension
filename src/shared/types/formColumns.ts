@@ -35,3 +35,15 @@ export interface RecordPayloadSource {
 	recordId: string;
 	values: Record<string, unknown>;
 }
+
+export interface DirtyColumn extends FormColumnDetails {
+	submitMode: string;
+}
+
+export interface DirtyColumnsResult {
+	entityLogicalName: string;
+	recordId: string | null;
+	isNew: boolean;
+	total: number;
+	columns: DirtyColumn[];
+}

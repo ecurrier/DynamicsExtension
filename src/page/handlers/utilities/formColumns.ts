@@ -1,9 +1,10 @@
 import { defineHandlers } from "@/messaging/page";
-import { getFormContext } from "@/page/xrm";
-import { type FormAttributeInfo, type FormColumnDetails, type FormControlInfo } from "@/shared/types";
+import { getEntityId, getFormContext } from "@/page/xrm";
+import { type DirtyColumnsResult, type FormAttributeInfo, type FormColumnDetails, type FormControlInfo } from "@/shared/types";
 
 const FLASH_MS = 3000;
 const FLASH_OUTLINE = "3px solid #0f6cbd";
+const FORM_TYPE_CREATE = 1;
 
 type ParentedControl = Xrm.Controls.Control & Partial<Xrm.Controls.StandardControl>;
 
@@ -40,6 +41,19 @@ const valueText = (attribute: Xrm.Attributes.Attribute): string | null => {
 	}
 	const text = (attribute as Partial<Xrm.Attributes.OptionSetAttribute>).getText?.();
 	return typeof text === "string" && text ? `${text} (${String(value)})` : String(value);
+};
+
+const describeAttribute = (attribute: Xrm.Attributes.Attribute, controls: Xrm.Controls.Control[]): FormColumnDetails => {
+	const first = controls[0] as ParentedControl | undefined;
+	return {
+		logicalName: attribute.getName(),
+		displayName: first?.getLabel?.() ?? attribute.getName(),
+		attributeType: attribute.getAttributeType(),
+		requiredLevel: attribute.getRequiredLevel(),
+		value: valueText(attribute),
+		onForm: controls.length > 0,
+		controls: controls.map(describeControl),
+	};
 };
 
 const flash = (name: string): void => {
@@ -102,14 +116,20 @@ export const formColumnsHandlers = defineHandlers({
 		if (first) {
 			reveal(first, show);
 		}
+		return describeAttribute(attribute, controls);
+	},
+	"utilities.getDirtyColumns": (): DirtyColumnsResult => {
+		const formContext = getFormContext();
+		const attributes = formContext.data.entity.attributes.get();
+		const recordId = getEntityId(formContext);
 		return {
-			logicalName: attribute.getName(),
-			displayName: first?.getLabel?.() ?? attribute.getName(),
-			attributeType: attribute.getAttributeType(),
-			requiredLevel: attribute.getRequiredLevel(),
-			value: valueText(attribute),
-			onForm: controls.length > 0,
-			controls: controls.map(describeControl),
+			entityLogicalName: formContext.data.entity.getEntityName(),
+			recordId: recordId || null,
+			isNew: formContext.ui.getFormType() === FORM_TYPE_CREATE,
+			total: attributes.length,
+			columns: attributes
+				.filter((attribute) => attribute.getIsDirty())
+				.map((attribute) => ({ ...describeAttribute(attribute, attribute.controls.get()), submitMode: attribute.getSubmitMode() })),
 		};
 	},
 });

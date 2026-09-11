@@ -12,6 +12,7 @@ import {
 	type ColumnUsageRequest,
 	type ControlDetails,
 	type CurrentUser,
+	type DirtyColumnsResult,
 	type EntityInfo,
 	type EntitySummary,
 	type EnvironmentAlertRequest,
@@ -85,6 +86,7 @@ export interface CommandMap {
 	"utilities.getPageTarget": { args: void; result: PageTarget; kind: "query" };
 	"utilities.getControlDetails": { args: void; result: ControlDetails; kind: "query" };
 	"utilities.getFormAttributes": { args: void; result: FormAttributeInfo[]; kind: "query" };
+	"utilities.getDirtyColumns": { args: void; result: DirtyColumnsResult; kind: "query" };
 	"utilities.revealFormColumn": { args: RevealFormColumnRequest; result: FormColumnDetails; kind: "mutation" };
 	"utilities.getRecordPayloadSource": { args: void; result: RecordPayloadSource; kind: "query" };
 	"formPresets.captureFormValues": { args: void; result: Record<string, unknown>; kind: "query" };

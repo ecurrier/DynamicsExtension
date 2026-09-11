@@ -7,6 +7,7 @@ import {
 	LockOpen20Regular,
 	Rename20Regular,
 	Settings20Regular,
+	TextBulletListSquareEdit20Regular,
 	Wrench20Regular,
 } from "@fluentui/react-icons";
 import { useState } from "react";
@@ -16,9 +17,16 @@ import { useExtensionSettings } from "@/modules/settings";
 import { TaskCard, TaskGrid, useAppToast, useSelectDialog } from "@/shared/components";
 import { openUrl } from "@/shared/extension";
 import { useAsyncAction } from "@/shared/hooks";
-import { type AdminModeResult, type EnvironmentDetails, type GeneratedUrls, type SessionSnapshot, type SolutionLayers } from "@/shared/types";
+import {
+	type AdminModeResult,
+	type DirtyColumnsResult,
+	type EnvironmentDetails,
+	type GeneratedUrls,
+	type SessionSnapshot,
+	type SolutionLayers,
+} from "@/shared/types";
 
-import { AdminModeDialog, EnvironmentDetailsDialog, SolutionLayersDialog, UrlDialog } from "../../dialogs";
+import { AdminModeDialog, DirtyColumnsDialog, EnvironmentDetailsDialog, SolutionLayersDialog, UrlDialog } from "../../dialogs";
 import { useEnvironmentPicker } from "../../hooks";
 import { adminCenterUrl, controlEditorUrl, DEFAULT_SOLUTION_ID, makerPortalUrl } from "../../lib";
 
@@ -38,6 +46,7 @@ export const AdminArea = () => {
 	const [snapshot, setSnapshot] = useState<SessionSnapshot | null>(null);
 	const [adminModeResult, setAdminModeResult] = useState<AdminModeResult | null>(null);
 	const [layers, setLayers] = useState<SolutionLayers | null>(null);
+	const [dirtyColumns, setDirtyColumns] = useState<DirtyColumnsResult | null>(null);
 
 	const adminMode = usePageMutation("utilities.enableAdminMode", {
 		onSuccess: (result) => {
@@ -64,6 +73,7 @@ export const AdminArea = () => {
 	const controlEditor = useAsyncAction("Could not open the control editor");
 	const environmentDetails = useAsyncAction("Could not load environment details");
 	const solutionLayers = useAsyncAction("Could not read the solution layers");
+	const dirtyCheck = useAsyncAction("Could not read the unsaved changes");
 
 	const openMakerPortal = () =>
 		makerPortal.run(async () => {
@@ -120,6 +130,11 @@ export const AdminArea = () => {
 			setLayers(await fetchPage("investigate.getSolutionLayers", { componentId: control.id, solutionComponentName }, { fresh: true }));
 		});
 
+	const showDirtyColumns = () =>
+		dirtyCheck.run(async () => {
+			setDirtyColumns(await fetchPage("utilities.getDirtyColumns", undefined, { fresh: true }));
+		});
+
 	return (
 		<>
 			<TaskGrid>
@@ -136,6 +151,14 @@ export const AdminArea = () => {
 					icon={Rename20Regular}
 					loading={logicalNames.isPending}
 					onAction={() => logicalNames.mutate(undefined)}
+				/>
+				<TaskCard
+					title="Dirty Columns"
+					description="List every column on the open form with an unsaved change, its current value, and whether the next save will send it."
+					icon={TextBulletListSquareEdit20Regular}
+					actionLabel="Show"
+					loading={dirtyCheck.running}
+					onAction={() => void showDirtyColumns()}
 				/>
 				<TaskCard
 					title="Record Links & Debug Flags"
@@ -209,6 +232,7 @@ export const AdminArea = () => {
 				onClose={() => setAdminModeResult(null)}
 			/>
 			<SolutionLayersDialog layers={layers} onClose={() => setLayers(null)} />
+			<DirtyColumnsDialog result={dirtyColumns} onClose={() => setDirtyColumns(null)} />
 		</>
 	);
 };

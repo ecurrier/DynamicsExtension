@@ -94,6 +94,9 @@ _Avoid_: Option set, picklist, dropdown, enum
 A single instance of a Table, identified by a GUID.
 _Avoid_: Item, object, entity instance
 
+**Dirty**:
+A Column on the open form whose value has changed since the Record was loaded or last saved, so the next save sends it unless the Column's submit mode is never.
+_Avoid_: Modified, changed, pending, touched
 **Solution Layer**:
 One solution's contribution to a component, ordered so the top layer is the one the platform actually applies.
 _Avoid_: Override, customization, layer stack

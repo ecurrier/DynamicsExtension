@@ -1,6 +1,7 @@
 export * from "./adminMode";
 export * from "./cloudUrls";
 export * from "./columnBrowser";
+export * from "./dirtyColumns";
 export * from "./environmentDetails";
 export * from "./fetchXmlSnippets";
 export * from "./recordPayload";
