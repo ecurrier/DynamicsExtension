@@ -30,8 +30,8 @@ export const utilitiesModule: ModuleDefinition = {
 		},
 		{
 			id: "utilities.records",
-			label: "Records",
-			breadcrumb: ["Utilities", "Records"],
+			label: "Record Set Navigator",
+			breadcrumb: ["Utilities", "Record Set Navigator"],
 			tooltip: "Load a view into a list and step through its records in the tab",
 			requires: "model-driven-app",
 			component: RecordsArea,

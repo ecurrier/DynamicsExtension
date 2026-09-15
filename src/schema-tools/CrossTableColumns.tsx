@@ -1,15 +1,30 @@
-import { Button, Checkbox, Dropdown, Field, Input, makeStyles, Option, Text, tokens } from "@fluentui/react-components";
+import { Button, Checkbox, Dropdown, Field, Input, makeStyles, MessageBar, MessageBarBody, Option, Text, tokens } from "@fluentui/react-components";
 import { Search20Regular } from "@fluentui/react-icons";
 import { useMutation } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
-import { type ColumnEditArgs, columnEditPlan, columnEditSummary, customisableReason, tablesToPublish, typeMismatches } from "@/modules/schema/lib";
-import { BulkRunDialog, DataTable, type DataTableColumn, FormRow, Grow } from "@/shared/components";
+import {
+	type AttributeProperty,
+	type ColumnEditArgs,
+	columnEditPlan,
+	columnEditSummary,
+	customisableReason,
+	editablePropertiesFor,
+	mixedTypeReason,
+	PROPERTY_LABELS,
+	tablesToPublish,
+	typeMismatches,
+} from "@/modules/schema/lib";
+import { BulkRunDialog, DataTable, type DataTableColumn, FormRow, Grow, MANAGED_COLORS, TableFilter, useTableFilter, ValueChip } from "@/shared/components";
 import { type AttributeEdit, type AttributeMatch, type BulkRunPlan, REQUIRED_LEVELS } from "@/shared/types";
 
 import { type SchemaGateway } from "./useSchemaToolsBootstrap";
 
-const useStyles = makeStyles({ caption: { color: tokens.colorNeutralForeground3 }, warn: { color: tokens.colorPaletteRedForeground1 } });
+const useStyles = makeStyles({
+	caption: { color: tokens.colorNeutralForeground3 },
+	warn: { color: tokens.colorPaletteRedForeground1 },
+	narrow: { maxWidth: "160px" },
+});
 
 interface CrossTableColumnsProps {
 	gateway: SchemaGateway;
@@ -17,15 +32,30 @@ interface CrossTableColumnsProps {
 	onPickSolution: () => void;
 }
 
+const numberOrUndefined = (value: string): number | undefined => {
+	const trimmed = value.trim();
+	if (trimmed === "") {
+		return undefined;
+	}
+	const parsed = Number(trimmed);
+	return Number.isFinite(parsed) ? parsed : undefined;
+};
+
 export const CrossTableColumns = ({ gateway, solutionUniqueName, onPickSolution }: CrossTableColumnsProps) => {
 	const styles = useStyles();
 	const [query, setQuery] = useState("");
 	const [customOnly, setCustomOnly] = useState(false);
 	const [matches, setMatches] = useState<AttributeMatch[]>([]);
 	const [selectedIds, setSelectedIds] = useState<string[]>([]);
-	const [label, setLabel] = useState("");
-	const [description, setDescription] = useState("");
-	const [requiredLevel, setRequiredLevel] = useState("");
+	const [values, setValues] = useState<Record<AttributeProperty, string>>({
+		label: "",
+		description: "",
+		requiredLevel: "",
+		maxLength: "",
+		minValue: "",
+		maxValue: "",
+		precision: "",
+	});
 	const [plan, setPlan] = useState<BulkRunPlan<ColumnEditArgs> | null>(null);
 
 	const search = useMutation({
@@ -38,10 +68,20 @@ export const CrossTableColumns = ({ gateway, solutionUniqueName, onPickSolution 
 
 	const mismatched = useMemo(() => typeMismatches(matches), [matches]);
 	const selected = useMemo(() => matches.filter((match) => selectedIds.includes(match.tableLogicalName)), [matches, selectedIds]);
+	const filter = useTableFilter(matches, (match) => [match.tableDisplayName, match.tableLogicalName, match.attributeType, match.label]);
+
+	const available = useMemo(() => editablePropertiesFor(selected.map((match) => match.attributeType)), [selected]);
+	const mixedReason = useMemo(() => mixedTypeReason(selected.map((match) => match.attributeType)), [selected]);
+	const set = (key: AttributeProperty, value: string) => setValues((current) => ({ ...current, [key]: value }));
+
 	const edit: AttributeEdit = {
-		...(label.trim() !== "" ? { label: label.trim() } : {}),
-		...(description.trim() !== "" ? { description: description.trim() } : {}),
-		...(requiredLevel !== "" ? { requiredLevel } : {}),
+		...(values.label.trim() !== "" ? { label: values.label.trim() } : {}),
+		...(values.description.trim() !== "" ? { description: values.description.trim() } : {}),
+		...(values.requiredLevel !== "" ? { requiredLevel: values.requiredLevel } : {}),
+		...(numberOrUndefined(values.maxLength) !== undefined ? { maxLength: numberOrUndefined(values.maxLength) } : {}),
+		...(numberOrUndefined(values.minValue) !== undefined ? { minValue: numberOrUndefined(values.minValue) } : {}),
+		...(numberOrUndefined(values.maxValue) !== undefined ? { maxValue: numberOrUndefined(values.maxValue) } : {}),
+		...(numberOrUndefined(values.precision) !== undefined ? { precision: numberOrUndefined(values.precision) } : {}),
 	};
 
 	const columns: DataTableColumn<AttributeMatch>[] = [
@@ -56,11 +96,24 @@ export const CrossTableColumns = ({ gateway, solutionUniqueName, onPickSolution 
 		{ id: "label", label: "Label", width: 160, render: (match) => match.label, sortValue: (match) => match.label },
 		{ id: "required", label: "Requirement", width: 140, render: (match) => match.requiredLevel, sortValue: (match) => match.requiredLevel },
 		{
-			id: "state",
+			id: "managed",
 			label: "Managed",
-			width: 150,
-			render: (match) => customisableReason(match) ?? (match.isManaged ? "Managed, editable" : "Unmanaged"),
-			sortValue: (match) => String(match.isCustomizable),
+			width: 130,
+			render: (match) => <ValueChip value={match.isManaged ? "Managed" : "Unmanaged"} palette={MANAGED_COLORS} />,
+			sortValue: (match) => String(match.isManaged),
+		},
+		{
+			id: "locked",
+			label: "",
+			width: 220,
+			render: (match) => {
+				const reason = customisableReason(match);
+				return reason ? (
+					<Text size={200} className={styles.warn}>
+						{reason}
+					</Text>
+				) : null;
+			},
 		},
 	];
 
@@ -70,6 +123,13 @@ export const CrossTableColumns = ({ gateway, solutionUniqueName, onPickSolution 
 
 	return (
 		<>
+			<MessageBar intent="info" layout="multiline">
+				<MessageBarBody>
+					The same column often exists on several tables — a status, a region, a reference code copied from table to table. Over time their labels,
+					descriptions and requirement levels drift apart, and fixing that in the maker portal means opening every table in turn. Search a column
+					logical name here to see every table in the environment that has it, then change the ones you pick in one run.
+				</MessageBarBody>
+			</MessageBar>
 			<FormRow>
 				<Grow>
 					<Field label="Column logical name">
@@ -86,29 +146,45 @@ export const CrossTableColumns = ({ gateway, solutionUniqueName, onPickSolution 
 					Find tables
 				</Button>
 			</FormRow>
+			{matches.length > 0 ? (
+				<FormRow>
+					<Grow>
+						<TableFilter query={filter.query} onChange={filter.setQuery} shown={filter.shown} total={filter.total} placeholder="Filter tables" />
+					</Grow>
+				</FormRow>
+			) : null}
 			<DataTable
-				items={matches}
+				items={filter.filtered}
 				columns={columns}
 				getRowId={(match) => match.tableLogicalName}
 				selectionMode="multiselect"
 				selectedIds={new Set(selectedIds)}
 				onSelectionChange={(ids) => setSelectedIds([...ids].map(String))}
-				maxHeight="300px"
+				maxHeight="440px"
 				autoFitColumns={false}
-				emptyMessage="Search a column logical name to see every table that has it."
+				emptyMessage={matches.length === 0 ? "Search a column logical name to see every table that has it." : "No tables match that filter."}
 			/>
+			{mixedReason ? (
+				<MessageBar intent="warning">
+					<MessageBarBody>{mixedReason}</MessageBarBody>
+				</MessageBar>
+			) : null}
 			<FormRow>
-				<Field label="New label">
-					<Input value={label} placeholder="leave blank to keep" onChange={(_, data) => setLabel(data.value)} />
-				</Field>
-				<Field label="New description">
-					<Input value={description} placeholder="leave blank to keep" onChange={(_, data) => setDescription(data.value)} />
-				</Field>
-				<Field label="Requirement level">
+				{available.includes("label") ? (
+					<Field label={PROPERTY_LABELS.label}>
+						<Input value={values.label} placeholder="leave blank to keep" onChange={(_, data) => set("label", data.value)} />
+					</Field>
+				) : null}
+				<Grow>
+					<Field label={PROPERTY_LABELS.description}>
+						<Input value={values.description} placeholder="leave blank to keep" onChange={(_, data) => set("description", data.value)} />
+					</Field>
+				</Grow>
+				<Field label={PROPERTY_LABELS.requiredLevel}>
 					<Dropdown
-						selectedOptions={[requiredLevel]}
-						value={requiredLevel || "Keep as is"}
-						onOptionSelect={(_, data) => setRequiredLevel(data.optionValue ?? "")}>
+						selectedOptions={[values.requiredLevel]}
+						value={values.requiredLevel || "Keep as is"}
+						onOptionSelect={(_, data) => set("requiredLevel", data.optionValue ?? "")}>
 						<Option value="">Keep as is</Option>
 						{REQUIRED_LEVELS.map((level) => (
 							<Option key={level} value={level}>
@@ -118,6 +194,22 @@ export const CrossTableColumns = ({ gateway, solutionUniqueName, onPickSolution 
 					</Dropdown>
 				</Field>
 			</FormRow>
+			{available.length > 3 ? (
+				<FormRow>
+					{(["maxLength", "minValue", "maxValue", "precision"] as AttributeProperty[])
+						.filter((key) => available.includes(key))
+						.map((key) => (
+							<Field key={key} label={PROPERTY_LABELS[key]} className={styles.narrow}>
+								<Input type="number" value={values[key]} placeholder="keep" onChange={(_, data) => set(key, data.value)} />
+							</Field>
+						))}
+					<Grow>
+						<Text size={200} className={styles.caption}>
+							These apply to {selected[0]?.attributeType} columns. Selecting a mix of types hides them.
+						</Text>
+					</Grow>
+				</FormRow>
+			) : null}
 			<FormRow>
 				<Button appearance="subtle" onClick={onPickSolution}>
 					{solutionUniqueName ? `Solution: ${solutionUniqueName}` : "Choose a solution"}

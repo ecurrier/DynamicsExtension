@@ -17,11 +17,15 @@ interface SchemaToolsProps {
 export const SchemaTools = ({ launch }: SchemaToolsProps) => {
 	const [tool, setTool] = useState<SchemaTool>(launch.tool);
 	const [solution, setSolution] = useState<string | null>(null);
+	const [prefix, setPrefix] = useState<string | null>(null);
 	const pickSolution = useSolutionPicker();
 	const gateway = useSchemaGateway(connectionFor(launch));
 
 	const choose = () => {
-		void pickSolution(false, "Select the solution these schema changes should be made in").then((picked) => setSolution(picked?.uniqueName ?? null));
+		void pickSolution(false, "Select the solution these schema changes should be made in").then((picked) => {
+			setSolution(picked?.uniqueName ?? null);
+			setPrefix(picked?.publisherPrefix ?? null);
+		});
 	};
 
 	return (
@@ -33,7 +37,7 @@ export const SchemaTools = ({ launch }: SchemaToolsProps) => {
 			{tool === "columns" ? (
 				<CrossTableColumns gateway={gateway} solutionUniqueName={solution} onPickSolution={choose} />
 			) : (
-				<PolymorphicLookups http={null} solutionUniqueName={solution} onPickSolution={choose} />
+				<PolymorphicLookups gateway={gateway} solutionUniqueName={solution} publisherPrefix={prefix} onPickSolution={choose} />
 			)}
 		</AreaContainer>
 	);

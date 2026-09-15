@@ -3,6 +3,7 @@ import { type BusinessUnit, type RoleChangeSet, type SecurityRole, type SystemUs
 import { DataverseOperationError } from "./errors";
 import { requireGuid } from "./guards";
 import { fetchXmlPath, type DataverseHttp } from "./http";
+import { getAllPages } from "./paging";
 import { privilegeOperations, type PrivilegeOperations } from "./privileges";
 import { escapeFetchXmlLike } from "../fetchXmlEscape";
 import { normalizeGuid } from "../guid";
@@ -31,6 +32,22 @@ const businessUnitFetchXml = `
       <order attribute="name" descending="false" />
       <filter type="and">
         <condition attribute="isdisabled" operator="eq" value="0" />
+      </filter>
+    </entity>
+  </fetch>`;
+
+export const allSystemUsersFetchXml = `
+  <fetch>
+    <entity name="systemuser">
+      <attribute name="fullname" />
+      <attribute name="systemuserid" />
+      <attribute name="azureactivedirectoryobjectid" />
+      <attribute name="domainname" />
+      <attribute name="isdisabled" />
+      <order attribute="fullname" descending="false" />
+      <filter type="and">
+        <condition attribute="isdisabled" operator="eq" value="0" />
+        <condition attribute="accessmode" operator="ne" value="3" />
       </filter>
     </entity>
   </fetch>`;
@@ -135,6 +152,7 @@ export interface SecurityOperations extends PrivilegeOperations {
 	getSecurityRoles: () => Promise<SecurityRole[]>;
 	getBusinessUnits: () => Promise<BusinessUnit[]>;
 	searchSystemUsers: (args: { query: string }) => Promise<SystemUser[]>;
+	listSystemUsers: () => Promise<SystemUser[]>;
 	getUserSecurityRoles: (args: { systemUserId: string; businessUnitId: string }) => Promise<SecurityRole[]>;
 	getSystemUserRoles: (args: { systemUserId: string }) => Promise<SecurityRole[]>;
 	applySecurityRoleChanges: (changes: RoleChangeSet) => Promise<void>;
@@ -160,6 +178,10 @@ export const securityOperations = (http: DataverseHttp): SecurityOperations => {
 			}
 			const users = await retrieve<SystemUserRecord>("systemusers", systemUserSearchFetchXml(term));
 			return users.map(toSystemUser);
+		},
+		listSystemUsers: async () => {
+			const page = await getAllPages<SystemUserRecord>(http, fetchXmlPath("systemusers", allSystemUsersFetchXml));
+			return page.rows.map(toSystemUser);
 		},
 		getUserSecurityRoles: async ({ systemUserId, businessUnitId }) => {
 			const userId = requireGuid(systemUserId, "User");

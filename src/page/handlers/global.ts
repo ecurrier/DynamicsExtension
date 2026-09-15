@@ -8,6 +8,9 @@ const SOLUTIONS_FETCH_XML = `
       <attribute name="solutionid" />
       <attribute name="friendlyname" />
       <attribute name="uniquename" />
+      <link-entity name="publisher" from="publisherid" to="publisherid" alias="pub">
+        <attribute name="customizationprefix" />
+      </link-entity>
       <order attribute="friendlyname" descending="false" />
       <filter type="and">
         <condition attribute="ismanaged" operator="eq" value="0" />
@@ -26,7 +29,15 @@ export const globalHandlers = defineHandlers({
 		return null;
 	},
 	"global.getSolutions": async () => {
-		const solutions = await retrieveMultiple<{ solutionid: string; friendlyname: string; uniquename: string }>("solution", SOLUTIONS_FETCH_XML);
-		return solutions.map((solution) => ({ id: solution.solutionid, name: solution.friendlyname, uniqueName: solution.uniquename }));
+		const solutions = await retrieveMultiple<{ solutionid: string; friendlyname: string; uniquename: string; "pub.customizationprefix"?: string | null }>(
+			"solution",
+			SOLUTIONS_FETCH_XML
+		);
+		return solutions.map((solution) => ({
+			id: solution.solutionid,
+			name: solution.friendlyname,
+			uniqueName: solution.uniquename,
+			publisherPrefix: solution["pub.customizationprefix"] ?? null,
+		}));
 	},
 });

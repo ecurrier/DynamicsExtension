@@ -7,6 +7,7 @@ export const securityGateway = defineGateway({
 		"getSecurityRoles",
 		"getBusinessUnits",
 		"searchSystemUsers",
+		"listSystemUsers",
 		"getUserSecurityRoles",
 		"getSystemUserRoles",
 		"getRolePrivileges",

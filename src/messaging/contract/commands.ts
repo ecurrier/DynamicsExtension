@@ -54,6 +54,9 @@ import {
 	type PrivilegeDepth,
 	type RolePrivilege,
 	type AttributeMatch,
+	type CreatePolymorphicLookupRequest,
+	type PolymorphicLookup,
+	type TargetRequest,
 	type AttributeSearchRequest,
 	type SecurityRole,
 	type UpdateAttributeRequest,
@@ -120,6 +123,7 @@ export interface CommandMap {
 	"security.getSecurityRoles": { args: void; result: SecurityRole[]; kind: "query" };
 	"security.getBusinessUnits": { args: void; result: BusinessUnit[]; kind: "query" };
 	"security.searchSystemUsers": { args: { query: string }; result: SystemUser[]; kind: "query" };
+	"security.listSystemUsers": { args: void; result: SystemUser[]; kind: "query" };
 	"security.getUserSecurityRoles": {
 		args: { systemUserId: string; businessUnitId: string };
 		result: SecurityRole[];
@@ -128,6 +132,10 @@ export interface CommandMap {
 	"security.getSystemUserRoles": { args: { systemUserId: string }; result: SecurityRole[]; kind: "query" };
 	"schema.findAttributeAcrossTables": { args: AttributeSearchRequest; result: AttributeMatch[]; kind: "query" };
 	"schema.updateAttribute": { args: UpdateAttributeRequest; result: void; kind: "mutation" };
+	"schema.listPolymorphicLookups": { args: { tableLogicalName: string }; result: PolymorphicLookup[]; kind: "query" };
+	"schema.createPolymorphicLookup": { args: CreatePolymorphicLookupRequest; result: void; kind: "mutation" };
+	"schema.addPolymorphicTarget": { args: TargetRequest; result: void; kind: "mutation" };
+	"schema.removePolymorphicTarget": { args: { relationshipId: string }; result: void; kind: "mutation" };
 	"schema.publishTables": { args: { logicalNames: string[] }; result: void; kind: "mutation" };
 	"security.getRolePrivileges": { args: { roleIds: string[] }; result: RolePrivilege[]; kind: "query" };
 	"security.addPrivilegesRole": { args: { roleId: string; privileges: { privilegeId: string; depth: PrivilegeDepth }[] }; result: void; kind: "mutation" };

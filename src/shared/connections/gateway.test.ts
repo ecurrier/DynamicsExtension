@@ -30,7 +30,7 @@ const definition = defineGateway({
 	namespace: "security",
 	operations: ["getSecurityRoles", "searchSystemUsers"],
 	pageOnly: ["getCurrentUser"],
-	excluded: ["getBusinessUnits", "getUserSecurityRoles", "getSystemUserRoles", "getRolePrivileges", "addPrivilegesRole", "applySecurityRoleChanges"],
+	excluded: ["getBusinessUnits", "getUserSecurityRoles", "getSystemUserRoles", "getRolePrivileges", "addPrivilegesRole", "applySecurityRoleChanges", "listSystemUsers"],
 	factory,
 	timeouts: { searchSystemUsers: 5_000 },
 });

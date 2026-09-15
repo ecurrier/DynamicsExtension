@@ -1,5 +1,7 @@
 import { type AttributeEdit, type AttributeMatch, type BulkRunPlan } from "@/shared/types";
 
+import { type AttributeProperty, editablePropertiesFor, PROPERTY_LABELS } from "./attributeProperties";
+
 export interface ColumnEditArgs extends AttributeEdit {
 	tableLogicalName: string;
 	columnLogicalName: string;
@@ -31,35 +33,55 @@ export const typeMismatches = (matches: AttributeMatch[]): Set<string> => {
 export const customisableReason = (match: AttributeMatch): string | null =>
 	match.isCustomizable ? null : "This column is locked by its managed solution and cannot be customised.";
 
-const unchanged = (match: AttributeMatch, edit: AttributeEdit): boolean =>
-	(edit.label === undefined || edit.label === match.label) &&
-	(edit.description === undefined || edit.description === match.description) &&
-	(edit.requiredLevel === undefined || edit.requiredLevel === match.requiredLevel);
+const CURRENT: Record<AttributeProperty, (match: AttributeMatch) => unknown> = {
+	label: (match) => match.label,
+	description: (match) => match.description,
+	requiredLevel: (match) => match.requiredLevel,
+	maxLength: (match) => match.maxLength,
+	minValue: (match) => match.minValue,
+	maxValue: (match) => match.maxValue,
+	precision: (match) => match.precision,
+};
 
-export const columnEditPlan = (matches: AttributeMatch[], edit: AttributeEdit): BulkRunPlan<ColumnEditArgs> => ({
-	title: "Update column metadata",
-	action: "Update",
-	items: matches
-		.filter((match) => match.isCustomizable && !unchanged(match, edit))
-		.map((match) => ({
-			id: `${match.tableLogicalName}:${match.columnLogicalName}`,
-			label: match.tableDisplayName,
-			detail: [
-				edit.label !== undefined && edit.label !== match.label ? `Label "${match.label}" to "${edit.label}"` : null,
-				edit.description !== undefined && edit.description !== match.description ? "Description changes" : null,
-				edit.requiredLevel !== undefined && edit.requiredLevel !== match.requiredLevel ? `${match.requiredLevel} to ${edit.requiredLevel}` : null,
-			]
-				.filter(Boolean)
-				.join(", "),
-			args: {
-				tableLogicalName: match.tableLogicalName,
-				columnLogicalName: match.columnLogicalName,
-				attributeType: match.attributeType,
-				metadataId: match.metadataId,
-				...edit,
-			},
-		})),
-});
+export const allowedEdit = (edit: AttributeEdit, matches: AttributeMatch[]): AttributeEdit => {
+	const allowed = new Set<string>(editablePropertiesFor(matches.map((match) => match.attributeType)));
+	return Object.fromEntries(Object.entries(edit).filter(([key]) => allowed.has(key)));
+};
+
+const changes = (match: AttributeMatch, edit: AttributeEdit): AttributeProperty[] =>
+	(Object.keys(edit) as AttributeProperty[]).filter((key) => edit[key] !== undefined && edit[key] !== CURRENT[key](match));
+
+const unchanged = (match: AttributeMatch, edit: AttributeEdit): boolean => changes(match, edit).length === 0;
+
+export const columnEditPlan = (matches: AttributeMatch[], requested: AttributeEdit): BulkRunPlan<ColumnEditArgs> => {
+	const edit = allowedEdit(requested, matches);
+	return {
+		title: "Update column metadata",
+		action: "Update",
+		items: matches
+			.filter((match) => match.isCustomizable && !unchanged(match, edit))
+			.map((match) => ({
+				id: `${match.tableLogicalName}:${match.columnLogicalName}`,
+				label: match.tableDisplayName,
+				detail: changes(match, edit)
+					.map((key) =>
+						key === "label"
+							? `Label "${match.label}" to "${String(edit.label)}"`
+							: key === "description"
+								? "Description changes"
+								: `${PROPERTY_LABELS[key]} ${String(CURRENT[key](match) ?? "unset")} to ${String(edit[key])}`
+					)
+					.join(", "),
+				args: {
+					tableLogicalName: match.tableLogicalName,
+					columnLogicalName: match.columnLogicalName,
+					attributeType: match.attributeType,
+					metadataId: match.metadataId,
+					...edit,
+				},
+			})),
+	};
+};
 
 export const tablesToPublish = (succeededIds: string[]): string[] => [...new Set(succeededIds.map((id) => id.split(":")[0] ?? "").filter(Boolean))];
 

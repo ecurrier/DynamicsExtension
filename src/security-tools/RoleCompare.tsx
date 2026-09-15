@@ -3,7 +3,18 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
 import { compareRoleMatrix, differingRows, roleCompareToText, type RoleCompareRow } from "@/modules/security/lib";
-import { CopyButton, DataTable, type DataTableColumn, FormRow, Grow } from "@/shared/components";
+import {
+	CopyButton,
+	DataTable,
+	type DataTableColumn,
+	FormRow,
+	Grow,
+	PRIVILEGE_ACCESS_COLORS,
+	PRIVILEGE_DEPTH_COLORS,
+	TableFilter,
+	useTableFilter,
+	ValueChip,
+} from "@/shared/components";
 import { dedupeLogicalRoles } from "@/shared/lib";
 import { type LogicalRole } from "@/shared/types";
 
@@ -18,7 +29,7 @@ interface RoleCompareProps {
 export const RoleCompare = ({ gateway }: RoleCompareProps) => {
 	const styles = useStyles();
 	const [selectedIds, setSelectedIds] = useState<string[]>([]);
-	const [showAll, setShowAll] = useState(false);
+	const [differencesOnly, setDifferencesOnly] = useState(true);
 
 	const allRoles = useQuery({
 		queryKey: gateway.key("getSecurityRoles"),
@@ -29,6 +40,7 @@ export const RoleCompare = ({ gateway }: RoleCompareProps) => {
 	});
 	const roles = useMemo(() => dedupeLogicalRoles(allRoles.data ?? []), [allRoles.data]);
 	const selected = useMemo(() => roles.filter((role) => selectedIds.includes(role.id)), [roles, selectedIds]);
+	const roleFilter = useTableFilter(roles, (role) => [role.name]);
 
 	const privileges = useQuery({
 		queryKey: gateway.key("getRolePrivileges", { roleIds: selectedIds }),
@@ -39,64 +51,110 @@ export const RoleCompare = ({ gateway }: RoleCompareProps) => {
 	});
 
 	const allRows = useMemo(() => compareRoleMatrix(selected, privileges.data ?? []), [selected, privileges.data]);
-	const rows = showAll ? allRows : differingRows(allRows, selected);
+	const differing = useMemo(() => differingRows(allRows, selected), [allRows, selected]);
+	const shownRows = differencesOnly ? differing : allRows;
+	const matrixFilter = useTableFilter(shownRows, (row) => [row.tableSchemaName, row.accessType]);
 
 	const roleColumns: DataTableColumn<LogicalRole>[] = [
-		{ id: "name", label: "Security role", width: 240, render: (role) => role.name, sortValue: (role) => role.name },
-		{
-			id: "copies",
-			label: "Business units",
-			width: 130,
-			render: (role) => (role.copies === 1 ? "1" : `${role.copies} copies`),
-			sortValue: (role) => role.copies,
-		},
+		{ id: "name", label: "Security role", width: 320, render: (role) => role.name, sortValue: (role) => role.name },
 	];
 
 	const matrixColumns: DataTableColumn<RoleCompareRow>[] = [
 		{ id: "table", label: "Table", width: 160, render: (row) => row.tableSchemaName, sortValue: (row) => row.tableSchemaName },
-		{ id: "privilege", label: "Privilege", width: 120, render: (row) => row.accessType, sortValue: (row) => row.accessType },
+		{
+			id: "privilege",
+			label: "Privilege",
+			width: 120,
+			render: (row) => <ValueChip value={row.accessType} palette={PRIVILEGE_ACCESS_COLORS} />,
+			sortValue: (row) => row.accessType,
+		},
 		...selected.map<DataTableColumn<RoleCompareRow>>((role) => ({
 			id: role.id,
 			label: role.name,
 			width: 150,
-			render: (row) => row.depths[role.id] ?? "None",
+			render: (row) => <ValueChip value={row.depths[role.id] ?? "None"} palette={PRIVILEGE_DEPTH_COLORS} />,
 			sortValue: (row) => row.depths[role.id] ?? "None",
 		})),
 	];
 
+	const hidden = allRows.length - differing.length;
+
 	return (
 		<>
-			<Field label="Security roles to compare" hint="Pick two or more. Roles are listed once per logical role, not once per business unit copy.">
+			<Field label="Security roles to compare" hint="Pick two or more. Each role is listed once and compared at its root business unit.">
+				<FormRow>
+					<Grow>
+						<TableFilter
+							query={roleFilter.query}
+							onChange={roleFilter.setQuery}
+							shown={roleFilter.shown}
+							total={roleFilter.total}
+							placeholder="Filter roles by name or prefix"
+						/>
+					</Grow>
+				</FormRow>
 				<DataTable
-					items={roles}
+					items={roleFilter.filtered}
 					columns={roleColumns}
 					getRowId={(role) => role.id}
 					selectionMode="multiselect"
 					selectedIds={new Set(selectedIds)}
 					onSelectionChange={(ids) => setSelectedIds([...ids].map(String))}
-					maxHeight="200px"
+					maxHeight="220px"
 					autoFitColumns={false}
-					emptyMessage="No security roles were returned."
+					emptyMessage={roleFilter.query ? "No roles match that filter." : "No security roles were returned."}
 				/>
 			</Field>
 			<FormRow>
-				<Switch checked={showAll} label="Show privileges they agree on" onChange={(_, data) => setShowAll(data.checked)} />
+				<Switch
+					checked={differencesOnly}
+					label="Differences only"
+					onChange={(_, data) => {
+						setDifferencesOnly(data.checked);
+						matrixFilter.setQuery("");
+					}}
+				/>
 				<Grow>
 					<Text size={200} className={styles.caption}>
 						{selectedIds.length < 2
 							? "Pick at least two roles."
-							: `${rows.length} of ${allRows.length} privileges ${showAll ? "shown" : "differ"} across ${selected.length} roles.`}
+							: differencesOnly
+								? `${differing.length} of ${allRows.length} privileges differ across ${selected.length} roles, ${hidden} identical rows hidden.`
+								: `All ${allRows.length} privileges across ${selected.length} roles.`}
 					</Text>
 				</Grow>
-				<CopyButton text={rows.length > 0 ? roleCompareToText(rows, selected) : null} label="Copy" successMessage="Comparison copied to clipboard" />
+				<CopyButton
+					text={matrixFilter.filtered.length > 0 ? roleCompareToText(matrixFilter.filtered, selected) : null}
+					label="Copy"
+					successMessage="Comparison copied to clipboard"
+				/>
 			</FormRow>
+			{shownRows.length > 0 ? (
+				<FormRow>
+					<Grow>
+						<TableFilter
+							query={matrixFilter.query}
+							onChange={matrixFilter.setQuery}
+							shown={matrixFilter.shown}
+							total={matrixFilter.total}
+							placeholder="Filter by table or privilege"
+						/>
+					</Grow>
+				</FormRow>
+			) : null}
 			<DataTable
-				items={rows}
+				items={matrixFilter.filtered}
 				columns={matrixColumns}
 				getRowId={(row) => row.id}
 				maxHeight="420px"
 				autoFitColumns={false}
-				emptyMessage={selectedIds.length < 2 ? "Pick at least two roles to compare." : "These roles have the same privileges."}
+				emptyMessage={
+					selectedIds.length < 2
+						? "Pick at least two roles to compare."
+						: differencesOnly
+							? "These roles have the same privileges."
+							: "No privileges to show."
+				}
 			/>
 		</>
 	);

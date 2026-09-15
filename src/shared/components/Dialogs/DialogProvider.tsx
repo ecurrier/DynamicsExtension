@@ -20,6 +20,7 @@ export interface SelectOptions<T> {
 	items: SelectItem<T>[];
 	placeholder?: string;
 	confirmLabel?: string;
+	defaultToFirst?: boolean;
 }
 
 interface DialogApi {
@@ -50,7 +51,7 @@ export const DialogProvider = ({ children }: PropsWithChildren) => {
 				}),
 			select: <T,>(options: SelectOptions<T>) =>
 				new Promise<T | null>((resolve) => {
-					setSelectedKey(options.items.length === 1 ? (options.items[0]?.key ?? null) : null);
+					setSelectedKey(options.defaultToFirst || options.items.length === 1 ? (options.items[0]?.key ?? null) : null);
 					setActive({
 						kind: "select",
 						options: options as SelectOptions<unknown>,

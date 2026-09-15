@@ -1402,9 +1402,9 @@
 		"transport.retrievePage": (args) =>
 			args.nextLink ? { rows: transportRows.slice(100), nextLink: null } : { rows: transportRows.slice(0, 100), nextLink: transportPageLink },
 		"global.getSolutions": () => [
-			{ id: "fd140aaf-4df4-11dd-bd17-0019b9312238", name: "Default Solution", uniqueName: "Default" },
-			{ id: "s2", name: "Contoso Core", uniqueName: "ContosoCore" },
-			{ id: "s3", name: "Contoso Field Service", uniqueName: "ContosoFieldService" },
+			{ id: "fd140aaf-4df4-11dd-bd17-0019b9312238", name: "Default Solution", uniqueName: "Default", publisherPrefix: "new" },
+			{ id: "s2", name: "Contoso Core", uniqueName: "ContosoCore", publisherPrefix: "contoso" },
+			{ id: "s3", name: "Contoso Field Service", uniqueName: "ContosoFieldService", publisherPrefix: "cfs" },
 		],
 		"settings.getEnvironmentDetails": () => ({
 			environmentName: "org12345",
@@ -1420,6 +1420,11 @@
 		}),
 		"utilities.refreshCommandBar": () => undefined,
 		"utilities.generateFetchXml": () => [
+			{
+				name: "View as displayed: Active Accounts",
+				fetchXml:
+					'<fetch><entity name="account"><attribute name="accountid" /><attribute name="name" /><attribute name="telephone1" /><attribute name="revenue" /><attribute name="ownerid" /><link-entity name="contact" from="parentcustomerid" to="accountid"><attribute name="fullname" /></link-entity></entity></fetch>',
+			},
 			{
 				name: "Current Record (account)",
 				fetchXml:
@@ -1633,9 +1638,13 @@
 				"@odata.etag": 'W/"1"',
 				accountid: `id-${i}`,
 				name: `Account ${i}`,
+				telephone1: `555-01${String(i).padStart(2, "0")}`,
 				revenue: i * 100,
 				"revenue@OData.Community.Display.V1.FormattedValue": `$${i * 100}.00`,
+				_ownerid_value: "u1",
+				"_ownerid_value@OData.Community.Display.V1.FormattedValue": i % 3 === 0 ? "Jane Doe" : "John Smith",
 				statecode: i % 2,
+				"statecode@OData.Community.Display.V1.FormattedValue": i % 2 === 0 ? "Active" : "Inactive",
 			})),
 		"schema.findAttributeAcrossTables": (args) => {
 			const name = (args.logicalName || "").toLowerCase();
@@ -1699,6 +1708,23 @@
 			}
 			console.log("[harness] schema.updateAttribute", args.tableLogicalName, args.columnLogicalName);
 		},
+		"schema.listPolymorphicLookups": (args) =>
+			args.tableLogicalName === "account"
+				? [
+						{
+							columnLogicalName: "contoso_relatedto",
+							tableLogicalName: "account",
+							targets: [
+								{ tableLogicalName: "contact", relationshipSchemaName: "contact_account_contoso_RelatedTo", relationshipId: guid(901) },
+								{ tableLogicalName: "lead", relationshipSchemaName: "lead_account_contoso_RelatedTo", relationshipId: guid(902) },
+							],
+						},
+					]
+				: [],
+		"schema.createPolymorphicLookup": (args) =>
+			console.log("[harness] schema.createPolymorphicLookup", args.columnSchemaName, args.targetTableLogicalNames.join(", ")),
+		"schema.addPolymorphicTarget": (args) => console.log("[harness] schema.addPolymorphicTarget", args.targetTableLogicalName),
+		"schema.removePolymorphicTarget": (args) => console.log("[harness] schema.removePolymorphicTarget", args.relationshipId),
 		"schema.publishTables": (args) => console.log("[harness] schema.publishTables", args.logicalNames.join(", ")),
 		"security.getCurrentUser": () => ({ userId: "u1", userName: "Jane Doe", roleIds: ["r1", "r3"] }),
 		"security.getSecurityRoles": () => roles,
@@ -1720,6 +1746,17 @@
 			...Array.from({ length: 10 }, (_, index) => ({
 				id: `u${index + 3}`,
 				fullName: `Contoso User ${index + 3}`,
+				azureAdObjectId: guid(510 + index),
+				domainName: `user${index + 3}@contoso.com`,
+				isDisabled: false,
+			})),
+		],
+		"security.listSystemUsers": () => [
+			{ id: "u1", fullName: "Jane Doe", azureAdObjectId: guid(501), domainName: "jane@contoso.com", isDisabled: false },
+			{ id: "u2", fullName: "John Smith", azureAdObjectId: null, domainName: "john@contoso.com", isDisabled: false },
+			...Array.from({ length: 40 }, (_, index) => ({
+				id: `u${index + 3}`,
+				fullName: `${["Alice", "Bob", "Carol", "Dan"][index % 4]} ${["Adams", "Brown", "Clark", "Diaz"][Math.floor(index / 4) % 4]} ${index + 3}`,
 				azureAdObjectId: guid(510 + index),
 				domainName: `user${index + 3}@contoso.com`,
 				isDisabled: false,

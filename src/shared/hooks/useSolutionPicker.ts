@@ -5,7 +5,12 @@ import { useSelectDialog } from "@/shared/components";
 import { defaultSolutionName, DEFAULT_SOLUTION_ID, DEFAULT_SOLUTION_UNIQUE_NAME } from "@/shared/lib";
 import { type Solution } from "@/shared/types";
 
-export const DEFAULT_SOLUTION: Solution = { id: DEFAULT_SOLUTION_ID, name: "Default Solution", uniqueName: DEFAULT_SOLUTION_UNIQUE_NAME };
+export const DEFAULT_SOLUTION: Solution = {
+	id: DEFAULT_SOLUTION_ID,
+	name: "Default Solution",
+	uniqueName: DEFAULT_SOLUTION_UNIQUE_NAME,
+	publisherPrefix: "new",
+};
 
 export const pickDefaultSolution = (solutions: Solution[]): Solution => solutions.find((solution) => defaultSolutionName(solution.name)) ?? DEFAULT_SOLUTION;
 

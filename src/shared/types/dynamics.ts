@@ -8,6 +8,7 @@ export interface Solution {
 	id: string;
 	name: string;
 	uniqueName: string;
+	publisherPrefix: string | null;
 }
 
 export interface EnvironmentDetails {

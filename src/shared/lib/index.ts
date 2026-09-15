@@ -10,6 +10,7 @@ export * from "./errors";
 export * from "./fetchXmlEscape";
 export * from "./fileHandles";
 export * from "./filePicker";
+export * from "./filterText";
 export * from "./formatXml";
 export * from "./formEvents";
 export * from "./guid";

@@ -13,6 +13,10 @@ interface AttributeRecord {
 	IsManaged?: boolean;
 	IsCustomizable?: { Value?: boolean } | null;
 	RequiredLevel?: { Value?: string } | null;
+	MaxLength?: number | null;
+	MinValue?: number | null;
+	MaxValue?: number | null;
+	Precision?: number | null;
 	DisplayName?: LabelBag | null;
 	Description?: LabelBag | null;
 }
@@ -38,7 +42,7 @@ export const attributeSearchOperations = (http: DataverseHttp): AttributeSearchO
 		if (!name) {
 			return [];
 		}
-		const expand = `Attributes($select=LogicalName,AttributeType,MetadataId,IsManaged,IsCustomizable,RequiredLevel,DisplayName,Description;$filter=LogicalName eq '${escapeODataString(name)}')`;
+		const expand = `Attributes($select=LogicalName,AttributeType,MetadataId,IsManaged,IsCustomizable,RequiredLevel,DisplayName,Description,MaxLength,MinValue,MaxValue,Precision;$filter=LogicalName eq '${escapeODataString(name)}')`;
 		const filter = customOnly ? "&$filter=IsCustomEntity eq true" : "";
 		const response = await http.get<{ value?: EntityRecord[] }>(
 			`EntityDefinitions?$select=LogicalName,DisplayName&$expand=${encodeURIComponent(expand)}${filter}`
@@ -52,13 +56,30 @@ export const attributeSearchOperations = (http: DataverseHttp): AttributeSearchO
 				label: labelOf(attribute.DisplayName),
 				description: labelOf(attribute.Description),
 				requiredLevel: attribute.RequiredLevel?.Value ?? "None",
+				maxLength: attribute.MaxLength ?? null,
+				minValue: attribute.MinValue ?? null,
+				maxValue: attribute.MaxValue ?? null,
+				precision: attribute.Precision ?? null,
 				isManaged: attribute.IsManaged === true,
 				isCustomizable: attribute.IsCustomizable?.Value !== false,
 				metadataId: attribute.MetadataId,
 			}))
 		);
 	},
-	updateAttribute: async ({ tableLogicalName, columnLogicalName, attributeType, metadataId, label, description, requiredLevel, solutionUniqueName }) => {
+	updateAttribute: async ({
+		tableLogicalName,
+		columnLogicalName,
+		attributeType,
+		metadataId,
+		label,
+		description,
+		requiredLevel,
+		maxLength,
+		minValue,
+		maxValue,
+		precision,
+		solutionUniqueName,
+	}) => {
 		const body: Record<string, unknown> = {
 			"@odata.type": `Microsoft.Dynamics.CRM.${attributeType}AttributeMetadata`,
 			MetadataId: metadataId,
@@ -78,6 +99,18 @@ export const attributeSearchOperations = (http: DataverseHttp): AttributeSearchO
 		}
 		if (requiredLevel !== undefined) {
 			body.RequiredLevel = { Value: requiredLevel, CanBeChanged: true, ManagedPropertyLogicalName: "canmodifyrequirementlevelsettings" };
+		}
+		if (maxLength !== undefined) {
+			body.MaxLength = maxLength;
+		}
+		if (minValue !== undefined) {
+			body.MinValue = minValue;
+		}
+		if (maxValue !== undefined) {
+			body.MaxValue = maxValue;
+		}
+		if (precision !== undefined) {
+			body.Precision = precision;
 		}
 		await http.request(
 			"PUT",
