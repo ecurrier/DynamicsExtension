@@ -113,7 +113,7 @@ describe("migrateLegacyStorage", () => {
 		});
 
 		expect(await migrateLegacyStorage()).toBe(false);
-		expect((await settingsItem.getValue()).openLastVisitedArea).toBe(false);
+		expect(await settingsItem.getValue()).toEqual(DEFAULT_SETTINGS);
 	});
 
 	it("stamps the version on a fresh install without legacy keys", async () => {

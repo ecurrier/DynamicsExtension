@@ -8,3 +8,4 @@ export * from "./recordPayload";
 export * from "./sessionSnapshot";
 export * from "./tableMetadata";
 export * from "./urlGroups";
+export * from "./recordSet";

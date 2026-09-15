@@ -11,7 +11,7 @@ export default defineConfig({
 	manifest: {
 		name: "Power Tools for Power Platform/Dynamics 365",
 		description: "Boost productivity & streamline workflows on Power Platform/Dynamics 365. Custom functionality & quality-of-life features.",
-		permissions: ["activeTab", "scripting", "storage", "declarativeNetRequestWithHostAccess"],
+		permissions: ["activeTab", "scripting", "storage", "webNavigation", "sidePanel", "declarativeNetRequestWithHostAccess"],
 		host_permissions: [
 			"https://*.dynamics.com/*",
 			"https://*.microsoftdynamics.us/*",
@@ -20,6 +20,7 @@ export default defineConfig({
 			"https://login.microsoftonline.us/*",
 		],
 		action: { default_title: "Power Tools" },
+		side_panel: { default_path: "sidepanel.html" },
 	},
 	vite: () => ({
 		define: { __APP_VERSION__: JSON.stringify(version) },

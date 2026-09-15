@@ -2,7 +2,7 @@ import { browser } from "wxt/browser";
 
 import { pinnedWindowsItem } from "@/shared/storage";
 
-export type PopupMode = "popup" | "window";
+export type PopupMode = "popup" | "window" | "sidepanel";
 
 export interface PopupLaunch {
 	mode: PopupMode;
@@ -14,9 +14,13 @@ const WINDOW_HEIGHT = 660;
 
 export const readPopupLaunch = (): PopupLaunch => {
 	const params = new URLSearchParams(globalThis.location?.search ?? "");
+	const mode = params.get("mode");
 	const tabId = Number(params.get("tabId"));
-	if (params.get("mode") === "window" && Number.isInteger(tabId) && tabId > 0) {
+	if (mode === "window" && Number.isInteger(tabId) && tabId > 0) {
 		return { mode: "window", tabId };
+	}
+	if (mode === "sidepanel" || (globalThis.location?.pathname ?? "").includes("sidepanel")) {
+		return { mode: "sidepanel", tabId: null };
 	}
 	return { mode: "popup", tabId: null };
 };

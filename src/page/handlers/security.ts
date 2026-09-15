@@ -22,5 +22,7 @@ export const securityHandlers = defineHandlers({
 	"security.searchSystemUsers": (args) => runOperation(() => operations().searchSystemUsers(args)),
 	"security.getUserSecurityRoles": (args) => runOperation(() => operations().getUserSecurityRoles(args)),
 	"security.getSystemUserRoles": (args) => runOperation(() => operations().getSystemUserRoles(args)),
+	"security.getRolePrivileges": (args) => runOperation(() => operations().getRolePrivileges(args)),
+	"security.addPrivilegesRole": (args) => runOperation(() => operations().addPrivilegesRole(args)),
 	"security.applySecurityRoleChanges": (changes) => runOperation(() => operations().applySecurityRoleChanges(changes)),
 });

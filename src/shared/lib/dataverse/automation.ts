@@ -3,6 +3,7 @@ import { type AutomationItem, type AutomationKind, type AutomationRun, type Tabl
 import { requireLogicalName } from "./guards";
 import { type DataverseHttp } from "./http";
 import { getAllPages } from "./paging";
+import { describeError } from "../errors";
 import { isGuid, normalizeGuid } from "../guid";
 import { odataStringLiteral } from "../odata";
 
@@ -130,8 +131,6 @@ const splitAttributes = (value: string | null | undefined): string[] =>
 		.map((entry) => entry.trim())
 		.filter((entry) => entry.length > 0);
 
-const describe = (reason: unknown): string => (reason instanceof Error ? reason.message : String(reason));
-
 const meaningfulName = (value: string | null | undefined): string | null => {
 	const name = value?.trim();
 	return name && !isGuid(name) ? name : null;
@@ -238,7 +237,7 @@ export const automationOperations = (http: DataverseHttp): AutomationOperations 
 			`callbackregistrations?$select=${REGISTRATION_SELECT}&$filter=entityname eq ${literal}`
 		).then(
 			(result) => ({ rows: result.rows, error: null as string | null }),
-			(reason: unknown) => ({ rows: [] as RegistrationRecord[], error: describe(reason) })
+			(reason: unknown) => ({ rows: [] as RegistrationRecord[], error: describeError(reason) })
 		);
 		const runsPromise = http
 			.get<{ value?: RunRecord[] }>(
@@ -246,7 +245,7 @@ export const automationOperations = (http: DataverseHttp): AutomationOperations 
 			)
 			.then(
 				(response) => ({ rows: response?.value ?? [], error: null as string | null }),
-				(reason: unknown) => ({ rows: [] as RunRecord[], error: describe(reason) })
+				(reason: unknown) => ({ rows: [] as RunRecord[], error: describeError(reason) })
 			);
 
 		const [workflows, steps, registrations, runs] = await Promise.all([workflowsPromise, stepsPromise, registrationsPromise, runsPromise]);

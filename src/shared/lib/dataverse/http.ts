@@ -1,4 +1,4 @@
-export type DataverseMethod = "GET" | "POST" | "PATCH" | "DELETE";
+export type DataverseMethod = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
 
 export interface DataverseHttp {
 	origin: string;
@@ -16,6 +16,21 @@ export interface DataverseHttpOptions {
 	fetchImpl?: typeof fetch;
 	timeoutMs?: number;
 }
+
+export const fetchXmlPath = (entitySet: string, fetchXml: string): string => `${entitySet}?fetchXml=${encodeURIComponent(fetchXml)}`;
+
+export const SOLUTION_HEADER = "MSCRM.SolutionUniqueName";
+
+export const withSolution = (
+	headers: Record<string, string> | undefined,
+	solutionUniqueName: string | null | undefined
+): Record<string, string> | undefined => {
+	const name = solutionUniqueName?.trim();
+	if (!name) {
+		return headers;
+	}
+	return { ...headers, [SOLUTION_HEADER]: name };
+};
 
 export const WEB_API_VERSION = "v9.2";
 

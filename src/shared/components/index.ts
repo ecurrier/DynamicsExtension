@@ -1,6 +1,7 @@
 export * from "./AppNavDrawer";
 export * from "./AppShell";
 export * from "./AreaBreadcrumb";
+export * from "./BulkRun";
 export * from "./CodeEditor";
 export * from "./ConnectionPicker";
 export * from "./ControlStateBadges";
@@ -15,6 +16,7 @@ export * from "./Layout";
 export * from "./Loading";
 export * from "./PageRequirementGate";
 export * from "./RecordLookup";
+export * from "./TabRecoveryBanner";
 export * from "./TaskCard";
 export * from "./Toast";
 export * from "./UserPicker";

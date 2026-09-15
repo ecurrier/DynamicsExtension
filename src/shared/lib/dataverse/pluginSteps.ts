@@ -5,6 +5,7 @@ import { requireGuid } from "./guards";
 import { type DataverseHttp } from "./http";
 import { getAllPages } from "./paging";
 import { chunk } from "../chunk";
+import { describeError } from "../errors";
 import { normalizeGuid } from "../guid";
 
 const STEP_SELECT = [
@@ -66,8 +67,6 @@ interface StepRecord {
 }
 
 const guidOrNull = (value: string | null | undefined): string | null => (value ? normalizeGuid(value) : null);
-
-const describe = (reason: unknown): string => (reason instanceof Error ? reason.message : String(reason));
 
 const indexAssemblies = (records: AssemblyRecord[]): Map<string, AssemblyRecord> =>
 	new Map(records.map((record) => [normalizeGuid(record.pluginassemblyid), record]));
@@ -145,7 +144,7 @@ export const pluginStepOperations = (http: DataverseHttp): PluginStepOperations 
 			const results = await Promise.allSettled(group.map((id) => http.patch(`sdkmessageprocessingsteps(${id})`, body)));
 			results.forEach((result, index) => {
 				if (result.status === "rejected") {
-					failed.push({ id: group[index] as string, message: describe(result.reason) });
+					failed.push({ id: group[index] as string, message: describeError(result.reason) });
 				}
 			});
 		}

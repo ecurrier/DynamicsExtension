@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createDataverseHttp, DataverseHttpError } from "./http";
+import { createDataverseHttp, DataverseHttpError, withSolution } from "./http";
 
 const jsonResponse = (body: unknown, status = 200) =>
 	new Response(body === undefined ? null : JSON.stringify(body), {
@@ -51,5 +51,25 @@ describe("createDataverseHttp", () => {
 		const fetchImpl = vi.fn(async () => new Response("gateway down", { status: 502, statusText: "Bad Gateway" }));
 		const http = createDataverseHttp({ origin: "https://org.crm.dynamics.com", fetchImpl });
 		await expect(http.delete("roles(1)")).rejects.toThrow("502 Bad Gateway");
+	});
+});
+
+describe("withSolution", () => {
+	it("adds the solution header when a name is given", () => {
+		expect(withSolution(undefined, "ContosoCore")).toEqual({ "MSCRM.SolutionUniqueName": "ContosoCore" });
+	});
+
+	it("keeps the headers it was given", () => {
+		expect(withSolution({ "If-Match": "*" }, "ContosoCore")).toEqual({ "If-Match": "*", "MSCRM.SolutionUniqueName": "ContosoCore" });
+	});
+
+	it("leaves the headers untouched when there is no solution", () => {
+		expect(withSolution(undefined, null)).toBeUndefined();
+		expect(withSolution(undefined, "   ")).toBeUndefined();
+		expect(withSolution({ "If-Match": "*" }, undefined)).toEqual({ "If-Match": "*" });
+	});
+
+	it("trims the name, since a stray space would make the platform reject it", () => {
+		expect(withSolution(undefined, "  ContosoCore  ")).toEqual({ "MSCRM.SolutionUniqueName": "ContosoCore" });
 	});
 });

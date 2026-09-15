@@ -3,6 +3,7 @@ import { type AccessPrivilege, type AccessRole, type AccessShare, type AccessTea
 import { resolveEntityRef } from "./entityRef";
 import { requireGuid } from "./guards";
 import { type DataverseHttp } from "./http";
+import { describeError } from "../errors";
 import { normalizeGuid } from "../guid";
 
 const TEAM_TYPE_LABELS: Record<number, string> = {
@@ -57,8 +58,6 @@ interface SharedPrincipalsResponse {
 }
 
 type OwnerRecord = Record<string, unknown>;
-
-const describe = (reason: unknown): string => (reason instanceof Error ? reason.message : String(reason));
 
 export const parseAccessRights = (value: string | null | undefined): string[] => {
 	const rights = (value ?? "")
@@ -125,13 +124,13 @@ export const recordAccessOperations = (http: DataverseHttp): RecordAccessOperati
 		const teamsPromise = http.get<{ value?: TeamRecord[] }>(`systemusers(${userId})/teammembership_association?$select=teamid,name,teamtype,isdefault`);
 		const privilegesPromise = http.get<UserPrivilegesResponse>(`systemusers(${userId})/Microsoft.Dynamics.CRM.RetrieveUserPrivileges`).then(
 			(response) => ({ rows: response?.RolePrivileges ?? [], error: null as string | null }),
-			(reason: unknown) => ({ rows: [] as RolePrivilegeRecord[], error: describe(reason) })
+			(reason: unknown) => ({ rows: [] as RolePrivilegeRecord[], error: describeError(reason) })
 		);
 		const sharesPromise = http
 			.get<SharedPrincipalsResponse>(`${entity.entitySetName}(${record})/Microsoft.Dynamics.CRM.RetrieveSharedPrincipalsAndAccess()`)
 			.then(
 				(response) => ({ rows: response?.PrincipalAccesses ?? [], error: null as string | null }),
-				(reason: unknown) => ({ rows: [] as SharedPrincipalRecord[], error: describe(reason) })
+				(reason: unknown) => ({ rows: [] as SharedPrincipalRecord[], error: describeError(reason) })
 			);
 		const ownerPromise = http
 			.request<OwnerRecord>("GET", `${entity.entitySetName}(${record})?$select=_ownerid_value,_owningbusinessunit_value`, undefined, ANNOTATED)

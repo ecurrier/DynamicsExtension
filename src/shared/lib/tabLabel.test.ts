@@ -27,14 +27,14 @@ describe("tabLabel", () => {
 
 describe("tabTooltip", () => {
 	it("names the tab when it can", () => {
-		expect(tabTooltip({ title: "Contoso Ltd - Account", url: null })).toBe("Go to the tab this window follows — Contoso Ltd - Account");
+		expect(tabTooltip({ title: "Contoso Ltd - Account", url: null })).toBe("Go to the tab Power Tools is reading — Contoso Ltd - Account");
 	});
 
 	it("says so plainly when the tab has gone", () => {
-		expect(tabTooltip(null)).toBe("The tab this window was opened from is no longer available");
+		expect(tabTooltip(null)).toBe("The tab Power Tools was reading is no longer available");
 	});
 
 	it("still offers the action when the tab cannot be named", () => {
-		expect(tabTooltip({ title: null, url: null })).toBe("Go to the tab this window follows");
+		expect(tabTooltip({ title: null, url: null })).toBe("Go to the tab Power Tools is reading");
 	});
 });

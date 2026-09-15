@@ -285,6 +285,7 @@ export interface RecordCounts {
 export interface FormLibrary {
 	name: string;
 	order: number;
+	webResourceId: string | null;
 }
 
 export interface FormEventHandler {

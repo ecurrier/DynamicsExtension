@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type BridgeStatus = "pending" | "ready" | "unavailable";
+export type BridgeStatus = "pending" | "ready" | "unavailable" | "lost";
 
 export interface SessionState {
 	tabId: number | null;

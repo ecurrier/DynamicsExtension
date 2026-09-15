@@ -32,8 +32,8 @@ export const tabLabel = (tab: TabDescriptor | null): string | null => {
 
 export const tabTooltip = (tab: TabDescriptor | null): string => {
 	if (!tab) {
-		return "The tab this window was opened from is no longer available";
+		return "The tab Power Tools was reading is no longer available";
 	}
 	const label = tabLabel(tab);
-	return label ? `Go to the tab this window follows — ${label}` : "Go to the tab this window follows";
+	return label ? `Go to the tab Power Tools is reading — ${label}` : "Go to the tab Power Tools is reading";
 };

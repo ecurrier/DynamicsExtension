@@ -4,6 +4,7 @@ import { type ModuleDefinition } from "@/modules/types";
 
 import { AdminArea } from "./areas/admin";
 import { DeveloperArea } from "./areas/developer";
+import { RecordsArea } from "./areas/records";
 
 export const utilitiesModule: ModuleDefinition = {
 	id: "utilities",
@@ -26,6 +27,14 @@ export const utilitiesModule: ModuleDefinition = {
 			tooltip: "Developer helpers such as Fetch XML, URLs, and choice code snippets",
 			requires: "model-driven-app",
 			component: DeveloperArea,
+		},
+		{
+			id: "utilities.records",
+			label: "Records",
+			breadcrumb: ["Utilities", "Records"],
+			tooltip: "Load a view into a list and step through its records in the tab",
+			requires: "model-driven-app",
+			component: RecordsArea,
 		},
 	],
 };

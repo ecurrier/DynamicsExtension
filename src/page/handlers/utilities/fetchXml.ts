@@ -11,9 +11,6 @@ const retrieveSavedQueries = async (): Promise<NamedFetchXml[]> => {
 	}
 	const query = `?$filter=returnedtypecode eq '${encodeURIComponent(entityName)}' and fetchxml ne null&$select=fetchxml,name&$orderby=name asc`;
 	const savedQueries = await retrieveMultipleOData<{ name: string; fetchxml: string }>("savedquery", query);
-	if (savedQueries.length === 0) {
-		throw new PageError("NotFound", "No saved queries found for the current view");
-	}
 	return savedQueries.map((savedQuery) => ({ name: savedQuery.name, fetchXml: savedQuery.fetchxml }));
 };
 
@@ -73,7 +70,11 @@ export const fetchXmlHandlers = defineHandlers({
 	"utilities.generateFetchXml": async () => {
 		if (getPageKind() !== "form") {
 			const applied = createAppliedViewQueries();
-			return [...applied, ...(await retrieveSavedQueries())];
+			const queries = [...applied, ...(await retrieveSavedQueries())];
+			if (queries.length === 0) {
+				throw new PageError("NotFound", "No views or saved queries were found for this page");
+			}
+			return queries;
 		}
 		const formContext = getFormContext();
 		return [await createRecordQuery(formContext), ...createSubgridQueries(formContext)];

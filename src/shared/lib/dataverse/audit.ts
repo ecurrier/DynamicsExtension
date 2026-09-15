@@ -3,6 +3,7 @@ import { type AuditChange, type AuditDetail, type AuditDetailRequest, type Audit
 import { resolveEntityRef } from "./entityRef";
 import { requireGuid } from "./guards";
 import { type DataverseHttp } from "./http";
+import { describeError } from "../errors";
 import { normalizeGuid } from "../guid";
 
 const ANNOTATED = { Prefer: 'odata.include-annotations="*"' };
@@ -53,8 +54,6 @@ interface AuditDetailResponse {
 		DeletedAttributes?: { Keys?: string[]; Values?: unknown[] } | null;
 	} | null;
 }
-
-const describe = (reason: unknown): string => (reason instanceof Error ? reason.message : String(reason));
 
 const annotation = (record: Record<string, unknown>, key: string): string | null => {
 	const value = record[key];
@@ -133,7 +132,7 @@ export const auditOperations = (http: DataverseHttp): AuditOperations => ({
 			)
 			.then(
 				(response) => ({ rows: response?.value ?? [], error: null as string | null }),
-				(reason: unknown) => ({ rows: [] as AuditRecord[], error: describe(reason) })
+				(reason: unknown) => ({ rows: [] as AuditRecord[], error: describeError(reason) })
 			);
 
 		const [organization, table, attributes, entries] = await Promise.all([organizationPromise, tablePromise, attributesPromise, entriesPromise]);

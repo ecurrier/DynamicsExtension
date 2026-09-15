@@ -1,6 +1,6 @@
 import { defineHandlers, PageError } from "@/messaging/page";
-import { getFormContext, getXrm, retrieveMultipleOData } from "@/page/xrm";
-import { buildPublishXml, formTypeFilter, formTypeLabel, isGuid, normalizeGuid, parseFormEvents } from "@/shared/lib";
+import { getFormContext, getXrm, pageHttp, retrieveMultipleOData, runOperation } from "@/page/xrm";
+import { formTypeFilter, formTypeLabel, isGuid, normalizeGuid, parseFormEvents, publishOperations, webResourceIdsByName } from "@/shared/lib";
 import { type FormBusinessRule, type FormControlDiagnostic, type FormDiagnostics, type SystemForm } from "@/shared/types";
 
 interface SystemFormRecord {
@@ -45,16 +45,8 @@ const requireFormId = (formId: string): string => {
 	return normalizeGuid(formId);
 };
 
-const publishEntity = (entityLogicalName: string) =>
-	getXrm().WebApi.online.execute({
-		ParameterXml: buildPublishXml(entityLogicalName),
-		getMetadata: () => ({
-			boundParameter: null,
-			parameterTypes: { ParameterXml: { typeName: "Edm.String", structuralProperty: 1 } },
-			operationType: 0,
-			operationName: "PublishXml",
-		}),
-	});
+const publishEntity = (entityLogicalName: string): Promise<void> =>
+	runOperation(() => publishOperations(pageHttp()).publishTables({ logicalNames: [entityLogicalName] }));
 
 const readFormXml = async (formId: string): Promise<string> => {
 	const record = (await getXrm().WebApi.retrieveRecord("systemform", formId, "?$select=formxml")) as { formxml?: string | null } | undefined;
@@ -118,8 +110,12 @@ export const formsHandlers = defineHandlers({
 		let formXmlUnavailable: string | null = null;
 		try {
 			const parsed = parseFormEvents(await readFormXml(formId));
-			libraries = parsed.libraries;
 			handlers = parsed.handlers;
+			const ids = await webResourceIdsByName(
+				pageHttp(),
+				parsed.libraries.map((library) => library.name)
+			).catch((): Record<string, string> => ({}));
+			libraries = parsed.libraries.map((library) => ({ ...library, webResourceId: ids[library.name] ?? null }));
 		} catch (error) {
 			formXmlUnavailable = describe(error);
 		}

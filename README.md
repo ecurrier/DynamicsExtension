@@ -57,8 +57,8 @@ A choice Template sees `choice.name`, `choice.displayName`, `choice.identifier`,
 
 ```
 src/
-  entrypoints/      popup, results viewer page, and the page bundle injected into Dynamics tabs
-  app/              popup shell, providers, session bootstrap
+  entrypoints/      popup, side panel, results viewer page, and the page bundle injected into Dynamics tabs
+  app/              shell, providers, session bootstrap, tab binding
   messaging/        typed command contract, page bridge, popup client and TanStack hooks
   page/             code that runs inside the Dynamics page (Xrm access), no React
   modules/          one folder per module: module.ts registration, areas/, lib/, hooks/
@@ -72,6 +72,10 @@ src/
 3. Register the module in `src/modules/registry.ts`.
 
 Navigation, breadcrumbs, page-context gating, and last-visited persistence derive from the registry.
+
+Power Tools now writes metadata. Attribute updates go through `src/shared/lib/dataverse/attributeSearch.ts` and must send only the properties being changed, carry `MSCRM.MergeLabels`, and be published afterwards for the tables that actually succeeded. Bulk, non-transactional changes go through the Bulk Run engine in `src/shared/lib/bulkRun/` and `src/shared/components/BulkRun/`: supply a plan and an executor and you get preview, confirm, progress, a per-item result, and retry of whatever did not succeed. Do not hand-roll a confirmation dialog for a multi-item write.
+
+Areas render in all three Surfaces (popup, pinned window, side panel), so an area has to be usable at about 400px. Layout that adapts to the Surface must use a container query, not a media query: the popup has a fixed 700px root inside a viewport of any size, so a media query reads the viewport and gets it wrong. `TaskGrid` is the worked example. Keep a stylesheet in the entrypoint that needs it rather than anywhere reachable from the `@/app` barrel, or it is bundled into the Workspace pages too. See `docs/adr/0002-extension-surfaces.md`.
 
 ### Adding a page command
 

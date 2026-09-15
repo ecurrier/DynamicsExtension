@@ -1,5 +1,6 @@
 import { defineHandlers } from "@/messaging/page";
 import { getEntityId, getFormContext, getGlobalContext, getPageKind, WEB_API_PATH } from "@/page/xrm";
+import { recordUrl } from "@/shared/lib";
 import { type GeneratedUrl } from "@/shared/types";
 
 import { currentEntityName, isLookupControl } from "./pageQuery";
@@ -11,12 +12,10 @@ const DEBUG_FLAGS: { name: string; suffix: string }[] = [
 	{ name: "Chrome-less (no nav or command bar)", suffix: "&navbar=off&cmdbar=false" },
 ];
 
-const buildRecordUrl = (appUrl: string, entityName: string, id: string): string => `${appUrl}&pagetype=entityrecord&etn=${entityName}&id=${id}`;
-
 const generateRecordUrls = (formContext: Xrm.Page, appUrl: string): GeneratedUrl[] => {
 	const current: GeneratedUrl = {
 		name: "Current Record/View",
-		url: buildRecordUrl(appUrl, formContext.data.entity.getEntityName(), getEntityId(formContext)),
+		url: recordUrl(appUrl, formContext.data.entity.getEntityName(), getEntityId(formContext)),
 		group: "Record",
 	};
 	const lookupUrls = formContext
@@ -30,7 +29,7 @@ const generateRecordUrls = (formContext: Xrm.Page, appUrl: string): GeneratedUrl
 			return [
 				{
 					name: `${control.getLabel()} (${value.entityType})`,
-					url: buildRecordUrl(appUrl, value.entityType, value.id.replace(/[{}]/g, "").toLowerCase()),
+					url: recordUrl(appUrl, value.entityType, value.id.replace(/[{}]/g, "").toLowerCase()),
 					group: "Lookups",
 				},
 			];

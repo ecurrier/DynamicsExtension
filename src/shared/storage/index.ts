@@ -4,5 +4,6 @@ export * from "./legacyKeys";
 export * from "./migrateFormPresets";
 export * from "./migrateLegacy";
 export * from "./migrateServicePrincipals";
+export * from "./migrateOpenLastArea";
 export * from "./migrations";
 export * from "./schema";

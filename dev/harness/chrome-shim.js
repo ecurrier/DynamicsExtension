@@ -2,6 +2,9 @@
 	const listeners = [];
 	const grantedOrigins = new Set(new URLSearchParams(location.search).get("granted") === "1" ? ["https://org12345.crm.dynamics.com/*"] : []);
 	const permissionListeners = { added: [] };
+	const tabListeners = { removed: [], updated: [], history: [], activated: [] };
+	const sidePanelOptions = { path: "sidepanel.html", enabled: true, openPanelOnActionClick: false };
+	const pageTarget = { entityLogicalName: "account", recordId: null, formId: null, viewId: null };
 	// Add ?closedTab=<id> to the harness URL to exercise the "tab has been closed" path.
 	const closedTabs = new Set(
 		(new URLSearchParams(location.search).get("closedTab") ?? "")
@@ -129,12 +132,42 @@
 			.slice(0, top);
 
 	const roles = [
-		{ id: "r1", name: "Basic User", businessUnitId: "bu1" },
-		{ id: "r2", name: "Sales Manager", businessUnitId: "bu1" },
-		{ id: "r3", name: "System Administrator", businessUnitId: "bu1" },
-		{ id: "r4", name: "System Customizer", businessUnitId: "bu1" },
-		{ id: "r5", name: "Basic User", businessUnitId: "bu2" },
+		{ id: "r1", name: "Basic User", businessUnitId: "bu1", parentRootRoleId: "r1" },
+		{ id: "r2", name: "Sales Manager", businessUnitId: "bu1", parentRootRoleId: "r2" },
+		{ id: "r3", name: "System Administrator", businessUnitId: "bu1", parentRootRoleId: "r3" },
+		{ id: "r4", name: "System Customizer", businessUnitId: "bu1", parentRootRoleId: "r4" },
+		{ id: "r5", name: "Basic User", businessUnitId: "bu2", parentRootRoleId: "r1" },
+		{ id: "r6", name: "Basic User", businessUnitId: "bu3", parentRootRoleId: "r1" },
+		{ id: "r7", name: "Sales Manager", businessUnitId: "bu2", parentRootRoleId: "r2" },
+		{ id: "r8", name: "Field Technician", businessUnitId: "bu2", parentRootRoleId: null },
 	];
+
+	const PRIVILEGE_TABLES = ["Account", "Contact", "Incident", "Opportunity"];
+	const ACCESS_TYPES = ["Create", "Read", "Write", "Delete", "Append", "AppendTo", "Assign", "Share"];
+	const DEPTHS = ["None", "User", "BusinessUnit", "ParentChild", "Organization"];
+	const rolePrivilegeFixtures = (roleIds) => {
+		const out = [];
+		roleIds.forEach((roleId, roleIndex) => {
+			PRIVILEGE_TABLES.forEach((table, tableIndex) => {
+				ACCESS_TYPES.forEach((accessType, accessIndex) => {
+					const seed = roleIndex * 7 + tableIndex * 3 + accessIndex;
+					const depth = roleId === "r3" ? "Organization" : DEPTHS[seed % DEPTHS.length];
+					if (depth === "None" && roleId !== "r1") {
+						return;
+					}
+					out.push({
+						roleId,
+						privilegeId: `p-${accessType}-${table}`,
+						name: `prv${accessType}${table}`,
+						accessType,
+						tableSchemaName: table,
+						depth,
+					});
+				});
+			});
+		});
+		return out;
+	};
 
 	const guid = (n) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 	const remoteUnits = [
@@ -1170,8 +1203,10 @@
 			formName: "Account",
 			entityLogicalName: "account",
 			libraries: [
-				{ name: "contoso_/js/account.js", order: 1 },
-				{ name: "contoso_/js/shared.js", order: 2 },
+				{ name: "contoso_/js/account.js", order: 1, webResourceId: guid(701) },
+				{ name: "contoso_/js/shared.js", order: 2, webResourceId: guid(702) },
+				{ name: "contoso_/js/validation.js", order: 3, webResourceId: guid(703) },
+				{ name: "contoso_/js/removed.js", order: 4, webResourceId: null },
 			],
 			handlers: [
 				{
@@ -1312,13 +1347,18 @@
 				versionnumber: 99,
 			},
 		}),
+		"utilities.navigateToRecord": (args) => {
+			pageTarget.recordId = args.recordId;
+			pageTarget.viewId = null;
+			console.log("[harness] utilities.navigateToRecord", args.entityLogicalName, args.recordId);
+		},
 		"utilities.getPageTarget": () => ({
-			kind: "form",
-			entityLogicalName: "account",
-			recordId: guid(960),
-			formId: guid(950),
+			kind: pageTarget.viewId ? "view" : "form",
+			entityLogicalName: pageTarget.entityLogicalName,
+			recordId: pageTarget.recordId ?? guid(960),
+			formId: pageTarget.formId ?? guid(950),
 			formName: "Account",
-			viewId: null,
+			viewId: pageTarget.viewId,
 		}),
 		"utilities.restoreFormState": (args) => ({ restored: args.snapshot.controls.length }),
 		"utilities.getSessionSnapshot": () => ({
@@ -1362,8 +1402,9 @@
 		"transport.retrievePage": (args) =>
 			args.nextLink ? { rows: transportRows.slice(100), nextLink: null } : { rows: transportRows.slice(0, 100), nextLink: transportPageLink },
 		"global.getSolutions": () => [
-			{ id: "fd140aaf-4df4-11dd-bd17-0019b9312238", name: "Default Solution" },
-			{ id: "s2", name: "Contoso Core" },
+			{ id: "fd140aaf-4df4-11dd-bd17-0019b9312238", name: "Default Solution", uniqueName: "Default" },
+			{ id: "s2", name: "Contoso Core", uniqueName: "ContosoCore" },
+			{ id: "s3", name: "Contoso Field Service", uniqueName: "ContosoFieldService" },
 		],
 		"settings.getEnvironmentDetails": () => ({
 			environmentName: "org12345",
@@ -1596,21 +1637,93 @@
 				"revenue@OData.Community.Display.V1.FormattedValue": `$${i * 100}.00`,
 				statecode: i % 2,
 			})),
+		"schema.findAttributeAcrossTables": (args) => {
+			const name = (args.logicalName || "").toLowerCase();
+			if (!name.startsWith("new_")) {
+				return [];
+			}
+			return [
+				{
+					tableLogicalName: "account",
+					tableDisplayName: "Account",
+					columnLogicalName: name,
+					attributeType: "String",
+					label: "Region",
+					description: "Sales region",
+					requiredLevel: "None",
+					isManaged: false,
+					isCustomizable: true,
+					metadataId: guid(801),
+				},
+				{
+					tableLogicalName: "contact",
+					tableDisplayName: "Contact",
+					columnLogicalName: name,
+					attributeType: "String",
+					label: "Area",
+					description: "",
+					requiredLevel: "Recommended",
+					isManaged: false,
+					isCustomizable: true,
+					metadataId: guid(802),
+				},
+				{
+					tableLogicalName: "incident",
+					tableDisplayName: "Case",
+					columnLogicalName: name,
+					attributeType: "String",
+					label: "Region",
+					description: "Sales region",
+					requiredLevel: "None",
+					isManaged: true,
+					isCustomizable: true,
+					metadataId: guid(803),
+				},
+				{
+					tableLogicalName: "lead",
+					tableDisplayName: "Lead",
+					columnLogicalName: name,
+					attributeType: "Memo",
+					label: "Region notes",
+					description: "",
+					requiredLevel: "None",
+					isManaged: true,
+					isCustomizable: false,
+					metadataId: guid(804),
+				},
+			];
+		},
+		"schema.updateAttribute": (args) => {
+			if (args.tableLogicalName === "contact") {
+				throw new Error("The Contact table is locked by another publisher");
+			}
+			console.log("[harness] schema.updateAttribute", args.tableLogicalName, args.columnLogicalName);
+		},
+		"schema.publishTables": (args) => console.log("[harness] schema.publishTables", args.logicalNames.join(", ")),
 		"security.getCurrentUser": () => ({ userId: "u1", userName: "Jane Doe", roleIds: ["r1", "r3"] }),
 		"security.getSecurityRoles": () => roles,
 		"security.getBusinessUnits": () => [
 			{ id: "bu1", name: "Contoso" },
 			{ id: "bu2", name: "Contoso Europe" },
+			{ id: "bu3", name: "Contoso Asia" },
 		],
+		"security.getRolePrivileges": (args) => rolePrivilegeFixtures(args.roleIds),
+		"security.addPrivilegesRole": (args) => {
+			if (args.roleId === "r3") {
+				throw new Error("System Administrator privileges cannot be changed");
+			}
+			console.log("[harness] security.addPrivilegesRole", args.roleId, args.privileges.length);
+		},
 		"security.searchSystemUsers": (args) => [
 			{ id: "u1", fullName: "Jane Doe", azureAdObjectId: guid(501), domainName: "jane@contoso.com", isDisabled: false },
-			{
-				id: "u2",
-				fullName: `John ${args.query}`,
-				azureAdObjectId: null,
-				domainName: "john@contoso.com",
-				isDisabled: true,
-			},
+			{ id: "u2", fullName: `John ${args.query}`, azureAdObjectId: null, domainName: "john@contoso.com", isDisabled: true },
+			...Array.from({ length: 10 }, (_, index) => ({
+				id: `u${index + 3}`,
+				fullName: `Contoso User ${index + 3}`,
+				azureAdObjectId: guid(510 + index),
+				domainName: `user${index + 3}@contoso.com`,
+				isDisabled: false,
+			})),
 		],
 		"security.getUserSecurityRoles": (args) =>
 			args.systemUserId === "u1" ? roles.filter((r) => ["r1", "r3"].includes(r.id)) : roles.filter((r) => r.id === "r1"),
@@ -1799,6 +1912,18 @@
 				environmentName: "org12345",
 				launchedAt: new Date().toISOString(),
 			},
+			schemaToolsLaunch: {
+				tool: new URLSearchParams(location.search).get("schemaTool") === "polymorphic" ? "polymorphic" : "columns",
+				tabId: 1,
+				environmentId: null,
+				launchedAt: new Date().toISOString(),
+			},
+			securityToolsLaunch: {
+				tool: new URLSearchParams(location.search).get("securityTool") === "privileges" ? "privileges" : "compare",
+				tabId: 1,
+				environmentId: null,
+				launchedAt: new Date().toISOString(),
+			},
 		},
 		"session"
 	);
@@ -1842,7 +1967,15 @@
 		},
 		storage: { local, session, sync: makeArea({}), onChanged: local.onChanged },
 		tabs: {
-			query: async () => [{ id: 1, url: "https://org12345.crm.dynamics.com/main.aspx?appid=1&pagetype=entityrecord&etn=account&id=abc" }],
+			query: async () =>
+				[
+					{
+						id: 1,
+						title: "Contoso Ltd - Account: Sales Hub",
+						url: "https://org12345.crm.dynamics.com/main.aspx?appid=1&pagetype=entityrecord&etn=account&id=abc",
+					},
+					{ id: 3, title: "Active Accounts: Sales Hub", url: "https://org12345.crm.dynamics.com/main.aspx?appid=1&pagetype=entitylist&etn=account" },
+				].filter((tab) => !closedTabs.has(tab.id)),
 			create: async ({ url }) => {
 				const harnessUrl = url
 					.replace("results-viewer.html", "harness-results.html")
@@ -1860,8 +1993,13 @@
 				return {
 					id: tabId,
 					windowId: 1,
-					title: "Contoso Ltd - Account: Sales Hub",
-					url: "https://org12345.crm.dynamics.com/main.aspx?appid=1&pagetype=entityrecord&etn=account&id=abc",
+					title: tabId === 9 ? "Power Apps" : tabId === 3 ? "Active Accounts: Sales Hub" : "Contoso Ltd - Account: Sales Hub",
+					url:
+						tabId === 9
+							? "https://make.powerapps.com/environments/contoso"
+							: tabId === 3
+								? "https://org12345.crm.dynamics.com/main.aspx?appid=1&pagetype=entitylist&etn=account"
+								: "https://org12345.crm.dynamics.com/main.aspx?appid=1&pagetype=entityrecord&etn=account&id=abc",
 				};
 			},
 			update: async (tabId, properties) => {
@@ -1871,8 +2009,44 @@
 				console.log("[harness] tabs.update", tabId, properties);
 				return { id: tabId };
 			},
-			onRemoved: { addListener() {}, removeListener() {} },
-			onUpdated: { addListener() {}, removeListener() {} },
+			onRemoved: {
+				addListener: (listener) => tabListeners.removed.push(listener),
+				removeListener: (listener) => {
+					tabListeners.removed = tabListeners.removed.filter((l) => l !== listener);
+				},
+			},
+			onUpdated: {
+				addListener: (listener) => tabListeners.updated.push(listener),
+				removeListener: (listener) => {
+					tabListeners.updated = tabListeners.updated.filter((l) => l !== listener);
+				},
+			},
+			onActivated: {
+				addListener: (listener) => tabListeners.activated.push(listener),
+				removeListener: (listener) => {
+					tabListeners.activated = tabListeners.activated.filter((l) => l !== listener);
+				},
+			},
+		},
+		sidePanel: {
+			setOptions: async (options) => {
+				Object.assign(sidePanelOptions, options);
+				console.log("[harness] sidePanel.setOptions", options);
+			},
+			getOptions: async () => ({ ...sidePanelOptions }),
+			setPanelBehavior: async (behavior) => {
+				Object.assign(sidePanelOptions, behavior);
+				console.log("[harness] sidePanel.setPanelBehavior", behavior);
+			},
+			open: async (options) => console.log("[harness] sidePanel.open", options),
+		},
+		webNavigation: {
+			onHistoryStateUpdated: {
+				addListener: (listener) => tabListeners.history.push(listener),
+				removeListener: (listener) => {
+					tabListeners.history = tabListeners.history.filter((l) => l !== listener);
+				},
+			},
 		},
 		windows: {
 			getCurrent: async () => ({ id: 1, state: "normal", width: window.outerWidth, height: window.outerHeight }),
@@ -1928,6 +2102,49 @@
 					return [{ frameId: 0, result: { ok: false, error: { name: "Error", message: String(error) } } }];
 				}
 			},
+		},
+	};
+	window.__harness = {
+		navigate: (recordId = guid(Math.floor(Math.random() * 900) + 1), tabId = 1) => {
+			pageTarget.recordId = recordId;
+			pageTarget.viewId = null;
+			console.log("[harness] webNavigation.onHistoryStateUpdated", tabId, recordId);
+			tabListeners.history.forEach((listener) =>
+				listener({ tabId, frameId: 0, url: `https://org12345.crm.dynamics.com/main.aspx?etn=account&id=${recordId}` })
+			);
+			return recordId;
+		},
+		openView: (viewId = guid(880), tabId = 1) => {
+			pageTarget.recordId = null;
+			pageTarget.viewId = viewId;
+			console.log("[harness] webNavigation.onHistoryStateUpdated", tabId, "view", viewId);
+			tabListeners.history.forEach((listener) =>
+				listener({ tabId, frameId: 0, url: `https://org12345.crm.dynamics.com/main.aspx?etn=account&viewid=${viewId}` })
+			);
+			return viewId;
+		},
+		closeTab: (tabId = 1) => {
+			closedTabs.add(tabId);
+			console.log("[harness] tabs.onRemoved", tabId);
+			tabListeners.removed.forEach((listener) => listener(tabId, { windowId: 1, isWindowClosing: false }));
+		},
+		reopenTab: (tabId = 1) => {
+			closedTabs.delete(tabId);
+			console.log("[harness] tab", tabId, "reopened");
+		},
+		activateTab: (tabId = 3) => {
+			console.log("[harness] tabs.onActivated", tabId);
+			tabListeners.activated.forEach((listener) => listener({ tabId, windowId: 1 }));
+		},
+		activateOtherSite: () => {
+			console.log("[harness] tabs.onActivated 9 (non-Dynamics)");
+			tabListeners.activated.forEach((listener) => listener({ tabId: 9, windowId: 1 }));
+		},
+		reload: (tabId = 1) => {
+			console.log("[harness] tabs.onUpdated complete", tabId);
+			tabListeners.updated.forEach((listener) =>
+				listener(tabId, { status: "complete" }, { id: tabId, url: "https://org12345.crm.dynamics.com/main.aspx" })
+			);
 		},
 	};
 })();

@@ -9,6 +9,8 @@ import { type TransporterLaunch, type WorkspaceLaunch } from "@/shared/types";
 const DataTransporter = lazy(() => import("@/data-transporter").then((module) => ({ default: module.DataTransporter })));
 const TraceViewer = lazy(() => import("@/plugin-traces").then((module) => ({ default: module.TraceViewer })));
 const ResultsViewer = lazy(() => import("@/results-viewer").then((module) => ({ default: module.ResultsViewer })));
+const SecurityTools = lazy(() => import("@/security-tools").then((module) => ({ default: module.SecurityTools })));
+const SchemaTools = lazy(() => import("@/schema-tools").then((module) => ({ default: module.SchemaTools })));
 
 interface HostedTransporterProps {
 	launch: TransporterLaunch;
@@ -34,5 +36,7 @@ export const WorkspaceOutlet = ({ workspace }: WorkspaceOutletProps) => (
 			</PageRequirementGate>
 		) : null}
 		{workspace.id === "results-viewer" ? <ResultsViewer share={workspace.share} /> : null}
+		{workspace.id === "security-tools" ? <SecurityTools launch={workspace.launch} /> : null}
+		{workspace.id === "schema-tools" ? <SchemaTools launch={workspace.launch} /> : null}
 	</Suspense>
 );

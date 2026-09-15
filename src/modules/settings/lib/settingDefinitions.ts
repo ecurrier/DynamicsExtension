@@ -56,7 +56,17 @@ export const SETTING_DEFINITIONS: SettingDefinition[] = [
 		section: "Extension",
 		title: "Open Last Visited Page",
 		label: "When the extension is opened, return to the last page you used",
-		tooltip: "When enabled, the last area you visited is loaded automatically when the extension opens",
+		tooltip:
+			"On by default. The last area you visited is remembered across the popup, the pinned window and the side panel, so moving between them keeps you where you were. Turn this off to open on the Admin area every time.",
+	},
+	{
+		kind: "toggle",
+		key: "openSidePanelOnActionClick",
+		section: "Extension",
+		title: "Open In Side Panel",
+		label: "Clicking the Power Tools icon opens the side panel instead of the popup",
+		tooltip:
+			"When enabled, the toolbar icon docks Power Tools in the browser side panel, where it stays open while you move between records. The popup is no longer opened by the icon, and the pinned window is still available from the side panel.",
 	},
 	{
 		kind: "toggle",
@@ -73,6 +83,14 @@ export const SETTING_DEFINITIONS: SettingDefinition[] = [
 		title: "Open Form/View Editor",
 		label: "Default to the Default Solution when opening the control editor",
 		tooltip: "When enabled, controls open in the Default Solution. When disabled, you are prompted to pick an unmanaged solution",
+	},
+	{
+		kind: "toggle",
+		key: "webResourceUseDefaultSolution",
+		section: "Utilities",
+		title: "Open Web Resource",
+		label: "Default to the Default Solution when opening a web resource from Form Diagnostics",
+		tooltip: "When enabled, web resources open in the Default Solution. When disabled, you are prompted to pick an unmanaged solution",
 	},
 	{
 		kind: "toggle",

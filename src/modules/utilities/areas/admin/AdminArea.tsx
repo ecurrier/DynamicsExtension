@@ -14,9 +14,9 @@ import { useState } from "react";
 
 import { usePageFetcher, usePageMutation } from "@/messaging/client";
 import { useExtensionSettings } from "@/modules/settings";
-import { TaskCard, TaskGrid, useAppToast, useSelectDialog } from "@/shared/components";
+import { TaskCard, TaskGrid, useAppToast } from "@/shared/components";
 import { openUrl } from "@/shared/extension";
-import { useAsyncAction } from "@/shared/hooks";
+import { useAsyncAction, useSolutionPicker } from "@/shared/hooks";
 import {
 	type AdminModeResult,
 	type DirtyColumnsResult,
@@ -28,7 +28,7 @@ import {
 
 import { AdminModeDialog, DirtyColumnsDialog, EnvironmentDetailsDialog, SolutionLayersDialog, UrlDialog } from "../../dialogs";
 import { useEnvironmentPicker } from "../../hooks";
-import { adminCenterUrl, controlEditorUrl, DEFAULT_SOLUTION_ID, makerPortalUrl } from "../../lib";
+import { adminCenterUrl, controlEditorUrl, makerPortalUrl } from "../../lib";
 
 const COMPONENT_NAMES: Record<string, string> = {
 	"form/edit": "SystemForm",
@@ -37,7 +37,7 @@ const COMPONENT_NAMES: Record<string, string> = {
 
 export const AdminArea = () => {
 	const toast = useAppToast();
-	const select = useSelectDialog();
+	const pickSolution = useSolutionPicker();
 	const fetchPage = usePageFetcher();
 	const pickEnvironment = useEnvironmentPicker();
 	const { settings } = useExtensionSettings();
@@ -98,19 +98,11 @@ export const AdminArea = () => {
 			if (!current.environmentId) {
 				throw new Error("The current environment id is unavailable");
 			}
-			const solutions = await fetchPage("global.getSolutions", undefined);
-			const solutionId = settings.controlEditorUseDefaultSolution
-				? (solutions.find((solution) => solution.name === "Default Solution")?.id ?? DEFAULT_SOLUTION_ID)
-				: await select<string>({
-						title: "Select a solution",
-						description: "Select a solution to open the control editor in",
-						items: solutions.map((solution) => ({ key: solution.id, label: solution.name, value: solution.id })),
-						placeholder: "Select a solution...",
-					});
-			if (!solutionId) {
+			const solution = await pickSolution(settings.controlEditorUseDefaultSolution, "Select a solution to open the control editor in");
+			if (!solution) {
 				return;
 			}
-			await openUrl(controlEditorUrl(current.environmentType, current.environmentId, solutionId, control));
+			await openUrl(controlEditorUrl(current.environmentType, current.environmentId, solution.id, control));
 		});
 
 	const showEnvironmentDetails = () =>

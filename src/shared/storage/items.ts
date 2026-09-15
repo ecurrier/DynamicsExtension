@@ -6,6 +6,8 @@ import {
 	type ImpersonationStates,
 	type ResultsShare,
 	type TemplateDefaults,
+	type SchemaToolsLaunch,
+	type SecurityToolsLaunch,
 	type Templates,
 	type TraceViewerLaunch,
 	type TransporterLaunch,
@@ -73,6 +75,16 @@ export const impersonationItem: StorageItem<ImpersonationStates> = storage.defin
 
 export const traceViewerLaunchItem: StorageItem<TraceViewerLaunch | null> = storage.defineItem<TraceViewerLaunch | null, Record<string, unknown>>(
 	"session:traceViewerLaunch",
+	{ fallback: null }
+);
+
+export const securityToolsLaunchItem: StorageItem<SecurityToolsLaunch | null> = storage.defineItem<SecurityToolsLaunch | null, Record<string, unknown>>(
+	"session:securityToolsLaunch",
+	{ fallback: null }
+);
+
+export const schemaToolsLaunchItem: StorageItem<SchemaToolsLaunch | null> = storage.defineItem<SchemaToolsLaunch | null, Record<string, unknown>>(
+	"session:schemaToolsLaunch",
 	{ fallback: null }
 );
 

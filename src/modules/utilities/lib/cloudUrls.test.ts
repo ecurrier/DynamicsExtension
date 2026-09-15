@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { adminCenterUrl, controlEditorUrl, makerPortalUrl, recordUrl } from "./cloudUrls";
+import { adminCenterUrl, controlEditorUrl, makerPortalUrl, recordUrl, webResourceUrl } from "./cloudUrls";
 
 describe("cloudUrls", () => {
 	it("builds maker portal urls per cloud", () => {
@@ -25,5 +25,15 @@ describe("cloudUrls", () => {
 		expect(recordUrl("https://org.crm.dynamics.com/main.aspx?appid=1", "contact", "abc")).toBe(
 			"https://org.crm.dynamics.com/main.aspx?appid=1&pagetype=entityrecord&etn=contact&id=abc"
 		);
+	});
+});
+
+describe("webResourceUrl", () => {
+	it("builds a maker link to a web resource inside a solution", () => {
+		expect(webResourceUrl("Commercial", "env", "sol", "wr-1")).toBe("https://make.powerapps.com/e/env/s/sol/webresource/wr-1");
+	});
+
+	it("follows the sovereign cloud the environment is in", () => {
+		expect(webResourceUrl("GCCHigh", "env", "sol", "wr-1")).toBe("https://make.high.powerapps.us/e/env/s/sol/webresource/wr-1");
 	});
 });

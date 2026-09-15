@@ -7,6 +7,7 @@ export const CLOUD_TYPES: readonly CloudType[] = ["Commercial", "GCC", "GCCHigh"
 export interface Solution {
 	id: string;
 	name: string;
+	uniqueName: string;
 }
 
 export interface EnvironmentDetails {
@@ -147,6 +148,7 @@ export interface SecurityRole {
 	id: string;
 	name: string;
 	businessUnitId: string | null;
+	parentRootRoleId: string | null;
 }
 
 export interface BusinessUnit {

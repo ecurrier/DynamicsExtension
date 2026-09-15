@@ -19,6 +19,9 @@ export const PageRequirementGate = ({ requires, children }: PageRequirementGateP
 	if (bridgeStatus === "pending") {
 		return <Spinner label="Connecting to the page..." style={{ padding: "24px" }} />;
 	}
+	if (bridgeStatus === "lost") {
+		return <EmptyState title="Waiting for a tab">This area reads the page you are on. Pick a tab in the banner above to carry on here.</EmptyState>;
+	}
 	if (bridgeStatus === "unavailable") {
 		return (
 			<EmptyState title="This page cannot be used with Power Tools" intent="warning">

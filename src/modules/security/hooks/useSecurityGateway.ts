@@ -3,10 +3,19 @@ import { securityOperations } from "@/shared/lib";
 
 export const securityGateway = defineGateway({
 	namespace: "security",
-	operations: ["getSecurityRoles", "getBusinessUnits", "searchSystemUsers", "getUserSecurityRoles", "getSystemUserRoles", "applySecurityRoleChanges"],
+	operations: [
+		"getSecurityRoles",
+		"getBusinessUnits",
+		"searchSystemUsers",
+		"getUserSecurityRoles",
+		"getSystemUserRoles",
+		"getRolePrivileges",
+		"addPrivilegesRole",
+		"applySecurityRoleChanges",
+	],
 	pageOnly: ["getCurrentUser"],
 	factory: securityOperations,
-	timeouts: { applySecurityRoleChanges: 120_000 },
+	timeouts: { applySecurityRoleChanges: 120_000, addPrivilegesRole: 120_000 },
 });
 
 export const useSecurityGateway = (connection: ConnectionTarget) => useGateway(securityGateway, connection);

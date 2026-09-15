@@ -2,3 +2,4 @@ export * from "./activeTab";
 export * from "./openUrl";
 export * from "./permissions";
 export * from "./popupWindow";
+export * from "./sidePanel";

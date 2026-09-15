@@ -11,13 +11,16 @@ copyFileSync(join(process.cwd(), "dev", "harness", "chrome-shim.js"), join(outpu
 
 for (const [source, target] of [
 	["popup.html", "harness.html"],
+	["sidepanel.html", "harness-sidepanel.html"],
 	["results-viewer.html", "harness-results.html"],
 	["plugin-traces.html", "harness-traces.html"],
 	["data-transporter.html", "harness-transporter.html"],
+	["security-tools.html", "harness-security.html"],
+	["schema-tools.html", "harness-schema.html"],
 ]) {
 	const html = readFileSync(join(output, source), "utf8").replace('<script type="module"', '<script src="./chrome-shim.js"></script><script type="module"');
 	writeFileSync(join(output, target), html);
 }
 
-console.log("Harness written to .output/chrome-mv3/harness.html, harness-results.html, and harness-traces.html");
+console.log("Harness written to .output/chrome-mv3/harness.html, harness-sidepanel.html, harness-results.html, and harness-traces.html");
 console.log("Serve the folder, for example: npx serve -l 5173 .output/chrome-mv3");

@@ -14,12 +14,14 @@ describe("securityOperations", () => {
 	it("reads roles and business units through fetchXml on the entity sets", async () => {
 		const { http, calls } = createFakeHttp({
 			"roles?fetchXml": {
-				value: [{ roleid: `{${ROLE_A.toUpperCase()}}`, name: "Admin", _businessunitid_value: UNIT }],
+				value: [
+					{ roleid: `{${ROLE_A.toUpperCase()}}`, name: "Admin", _businessunitid_value: UNIT, _parentrootroleid_value: `{${ROLE_A.toUpperCase()}}` },
+				],
 			},
 			"businessunits?fetchXml": { value: [{ businessunitid: UNIT, name: "Contoso" }] },
 		});
 		const operations = securityOperations(http);
-		await expect(operations.getSecurityRoles()).resolves.toEqual([{ id: ROLE_A, name: "Admin", businessUnitId: UNIT }]);
+		await expect(operations.getSecurityRoles()).resolves.toEqual([{ id: ROLE_A, name: "Admin", businessUnitId: UNIT, parentRootRoleId: ROLE_A }]);
 		await expect(operations.getBusinessUnits()).resolves.toEqual([{ id: UNIT, name: "Contoso" }]);
 		expect(calls.map((call) => call.path.split("?")[0])).toEqual(["roles", "businessunits"]);
 		expect(decodeURIComponent(calls[0]?.path ?? "")).toContain('<entity name="role">');
@@ -62,7 +64,7 @@ describe("securityOperations", () => {
 			"roles?fetchXml": { value: [{ roleid: ROLE_A, name: "Admin", _businessunitid_value: UNIT }] },
 		});
 		await expect(securityOperations(http).getSystemUserRoles({ systemUserId: USER })).resolves.toEqual([
-			{ id: ROLE_A, name: "Admin", businessUnitId: UNIT },
+			{ id: ROLE_A, name: "Admin", businessUnitId: UNIT, parentRootRoleId: null },
 		]);
 		const fetchXml = decodeURIComponent(calls[0]?.path ?? "");
 		expect(fetchXml).toContain(`<condition attribute="systemuserid" operator="eq" value="${USER}" />`);

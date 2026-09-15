@@ -1,5 +1,7 @@
 import { type CloudType, type ControlDetails } from "@/shared/types";
 
+export { DEFAULT_SOLUTION_ID } from "@/shared/lib";
+
 export const MAKER_PORTAL_URLS: Record<CloudType, string> = {
 	Commercial: "https://make.powerapps.com/",
 	GCC: "https://make.gov.powerapps.us/",
@@ -13,8 +15,6 @@ export const ADMIN_CENTER_URLS: Record<CloudType, string> = {
 	GCCHigh: "https://high.admin.powerplatform.microsoft.us/",
 	DOD: "https://admin.appsplatform.us/",
 };
-
-export const DEFAULT_SOLUTION_ID = "fd140aaf-4df4-11dd-bd17-0019b9312238";
 
 const base = (urls: Record<CloudType, string>, cloud: CloudType | null | undefined): string => urls[cloud ?? "Commercial"] ?? urls.Commercial;
 
@@ -31,4 +31,7 @@ export const adminCenterUrl = (cloud: CloudType | null | undefined, environmentI
 export const controlEditorUrl = (cloud: CloudType | null | undefined, environmentId: string, solutionId: string, control: ControlDetails): string =>
 	`${base(MAKER_PORTAL_URLS, cloud)}e/${environmentId}/s/${solutionId}/entity/${control.entityName}/${control.controlType}/${control.id}`;
 
-export const recordUrl = (appUrl: string, entityName: string, recordId: string): string => `${appUrl}&pagetype=entityrecord&etn=${entityName}&id=${recordId}`;
+export const webResourceUrl = (cloud: CloudType | null | undefined, environmentId: string, solutionId: string, webResourceId: string): string =>
+	`${base(MAKER_PORTAL_URLS, cloud)}e/${environmentId}/s/${solutionId}/webresource/${webResourceId}`;
+
+export { recordUrl } from "@/shared/lib";

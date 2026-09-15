@@ -7,6 +7,7 @@ const SOLUTIONS_FETCH_XML = `
     <entity name="solution">
       <attribute name="solutionid" />
       <attribute name="friendlyname" />
+      <attribute name="uniquename" />
       <order attribute="friendlyname" descending="false" />
       <filter type="and">
         <condition attribute="ismanaged" operator="eq" value="0" />
@@ -25,7 +26,7 @@ export const globalHandlers = defineHandlers({
 		return null;
 	},
 	"global.getSolutions": async () => {
-		const solutions = await retrieveMultiple<{ solutionid: string; friendlyname: string }>("solution", SOLUTIONS_FETCH_XML);
-		return solutions.map((solution) => ({ id: solution.solutionid, name: solution.friendlyname }));
+		const solutions = await retrieveMultiple<{ solutionid: string; friendlyname: string; uniquename: string }>("solution", SOLUTIONS_FETCH_XML);
+		return solutions.map((solution) => ({ id: solution.solutionid, name: solution.friendlyname, uniqueName: solution.uniquename }));
 	},
 });

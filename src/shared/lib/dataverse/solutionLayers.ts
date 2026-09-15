@@ -3,6 +3,7 @@ import { type SolutionLayer, type SolutionLayerRequest, type SolutionLayers } fr
 import { DataverseOperationError } from "./errors";
 import { requireGuid } from "./guards";
 import { type DataverseHttp } from "./http";
+import { describeError } from "../errors";
 import { odataStringLiteral } from "../odata";
 
 const COMPONENT_NAME_PATTERN = /^[A-Za-z][A-Za-z0-9]{0,63}$/;
@@ -18,8 +19,6 @@ interface ComponentLayerRecord {
 	msdyn_changedon?: string | null;
 	msdyn_overwritetime?: string | null;
 }
-
-const describe = (reason: unknown): string => (reason instanceof Error ? reason.message : String(reason));
 
 const requireComponentName = (value: string): string => {
 	if (!COMPONENT_NAME_PATTERN.test(value)) {
@@ -62,7 +61,7 @@ export const solutionLayerOperations = (http: DataverseHttp): SolutionLayerOpera
 			const response = await http.get<{ value?: ComponentLayerRecord[] }>(path);
 			rows = response?.value ?? [];
 		} catch (error) {
-			unavailable = describe(error);
+			unavailable = describeError(error);
 		}
 
 		const layers = rows

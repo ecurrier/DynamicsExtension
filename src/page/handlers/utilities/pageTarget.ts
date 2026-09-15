@@ -1,5 +1,5 @@
 import { defineHandlers, PageError } from "@/messaging/page";
-import { getEntityId, getFormContext, getPageKind, requireModelDrivenApp } from "@/page/xrm";
+import { getEntityId, getFormContext, getPageKind, getXrm, requireModelDrivenApp } from "@/page/xrm";
 import { normalizeGuid } from "@/shared/lib";
 import { type ControlDetails, type PageTarget } from "@/shared/types";
 
@@ -21,6 +21,10 @@ const retrieveViewControlDetails = (): ControlDetails => {
 };
 
 export const pageTargetHandlers = defineHandlers({
+	"utilities.navigateToRecord": async ({ entityLogicalName, recordId }) => {
+		requireModelDrivenApp();
+		await getXrm().Navigation.navigateTo({ pageType: "entityrecord", entityName: entityLogicalName, entityId: recordId }, { target: 1 });
+	},
 	"utilities.getPageTarget": (): PageTarget => {
 		requireModelDrivenApp();
 		const kind = getPageKind();

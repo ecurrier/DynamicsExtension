@@ -5,23 +5,25 @@ import { useCallback, useEffect, useState } from "react";
 import { pageKeys, usePageQuery } from "@/messaging/client";
 import { moduleForArea, modules, resolveArea } from "@/modules";
 import { ImpersonationIndicator } from "@/modules/impersonation";
-import { AppNavDrawer, AppShell, HostAccessBanner } from "@/shared/components";
-import { describeTab, focusTab, openPinnedWindow, type TabSummary } from "@/shared/extension";
+import { AppNavDrawer, AppShell, HostAccessBanner, TabRecoveryBanner } from "@/shared/components";
+import { describeTab, focusTab, openPinnedWindow, openSidePanel, sidePanelSupported, type TabSummary } from "@/shared/extension";
 import { useAsyncAction, usePopupLaunch } from "@/shared/hooks";
 import { resolveOrgOrigin, tabTooltip } from "@/shared/lib";
 import { useNavigationStore, useSessionStore } from "@/shared/stores";
 import { WorkspaceOutlet } from "@/workspaces";
 
 import { AreaOutlet } from "./AreaOutlet";
-import { useSessionBootstrap } from "./useSessionBootstrap";
+import { useSessionBootstrap, useTabRecovery } from "./useSessionBootstrap";
 
 const WINDOW_ACCESS_REASON = "This window stays open while you work, but after the page reloads it can only reconnect to the tab with access to the site.";
+const PANEL_ACCESS_REASON = "The panel stays open while you move between tabs, so it can only read a site you have granted access to.";
 
 export const App = () => {
 	const ready = useSessionBootstrap();
 	const queryClient = useQueryClient();
 	const launch = usePopupLaunch();
 	const tabId = useSessionStore((state) => state.tabId);
+	const bridgeStatus = useSessionStore((state) => state.bridgeStatus);
 	const tabUrl = useSessionStore((state) => state.tabUrl);
 	const currentAreaId = useNavigationStore((state) => state.currentAreaId);
 	const drawerOpen = useNavigationStore((state) => state.drawerOpen);
@@ -31,13 +33,16 @@ export const App = () => {
 	const closeWorkspace = useNavigationStore((state) => state.closeWorkspace);
 	const environment = usePageQuery("settings.getEnvironmentDetails", undefined);
 	const pin = useAsyncAction("Could not open Power Tools in a window");
-	const goToTab = useAsyncAction("Could not switch to the tab this window follows");
+	const goToTab = useAsyncAction("Could not switch to the tab Power Tools is reading");
 	const environmentName = environment.data?.environmentName ?? null;
 	const [connectedTab, setConnectedTab] = useState<TabSummary | null>(null);
 	const [tabMissing, setTabMissing] = useState(false);
+	const { choices: recoveryChoices, refresh: refreshRecovery, rebind: rebindTab } = useTabRecovery();
+	const rebind = useAsyncAction("Could not connect to that tab");
+	const dock = useAsyncAction("Could not open the side panel");
 
 	const readConnectedTab = useCallback(async () => {
-		if (launch.mode !== "window" || tabId === null) {
+		if (launch.mode === "popup" || tabId === null) {
 			return;
 		}
 		const summary = await describeTab(tabId);
@@ -46,7 +51,7 @@ export const App = () => {
 	}, [launch.mode, tabId]);
 
 	useEffect(() => {
-		if (launch.mode !== "window" || tabId === null) {
+		if (launch.mode === "popup" || tabId === null) {
 			return;
 		}
 		let active = true;
@@ -65,6 +70,12 @@ export const App = () => {
 			window.removeEventListener("focus", refresh);
 		};
 	}, [launch.mode, tabId]);
+
+	useEffect(() => {
+		if (bridgeStatus === "lost") {
+			void refreshRecovery();
+		}
+	}, [bridgeStatus, refreshRecovery]);
 
 	useEffect(() => {
 		if (launch.mode === "window") {
@@ -97,14 +108,25 @@ export const App = () => {
 						void queryClient.invalidateQueries({ queryKey: pageKeys.tab(tabId) });
 					}
 				}}
-				onPin={launch.mode === "popup" && tabId !== null ? () => void pin.run(() => openPinnedWindow(tabId)) : undefined}
+				onPin={
+					launch.mode === "popup" && tabId !== null
+						? () =>
+								void pin.run(async () => {
+									await openPinnedWindow(tabId);
+									window.close();
+								})
+						: undefined
+				}
+				onOpenSidePanel={
+					launch.mode !== "sidepanel" && tabId !== null && sidePanelSupported() ? () => void dock.run(() => openSidePanel(tabId)) : undefined
+				}
 				onFocusTab={
-					launch.mode === "window" && tabId !== null
+					launch.mode !== "popup" && tabId !== null
 						? () =>
 								void goToTab.run(async () => {
 									if (!(await focusTab(tabId))) {
 										setTabMissing(true);
-										throw new Error("That tab has been closed. Reopen Power Tools from the tab you want to work in.");
+										throw new Error("That tab has been closed. Pick another tab in the banner to carry on.");
 									}
 									await readConnectedTab();
 								})
@@ -114,7 +136,19 @@ export const App = () => {
 				focusTabDisabled={tabMissing}
 				environmentName={environmentName}
 				actions={<ImpersonationIndicator />}
-				banner={launch.mode === "window" ? <HostAccessBanner origin={orgOrigin} reason={WINDOW_ACCESS_REASON} /> : null}>
+				banner={
+					bridgeStatus === "lost" ? (
+						<TabRecoveryBanner
+							variant={launch.mode === "window" ? "lost" : "unbound"}
+							choices={recoveryChoices}
+							busy={rebind.running}
+							onPick={(pickedTabId) => void rebind.run(() => rebindTab(pickedTabId))}
+							onRefresh={() => void refreshRecovery()}
+						/>
+					) : launch.mode !== "popup" ? (
+						<HostAccessBanner origin={orgOrigin} reason={launch.mode === "sidepanel" ? PANEL_ACCESS_REASON : WINDOW_ACCESS_REASON} />
+					) : null
+				}>
 				{workspace ? <WorkspaceOutlet key={workspace.id} workspace={workspace} /> : <AreaOutlet key={area.id} area={area} />}
 			</AppShell>
 		</>

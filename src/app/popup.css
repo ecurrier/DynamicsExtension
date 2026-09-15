@@ -9,7 +9,10 @@ body,
 
 html[data-mode="window"],
 html[data-mode="window"] body,
-html[data-mode="window"] #root {
+html[data-mode="window"] #root,
+html[data-mode="sidepanel"],
+html[data-mode="sidepanel"] body,
+html[data-mode="sidepanel"] #root {
 	width: 100%;
 	height: 100%;
 }

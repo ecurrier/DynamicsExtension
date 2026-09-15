@@ -18,7 +18,7 @@ vi.mock("@/messaging/client", async (importOriginal) => ({
 
 vi.mock("./environmentHttp", () => ({ getEnvironmentHttp: mocks.getEnvironmentHttp }));
 
-const ROLE: SecurityRole = { id: "r1", name: "Admin", businessUnitId: null };
+const ROLE: SecurityRole = { id: "r1", name: "Admin", businessUnitId: null, parentRootRoleId: null };
 const USER: SystemUser = { id: "u1", fullName: "Jane", azureAdObjectId: null, domainName: null, isDisabled: false };
 
 const factory = vi.fn((http: DataverseHttp) => ({
@@ -30,7 +30,7 @@ const definition = defineGateway({
 	namespace: "security",
 	operations: ["getSecurityRoles", "searchSystemUsers"],
 	pageOnly: ["getCurrentUser"],
-	excluded: ["getBusinessUnits", "getUserSecurityRoles", "getSystemUserRoles", "applySecurityRoleChanges"],
+	excluded: ["getBusinessUnits", "getUserSecurityRoles", "getSystemUserRoles", "getRolePrivileges", "addPrivilegesRole", "applySecurityRoleChanges"],
 	factory,
 	timeouts: { searchSystemUsers: 5_000 },
 });

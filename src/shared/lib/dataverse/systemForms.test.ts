@@ -15,3 +15,20 @@ describe("systemForms", () => {
 		expect(buildPublishXml("account")).toBe("<importexportxml><entities><entity>account</entity></entities></importexportxml>");
 	});
 });
+
+describe("buildPublishXml", () => {
+	it("accepts a single name for the form publish path", () => {
+		expect(buildPublishXml("account")).toBe("<importexportxml><entities><entity>account</entity></entities></importexportxml>");
+	});
+
+	it("accepts several names for a bulk publish", () => {
+		expect(buildPublishXml(["account", "contact"])).toBe(
+			"<importexportxml><entities><entity>account</entity><entity>contact</entity></entities></importexportxml>"
+		);
+	});
+
+	it("is null when there is nothing worth publishing", () => {
+		expect(buildPublishXml([])).toBeNull();
+		expect(buildPublishXml("")).toBeNull();
+	});
+});

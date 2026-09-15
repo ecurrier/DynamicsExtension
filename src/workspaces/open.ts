@@ -1,7 +1,7 @@
 import { browser } from "wxt/browser";
 
 import { openExtensionPage } from "@/shared/extension";
-import { resultsShareItem, traceViewerLaunchItem, transporterLaunchItem } from "@/shared/storage";
+import { resultsShareItem, schemaToolsLaunchItem, securityToolsLaunchItem, traceViewerLaunchItem, transporterLaunchItem } from "@/shared/storage";
 import { type WorkspaceLaunch } from "@/shared/types";
 
 import { WORKSPACE_PAGES } from "./pages";
@@ -15,6 +15,10 @@ const persistLaunch = (workspace: WorkspaceLaunch): Promise<void> => {
 			return traceViewerLaunchItem.setValue(workspace.launch);
 		case "results-viewer":
 			return resultsShareItem.setValue(workspace.share);
+		case "security-tools":
+			return securityToolsLaunchItem.setValue(workspace.launch);
+		case "schema-tools":
+			return schemaToolsLaunchItem.setValue(workspace.launch);
 	}
 };
 

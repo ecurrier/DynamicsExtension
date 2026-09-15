@@ -1,5 +1,6 @@
 import { type KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 
+import { describeError } from "@/shared/lib";
 import { type EntityInfo, type LookupSelection, type LookupTarget, type RecordSearchResult } from "@/shared/types";
 
 export interface RecordLookupServices {
@@ -22,8 +23,6 @@ interface SearchState {
 const DEBOUNCE_MS = 300;
 
 const NO_ROWS: RecordSearchResult[] = [];
-
-const describeError = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 const searchKey = (target: string, query: string): string => `${target}|${query}`;
 

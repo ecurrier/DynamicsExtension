@@ -21,6 +21,7 @@ export const parseFormEvents = (formXml: string): ParsedFormEvents => {
 	const libraries = [...document.querySelectorAll("formLibraries > Library")].map<FormLibrary>((element, index) => ({
 		name: attribute(element, "name") ?? "",
 		order: index + 1,
+		webResourceId: null,
 	}));
 
 	const handlers: FormEventHandler[] = [];

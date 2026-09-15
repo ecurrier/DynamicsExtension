@@ -1,5 +1,7 @@
 import { browser } from "wxt/browser";
 
+import { ORG_HOST_PATTERNS } from "@/shared/lib";
+
 export interface ActiveTab {
 	id: number;
 	url: string | null;
@@ -34,6 +36,15 @@ export const describeTab = async (tabId: number): Promise<TabSummary | null> => 
 		return tab.id ? { id: tab.id, url: tab.url ?? null, title: tab.title ?? null } : null;
 	} catch {
 		return null;
+	}
+};
+
+export const listOrgTabs = async (): Promise<TabSummary[]> => {
+	try {
+		const tabs = await browser.tabs.query({ url: ORG_HOST_PATTERNS });
+		return tabs.flatMap((tab) => (tab.id === undefined ? [] : [{ id: tab.id, url: tab.url ?? null, title: tab.title ?? null }]));
+	} catch {
+		return [];
 	}
 };
 

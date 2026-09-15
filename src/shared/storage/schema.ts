@@ -3,7 +3,8 @@ import { type CloudType, type EnvironmentAlert, type PageContext } from "@/share
 export const LEGACY_SCHEMA_VERSION = 2;
 export const SERVICE_PRINCIPAL_SCHEMA_VERSION = 3;
 export const FORM_PRESET_SCHEMA_VERSION = 4;
-export const SCHEMA_VERSION = FORM_PRESET_SCHEMA_VERSION;
+export const OPEN_LAST_AREA_SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = OPEN_LAST_AREA_SCHEMA_VERSION;
 
 export interface ServicePrincipal {
 	id: string;
@@ -52,9 +53,11 @@ export const THEME_PREFERENCES: readonly ThemePreference[] = ["system", "light",
 export interface ExtensionSettings {
 	themeMode: ThemePreference;
 	openLastVisitedArea: boolean;
+	openSidePanelOnActionClick: boolean;
 	makerPortalUseCurrentEnvironment: boolean;
 	adminCenterUseCurrentEnvironment: boolean;
 	controlEditorUseDefaultSolution: boolean;
+	webResourceUseDefaultSolution: boolean;
 	securityRequireRemovalConfirmation: boolean;
 	formsRequireSaveConfirmation: boolean;
 	environmentVariablesRequireSaveConfirmation: boolean;
@@ -63,10 +66,12 @@ export interface ExtensionSettings {
 
 export const DEFAULT_SETTINGS: ExtensionSettings = {
 	themeMode: "system",
-	openLastVisitedArea: false,
+	openLastVisitedArea: true,
+	openSidePanelOnActionClick: false,
 	makerPortalUseCurrentEnvironment: false,
 	adminCenterUseCurrentEnvironment: false,
 	controlEditorUseDefaultSolution: false,
+	webResourceUseDefaultSolution: false,
 	securityRequireRemovalConfirmation: true,
 	formsRequireSaveConfirmation: true,
 	environmentVariablesRequireSaveConfirmation: true,

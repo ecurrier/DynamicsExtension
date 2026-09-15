@@ -13,5 +13,10 @@ export const formTypeLabel = (type: number): string => FORM_TYPE_LABELS[type] ??
 
 export const formTypeFilter = (): string => FORM_TYPES.map((type) => `type eq ${type}`).join(" or ");
 
-export const buildPublishXml = (entityLogicalName: string): string =>
-	`<importexportxml><entities><entity>${entityLogicalName}</entity></entities></importexportxml>`;
+export const buildPublishXml = (entityLogicalNames: string | string[]): string | null => {
+	const names = [...new Set((Array.isArray(entityLogicalNames) ? entityLogicalNames : [entityLogicalNames]).filter((name) => name.trim() !== ""))];
+	if (names.length === 0) {
+		return null;
+	}
+	return `<importexportxml><entities>${names.map((name) => `<entity>${name}</entity>`).join("")}</entities></importexportxml>`;
+};

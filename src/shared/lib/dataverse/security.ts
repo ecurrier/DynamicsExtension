@@ -2,7 +2,8 @@ import { type BusinessUnit, type RoleChangeSet, type SecurityRole, type SystemUs
 
 import { DataverseOperationError } from "./errors";
 import { requireGuid } from "./guards";
-import { type DataverseHttp } from "./http";
+import { fetchXmlPath, type DataverseHttp } from "./http";
+import { privilegeOperations, type PrivilegeOperations } from "./privileges";
 import { escapeFetchXmlLike } from "../fetchXmlEscape";
 import { normalizeGuid } from "../guid";
 
@@ -14,6 +15,7 @@ const roleFetchXml = `
       <attribute name="name" />
       <attribute name="roleid" />
       <attribute name="businessunitid" />
+      <attribute name="parentrootroleid" />
       <order attribute="name" descending="false" />
       <filter type="and">
         <condition attribute="componentstate" operator="eq" value="0" />
@@ -98,6 +100,7 @@ interface RoleRecord {
 	roleid: string;
 	name: string;
 	_businessunitid_value?: string | null;
+	_parentrootroleid_value?: string | null;
 }
 
 interface BusinessUnitRecord {
@@ -125,11 +128,10 @@ const toRole = (record: RoleRecord): SecurityRole => ({
 	id: normalizeGuid(record.roleid),
 	name: record.name,
 	businessUnitId: record._businessunitid_value ? normalizeGuid(record._businessunitid_value) : null,
+	parentRootRoleId: record._parentrootroleid_value ? normalizeGuid(record._parentrootroleid_value) : null,
 });
 
-export const fetchXmlPath = (entitySet: string, fetchXml: string): string => `${entitySet}?fetchXml=${encodeURIComponent(fetchXml)}`;
-
-export interface SecurityOperations {
+export interface SecurityOperations extends PrivilegeOperations {
 	getSecurityRoles: () => Promise<SecurityRole[]>;
 	getBusinessUnits: () => Promise<BusinessUnit[]>;
 	searchSystemUsers: (args: { query: string }) => Promise<SystemUser[]>;
@@ -144,6 +146,7 @@ export const securityOperations = (http: DataverseHttp): SecurityOperations => {
 		return response?.value ?? [];
 	};
 	return {
+		...privilegeOperations(http),
 		getSecurityRoles: async () => (await retrieve<RoleRecord>("roles", roleFetchXml)).map(toRole),
 		getBusinessUnits: async () =>
 			(await retrieve<BusinessUnitRecord>("businessunits", businessUnitFetchXml)).map((record) => ({

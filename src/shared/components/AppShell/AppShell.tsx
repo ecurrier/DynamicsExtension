@@ -1,5 +1,5 @@
 import { Hamburger, makeStyles, Text, tokens, Toolbar, ToolbarButton, Tooltip } from "@fluentui/react-components";
-import { ArrowClockwise20Regular, ArrowLeft20Regular, Pin20Regular, TabDesktop20Regular } from "@fluentui/react-icons";
+import { ArrowClockwise20Regular, ArrowLeft20Regular, PanelRightExpand20Regular, Pin20Regular, TabDesktop20Regular } from "@fluentui/react-icons";
 import { type ReactNode } from "react";
 
 import { AreaBreadcrumb, type BreadcrumbArea } from "../AreaBreadcrumb";
@@ -48,6 +48,7 @@ interface AppShellProps {
 	backLabel?: string;
 	onRefresh: () => void;
 	onPin?: () => void;
+	onOpenSidePanel?: () => void;
 	onFocusTab?: () => void;
 	focusTabTooltip?: string;
 	focusTabDisabled?: boolean;
@@ -68,8 +69,9 @@ export const AppShell = ({
 	backLabel = "Back",
 	onRefresh,
 	onPin,
+	onOpenSidePanel,
 	onFocusTab,
-	focusTabTooltip = "Go to the tab this window follows",
+	focusTabTooltip = "Go to the tab Power Tools is reading",
 	focusTabDisabled = false,
 	environmentName,
 	actions,
@@ -102,6 +104,11 @@ export const AppShell = ({
 				{onFocusTab ? (
 					<Tooltip content={focusTabTooltip} relationship="label">
 						<ToolbarButton icon={<TabDesktop20Regular />} onClick={onFocusTab} disabled={focusTabDisabled} aria-label={focusTabTooltip} />
+					</Tooltip>
+				) : null}
+				{onOpenSidePanel ? (
+					<Tooltip content="Dock Power Tools in the browser side panel" relationship="label">
+						<ToolbarButton icon={<PanelRightExpand20Regular />} onClick={onOpenSidePanel} aria-label="Open in the side panel" />
 					</Tooltip>
 				) : null}
 				{onPin ? (

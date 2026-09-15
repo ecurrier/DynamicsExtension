@@ -15,9 +15,9 @@ import {
 import { DataverseOperationError } from "./errors";
 import { requireGuid } from "./guards";
 import { type DataverseHttp } from "./http";
+import { fetchXmlPath } from "./http";
 import { type ManyToOneRelationship, resolveLookupTargets } from "./lookupTargets";
 import { getAllPages, nextLinkPath } from "./paging";
-import { fetchXmlPath } from "./security";
 import { chunk } from "../chunk";
 import { normalizeGuid } from "../guid";
 

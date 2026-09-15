@@ -18,6 +18,7 @@ const role = (id: string, businessUnitId: string | null = UNIT.id): SecurityRole
 	id,
 	name: id.toUpperCase(),
 	businessUnitId,
+	parentRootRoleId: null,
 });
 
 const input = (overrides: Partial<RolesViewModelInput> = {}): RolesViewModelInput => ({

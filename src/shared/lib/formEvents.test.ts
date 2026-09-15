@@ -28,10 +28,10 @@ const formXml = `
 </form>`;
 
 describe("parseFormEvents", () => {
-	it("reads the libraries in declaration order", () => {
+	it("reads the libraries in declaration order, leaving the web resource id for the handler to resolve", () => {
 		expect(parseFormEvents(formXml).libraries).toEqual([
-			{ name: "new_account.js", order: 1 },
-			{ name: "new_shared.js", order: 2 },
+			{ name: "new_account.js", order: 1, webResourceId: null },
+			{ name: "new_shared.js", order: 2, webResourceId: null },
 		]);
 	});
 

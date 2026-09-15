@@ -51,7 +51,12 @@ import {
 	type RevealFormColumnRequest,
 	type RoleChangeSet,
 	type SavedView,
+	type PrivilegeDepth,
+	type RolePrivilege,
+	type AttributeMatch,
+	type AttributeSearchRequest,
 	type SecurityRole,
+	type UpdateAttributeRequest,
 	type SessionSnapshot,
 	type SetEnvironmentVariableValueRequest,
 	type Solution,
@@ -83,6 +88,7 @@ export interface CommandMap {
 	"utilities.enableAdminMode": { args: void; result: AdminModeResult; kind: "mutation" };
 	"utilities.restoreFormState": { args: RestoreFormStateRequest; result: RestoreFormStateResult; kind: "mutation" };
 	"utilities.getSessionSnapshot": { args: void; result: SessionSnapshot; kind: "query" };
+	"utilities.navigateToRecord": { args: { entityLogicalName: string; recordId: string }; result: void; kind: "mutation" };
 	"utilities.getPageTarget": { args: void; result: PageTarget; kind: "query" };
 	"utilities.getControlDetails": { args: void; result: ControlDetails; kind: "query" };
 	"utilities.getFormAttributes": { args: void; result: FormAttributeInfo[]; kind: "query" };
@@ -120,6 +126,11 @@ export interface CommandMap {
 		kind: "query";
 	};
 	"security.getSystemUserRoles": { args: { systemUserId: string }; result: SecurityRole[]; kind: "query" };
+	"schema.findAttributeAcrossTables": { args: AttributeSearchRequest; result: AttributeMatch[]; kind: "query" };
+	"schema.updateAttribute": { args: UpdateAttributeRequest; result: void; kind: "mutation" };
+	"schema.publishTables": { args: { logicalNames: string[] }; result: void; kind: "mutation" };
+	"security.getRolePrivileges": { args: { roleIds: string[] }; result: RolePrivilege[]; kind: "query" };
+	"security.addPrivilegesRole": { args: { roleId: string; privileges: { privilegeId: string; depth: PrivilegeDepth }[] }; result: void; kind: "mutation" };
 	"security.applySecurityRoleChanges": { args: RoleChangeSet; result: void; kind: "mutation" };
 	"environmentVariables.getDefinitions": { args: void; result: EnvironmentVariable[]; kind: "query" };
 	"environmentVariables.setValue": {

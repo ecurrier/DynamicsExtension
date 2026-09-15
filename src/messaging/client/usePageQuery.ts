@@ -38,6 +38,8 @@ const STALE_TIMES: Record<QueryCommandName, number> = {
 	"security.searchSystemUsers": 0,
 	"security.getUserSecurityRoles": 0,
 	"security.getSystemUserRoles": 0,
+	"security.getRolePrivileges": Infinity,
+	"schema.findAttributeAcrossTables": 0,
 	"environmentVariables.getDefinitions": 0,
 	"pluginSteps.getSteps": 0,
 	"pluginSteps.get": FIVE_MINUTES,

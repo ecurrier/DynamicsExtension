@@ -1,8 +1,10 @@
 import { AccordionHeader, Badge, Button, Input, makeStyles, Text, tokens, Tooltip } from "@fluentui/react-components";
-import { ArrowClockwise20Regular, Search20Regular } from "@fluentui/react-icons";
-import { useMemo, useState } from "react";
+import { ArrowClockwise20Regular, Open20Regular, Search20Regular } from "@fluentui/react-icons";
+import { useCallback, useMemo, useState } from "react";
 
-import { usePageQuery } from "@/messaging/client";
+import { usePageFetcher, usePageQuery } from "@/messaging/client";
+import { useExtensionSettings } from "@/modules/settings";
+import { webResourceUrl } from "@/modules/utilities/lib";
 import {
 	AreaContainer,
 	AreaToolbar,
@@ -17,6 +19,8 @@ import {
 	Grow,
 	PageRequirementGate,
 } from "@/shared/components";
+import { openUrl } from "@/shared/extension";
+import { useAsyncAction, useSolutionPicker } from "@/shared/hooks";
 import { controlIsRestricted, controlStateTags } from "@/shared/lib";
 import { type FormBusinessRule, type FormControlDiagnostic, type FormEventHandler, type FormLibrary } from "@/shared/types";
 
@@ -36,6 +40,10 @@ export const FormDiagnosticsArea = () => {
 	const styles = useStyles();
 	const [filter, setFilter] = useState("");
 	const diagnostics = usePageQuery("forms.getFormDiagnostics", undefined);
+	const fetchEnvironment = usePageFetcher();
+	const pickSolution = useSolutionPicker();
+	const { settings } = useExtensionSettings();
+	const openResource = useAsyncAction("Could not open the web resource");
 
 	const data = diagnostics.data ?? null;
 	const controls = useMemo(() => (data?.controls ?? []).filter((control) => controlMatches(control, filter)), [data, filter]);
@@ -146,6 +154,24 @@ export const FormDiagnosticsArea = () => {
 		[styles]
 	);
 
+	const openWebResource = useCallback(
+		(library: FormLibrary) =>
+			openResource.run(async () => {
+				if (!library.webResourceId) {
+					return;
+				}
+				const current = await fetchEnvironment("settings.getEnvironmentDetails", undefined);
+				if (!current.environmentId) {
+					throw new Error("The current environment id is unavailable");
+				}
+				const solution = await pickSolution(settings.webResourceUseDefaultSolution, "Select a solution to open the web resource in");
+				if (solution) {
+					await openUrl(webResourceUrl(current.environmentType, current.environmentId, solution.id, library.webResourceId));
+				}
+			}),
+		[fetchEnvironment, openResource, pickSolution, settings.webResourceUseDefaultSolution]
+	);
+
 	const libraryColumns = useMemo<DataTableColumn<FormLibrary>[]>(
 		() => [
 			{ id: "order", label: "#", width: 50, render: (library) => String(library.order), sortValue: (l) => l.order },
@@ -156,8 +182,28 @@ export const FormDiagnosticsArea = () => {
 				render: (library) => <span className={styles.mono}>{library.name}</span>,
 				sortValue: (library) => library.name,
 			},
+			{
+				id: "open",
+				label: "",
+				width: 90,
+				render: (library) =>
+					library.webResourceId ? (
+						<Button
+							size="small"
+							appearance="subtle"
+							icon={<Open20Regular />}
+							disabled={openResource.running}
+							onClick={() => openWebResource(library)}>
+							Open
+						</Button>
+					) : (
+						<Tooltip content="This library has no matching web resource in the environment" relationship="label">
+							<Text size={200}>Not found</Text>
+						</Tooltip>
+					),
+			},
 		],
-		[styles]
+		[styles, openResource.running, openWebResource]
 	);
 
 	const ruleColumns = useMemo<DataTableColumn<FormBusinessRule>[]>(

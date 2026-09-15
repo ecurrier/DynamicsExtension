@@ -12,6 +12,10 @@ _Avoid_: Tool, feature, plugin, section
 A single screen within a Module, and the unit the user navigates to and the extension remembers between sessions.
 _Avoid_: Page, screen, tab, view
 
+**Surface**:
+One of the three places the Areas render: the popup, the pinned window, or the browser side panel. A Surface changes layout and lifetime, never which Modules and Areas exist.
+_Avoid_: Mode, host, view, container
+
 **Utility**:
 A one-shot action on a Utilities Area, shown as a card, that acts on the open page or shows its result in a dialog.
 _Avoid_: Task, card, shortcut, helper, tool
@@ -33,7 +37,7 @@ A Power Automate cloud flow, and the Dialect whose output is pasted into one: Li
 _Avoid_: Automation (that is the wider term), workflow, Logic App
 
 **Workspace**:
-A full-window experience opened from an Area for one long-running job: the Data Transporter, the Trace Viewer, and the Results Viewer. It opens in its own browser tab, or, when Power Tools is pinned in a window, fills that window in place of the Areas until the user goes back.
+A full-window experience opened from an Area for one long-running job: the Data Transporter, the Trace Viewer, and the Results Viewer. It opens in its own browser tab, or, when Power Tools is pinned in a window, fills that window in place of the Areas until the user goes back. From the side panel it always opens in a tab, because a Workspace cannot be read at panel width.
 _Avoid_: Tool page, full-page tool, viewer tab, standalone page
 
 **Page Context**:
@@ -97,6 +101,26 @@ _Avoid_: Item, object, entity instance
 **Dirty**:
 A Column on the open form whose value has changed since the Record was loaded or last saved, so the next save sends it unless the Column's submit mode is never.
 _Avoid_: Modified, changed, pending, touched
+**Polymorphic Lookup**:
+A Column that may reference Records on more than one Table, implemented underneath as several relationships sharing one lookup Column.
+_Avoid_: Multi-table lookup, customer field, generic lookup
+
+**Requirement Level**:
+Whether the platform requires a Column to have a value: None, Recommended, or ApplicationRequired.
+_Avoid_: Required level, mandatory flag, optionality
+
+**Privilege Depth**:
+How far a Security Role's privilege reaches: None, User, BusinessUnit, ParentChild, or Organization. Power Tools writes depth with AddPrivilegesRole, so privileges that were not selected are left untouched.
+_Avoid_: Scope, access level, permission level
+
+**Record Set**:
+The ordered list of Records loaded from one grid or view that the user steps through without returning to the list. Power Tools rebuilds it by re-running the grid's own query, so the filters and sort the user applied are preserved.
+_Avoid_: Result set, list, selection
+
+**Bulk Run**:
+A set of changes previewed, confirmed, and then applied one at a time, reporting an outcome per item. A Bulk Run is not a transaction: it can stop part way, and what did not succeed is retried rather than rolled back.
+_Avoid_: Batch, job, transaction
+
 **Solution Layer**:
 One solution's contribution to a component, ordered so the top layer is the one the platform actually applies.
 _Avoid_: Override, customization, layer stack
@@ -130,7 +154,7 @@ A Dataverse configuration value with a definition (schema name, type, default) a
 _Avoid_: Config setting, parameter, app setting
 
 **Security Role**:
-A named set of privileges assignable to a user or a team.
+A named set of privileges assignable to a user or a team. Dataverse replicates a role into every business unit, so Power Tools lists one row per logical role rather than one per copy, operates on the root copy, and lets the platform carry the change to the inherited copies.
 _Avoid_: Permission set, profile, access level
 
 **Impersonation**:

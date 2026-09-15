@@ -4,6 +4,7 @@ import { requireLogicalName } from "./guards";
 import { type DataverseHttp } from "./http";
 import { getAllPages } from "./paging";
 import { chunk } from "../chunk";
+import { describeError } from "../errors";
 import { normalizeGuid } from "../guid";
 import { odataStringLiteral } from "../odata";
 
@@ -81,8 +82,6 @@ interface AttributeRecord {
 	MetadataId?: string | null;
 	DisplayName?: { UserLocalizedLabel?: { Label?: string | null } | null } | null;
 }
-
-const describe = (reason: unknown): string => (reason instanceof Error ? reason.message : String(reason));
 
 export const referencesAttribute = (clientData: string | null | undefined, attribute: string): boolean => {
 	if (!clientData) {
@@ -165,7 +164,7 @@ export const columnUsageOperations = (http: DataverseHttp): ColumnUsageOperation
 					};
 				});
 			} catch (error) {
-				dependentsUnavailable = describe(error);
+				dependentsUnavailable = describeError(error);
 			}
 		} else {
 			dependentsUnavailable = "The column definition could not be read, so platform dependencies were skipped.";
@@ -195,7 +194,7 @@ export const columnUsageOperations = (http: DataverseHttp): ColumnUsageOperation
 					flowsUnavailable = `Only the first ${FLOW_SCAN_LIMIT} cloud flows were scanned.`;
 				}
 			} catch (error) {
-				flowsUnavailable = describe(error);
+				flowsUnavailable = describeError(error);
 			}
 		}
 
@@ -221,7 +220,7 @@ export const columnUsageOperations = (http: DataverseHttp): ColumnUsageOperation
 					filteringAttributes: step.filteringattributes ?? "",
 				}));
 		} catch (error) {
-			stepsUnavailable = describe(error);
+			stepsUnavailable = describeError(error);
 		}
 
 		return {

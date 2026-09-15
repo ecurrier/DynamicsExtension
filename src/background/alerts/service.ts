@@ -1,10 +1,9 @@
 import { browser } from "wxt/browser";
 
 import { ensurePageBridge, invoke } from "@/messaging/tab";
-import { activeAlertFor } from "@/shared/lib";
+import { activeAlertFor, ORG_HOST_PATTERNS } from "@/shared/lib";
 import { environmentsItem } from "@/shared/storage";
 
-const HOST_PATTERNS = ["https://*.dynamics.com/*", "https://*.microsoftdynamics.us/*", "https://*.appsplatform.us/*"];
 const ALERT_TIMEOUT_MS = 60_000;
 
 export const shouldApplyOnUpdate = (change: { status?: string }, url: string | undefined): url is string =>
@@ -30,6 +29,6 @@ export const watchEnvironmentAlerts = (): void => {
 };
 
 export const reconcileEnvironmentAlerts = async (): Promise<void> => {
-	const tabs = await browser.tabs.query({ url: HOST_PATTERNS });
+	const tabs = await browser.tabs.query({ url: ORG_HOST_PATTERNS });
 	await Promise.all(tabs.map((tab) => (tab.id !== undefined && tab.url ? applyQuietly(tab.id, tab.url) : Promise.resolve())));
 };
