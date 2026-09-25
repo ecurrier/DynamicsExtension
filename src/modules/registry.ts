@@ -34,6 +34,7 @@ export const areasById: Record<string, AreaDefinition> = Object.fromEntries(modu
 const LEGACY_AREA_IDS: Record<string, string> = {
 	"pluginsteps.steps": "plugins.steps",
 	"plugintraces.viewer": "plugins.traces",
+	"webapi.update-fields": "webapi.record-columns",
 };
 
 export const moduleForArea = (areaId: string): ModuleDefinition | undefined => modules.find((module) => module.areas.some((area) => area.id === areaId));

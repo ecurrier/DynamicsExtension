@@ -7,7 +7,7 @@ export const LEGACY_TARGET_TO_AREA: Record<string, string> = {
 	"#utilities-admin-content": "utilities.admin",
 	"#utilities-developer-content": "utilities.developer",
 	"#templates-content": "formpresets.presets",
-	"#webapi-update-fields-content": "webapi.update-fields",
+	"#webapi-update-fields-content": "webapi.record-columns",
 	"#webapi-retrieve-records-content": "webapi.retrieve-records",
 	"#security-content": "security.roles",
 	"#settings-environments-content": "settings.environments",
