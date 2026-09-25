@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { browser } from "wxt/browser";
 
-import { invokeBackground, usePageMutation, usePageQuery } from "@/messaging/client";
+import { invokeBackground, usePageFetcher, usePageMutation, usePageQuery } from "@/messaging/client";
 import { AreaContainer, FormStack, HostAccessBanner, useAppToast, useHostAccess, UserPicker } from "@/shared/components";
 import { ensureHostAccess } from "@/shared/extension";
 import { resolveOrgOrigin } from "@/shared/lib";
@@ -12,7 +12,7 @@ import { impersonationItem, useStorageItem } from "@/shared/storage";
 import { useSessionStore } from "@/shared/stores";
 import { type SystemUser } from "@/shared/types";
 
-import { UserRoles } from "./UserRoles";
+import { RoleList, UserRoles } from "./UserRoles";
 import { formatStartedAt } from "../../lib";
 
 const ACCESS_REASON = "Impersonation rewrites the Web API requests this tab sends, which needs access to the site.";
@@ -34,6 +34,7 @@ export const ImpersonationArea = () => {
 	const tabId = useSessionStore((state) => state.tabId);
 	const tabUrl = useSessionStore((state) => state.tabUrl);
 	const details = usePageQuery("settings.getEnvironmentDetails", undefined);
+	const fetchPage = usePageFetcher();
 	const states = useStorageItem(impersonationItem);
 	const [users, setUsers] = useState<SystemUser[]>([]);
 	const [selected, setSelected] = useState<SystemUser | null>(null);
@@ -58,10 +59,13 @@ export const ImpersonationArea = () => {
 			if (!(await ensureHostAccess([`${orgOrigin}/*`]))) {
 				throw new Error("Power Tools needs permission to modify requests sent to this environment");
 			}
+			// Read the roles first: once the header rule exists, this tab's requests, ours included, run as the impersonated user
+			const roles = await fetchPage("security.getSystemUserRoles", { systemUserId: user.id }).catch(() => null);
 			return invokeBackground("impersonation.start", {
 				tabId,
 				orgOrigin,
 				user: { id: user.id, fullName: user.fullName, azureAdObjectId: user.azureAdObjectId },
+				roles,
 			});
 		},
 		onSuccess: (state) => {
@@ -112,7 +116,11 @@ export const ImpersonationArea = () => {
 							</Button>
 						</MessageBarActions>
 					</MessageBar>
-					<UserRoles systemUserId={active.user.id} fullName={active.user.fullName} />
+					<RoleList
+						fullName={active.user.fullName}
+						roles={active.roles}
+						error={active.roles ? null : "Could not load roles when impersonation started."}
+					/>
 				</FormStack>
 			</AreaContainer>
 		);
@@ -127,7 +135,8 @@ export const ImpersonationArea = () => {
 						<MessageBarTitle>How impersonation works</MessageBarTitle>
 						Power Tools adds the Dataverse impersonation header to every Web API request this tab sends to {orgOrigin ?? "the environment"}, so the
 						app loads data and saves records as the selected user. Your own account needs the Act on Behalf of Another User privilege, which System
-						Administrator includes. Reload the page after starting or stopping.
+						Administrator includes, from a role assigned to you directly: Dataverse ignores it when it comes through a team. Reload the page after
+						starting or stopping.
 					</MessageBarBody>
 				</MessageBar>
 				<UserPicker

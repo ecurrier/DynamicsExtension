@@ -1,4 +1,4 @@
-import { type BusinessUnit, type RoleChangeSet, type SecurityRole, type SystemUser } from "@/shared/types";
+import { type BusinessUnit, type RoleChangeSet, type SecurityRole, type SecurityRoleAssignment, type SystemUser } from "@/shared/types";
 
 import { DataverseOperationError } from "./errors";
 import { requireGuid } from "./guards";
@@ -113,11 +113,35 @@ const systemUserRolesFetchXml = (systemUserId: string): string => `
     </entity>
   </fetch>`;
 
+const teamRolesFetchXml = (systemUserId: string): string => `
+  <fetch>
+    <entity name="role">
+      <attribute name="name" />
+      <attribute name="roleid" />
+      <attribute name="businessunitid" />
+      <order attribute="name" descending="false" />
+      <link-entity name="teamroles" from="roleid" to="roleid" intersect="true">
+        <link-entity name="team" from="teamid" to="teamid" alias="team">
+          <attribute name="name" />
+          <link-entity name="teammembership" from="teamid" to="teamid" intersect="true">
+            <filter type="and">
+              <condition attribute="systemuserid" operator="eq" value="${systemUserId}" />
+            </filter>
+          </link-entity>
+        </link-entity>
+      </link-entity>
+    </entity>
+  </fetch>`;
+
 interface RoleRecord {
 	roleid: string;
 	name: string;
 	_businessunitid_value?: string | null;
 	_parentrootroleid_value?: string | null;
+}
+
+interface TeamRoleRecord extends RoleRecord {
+	"team.name"?: string | null;
 }
 
 interface BusinessUnitRecord {
@@ -154,7 +178,7 @@ export interface SecurityOperations extends PrivilegeOperations {
 	searchSystemUsers: (args: { query: string }) => Promise<SystemUser[]>;
 	listSystemUsers: () => Promise<SystemUser[]>;
 	getUserSecurityRoles: (args: { systemUserId: string; businessUnitId: string }) => Promise<SecurityRole[]>;
-	getSystemUserRoles: (args: { systemUserId: string }) => Promise<SecurityRole[]>;
+	getSystemUserRoles: (args: { systemUserId: string }) => Promise<SecurityRoleAssignment[]>;
 	applySecurityRoleChanges: (changes: RoleChangeSet) => Promise<void>;
 }
 
@@ -194,7 +218,14 @@ export const securityOperations = (http: DataverseHttp): SecurityOperations => {
 		},
 		getSystemUserRoles: async ({ systemUserId }) => {
 			const userId = requireGuid(systemUserId, "User");
-			return (await retrieve<RoleRecord>("roles", systemUserRolesFetchXml(userId))).map(toRole);
+			const [direct, inherited] = await Promise.all([
+				retrieve<RoleRecord>("roles", systemUserRolesFetchXml(userId)),
+				retrieve<TeamRoleRecord>("roles", teamRolesFetchXml(userId)),
+			]);
+			return [
+				...direct.map((record) => ({ ...toRole(record), viaTeam: null })),
+				...inherited.map((record) => ({ ...toRole(record), viaTeam: record["team.name"] ?? "Team" })),
+			];
 		},
 		applySecurityRoleChanges: async ({ systemUserId, associateRoleIds, disassociateRoleIds }) => {
 			const userId = requireGuid(systemUserId, "User");

@@ -58,6 +58,7 @@ import {
 	type SavedView,
 	type SaveRecordRequest,
 	type SecurityRole,
+	type SecurityRoleAssignment,
 	type SessionSnapshot,
 	type SetEnvironmentVariableValueRequest,
 	type Solution,
@@ -128,7 +129,7 @@ export interface CommandMap {
 		result: SecurityRole[];
 		kind: "query";
 	};
-	"security.getSystemUserRoles": { args: { systemUserId: string }; result: SecurityRole[]; kind: "query" };
+	"security.getSystemUserRoles": { args: { systemUserId: string }; result: SecurityRoleAssignment[]; kind: "query" };
 	"schema.findAttributeAcrossTables": { args: AttributeSearchRequest; result: AttributeMatch[]; kind: "query" };
 	"schema.updateAttribute": { args: UpdateAttributeRequest; result: void; kind: "mutation" };
 	"schema.listPolymorphicLookups": { args: { tableLogicalName: string }; result: PolymorphicLookup[]; kind: "query" };

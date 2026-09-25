@@ -1899,7 +1899,17 @@
 		],
 		"security.getUserSecurityRoles": (args) =>
 			args.systemUserId === "u1" ? roles.filter((r) => ["r1", "r3"].includes(r.id)) : roles.filter((r) => r.id === "r1"),
-		"security.getSystemUserRoles": (args) => (args.systemUserId === "u1" ? roles.filter((r) => ["r1", "r3", "r5"].includes(r.id)) : []),
+		"security.getSystemUserRoles": (args) => {
+			const held = (ids, viaTeam) => roles.filter((r) => ids.includes(r.id)).map((r) => ({ ...r, viaTeam }));
+			const fieldSales = held(["r7"], "Field Sales");
+			if (args.systemUserId === "u1") {
+				return [...held(["r1", "r3", "r5"], null), ...fieldSales];
+			}
+			if (args.systemUserId === "u3") {
+				return [...fieldSales, ...held(["r8"], "Technicians")];
+			}
+			return [];
+		},
 		"security.applySecurityRoleChanges": () => undefined,
 		"environmentVariables.getDefinitions": () => environmentVariables.map((variable) => ({ ...variable })),
 		"environmentVariables.setValue": (args) => {
@@ -2100,9 +2110,9 @@
 		"session"
 	);
 	const backgroundHandlers = {
-		"impersonation.start": async ({ tabId, orgOrigin, user }) => {
+		"impersonation.start": async ({ tabId, orgOrigin, user, roles: capturedRoles }) => {
 			const header = user.azureAdObjectId ? "CallerObjectId" : "MSCRMCallerID";
-			const state = { tabId, orgOrigin, user, header, startedAt: new Date().toISOString() };
+			const state = { tabId, orgOrigin, user, roles: capturedRoles, header, startedAt: new Date().toISOString() };
 			const current = (await session.get("impersonation")).impersonation ?? {};
 			await session.set({ impersonation: { ...current, [tabId]: state } });
 			return state;
