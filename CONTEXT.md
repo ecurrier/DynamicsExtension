@@ -101,6 +101,11 @@ _Avoid_: Item, object, entity instance
 **Dirty**:
 A Column on the open form whose value has changed since the Record was loaded or last saved, so the next save sends it unless the Column's submit mode is never.
 _Avoid_: Modified, changed, pending, touched
+
+**Draft**:
+A value the user has entered for a Column in Power Tools that has not yet been saved to the Record. A Draft lives in the extension and is written to the server; Dirty belongs to the open form.
+_Avoid_: Edit, staged change, pending change, Dirty
+
 **Polymorphic Lookup**:
 A Column that may reference Records on more than one Table, implemented underneath as several relationships sharing one lookup Column.
 _Avoid_: Multi-table lookup, customer field, generic lookup

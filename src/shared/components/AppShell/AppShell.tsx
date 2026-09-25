@@ -9,22 +9,45 @@ const useStyles = makeStyles({
 	root: {
 		display: "grid",
 		gridTemplateRows: "auto auto auto 1fr",
+		gridTemplateColumns: "minmax(0, 1fr)",
 		height: "100%",
 		backgroundColor: tokens.colorNeutralBackground2,
+	},
+	bar: {
+		containerType: "inline-size",
+		backgroundColor: tokens.colorNeutralBackground1,
+		borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
 	},
 	header: {
 		display: "flex",
 		alignItems: "center",
 		gap: "8px",
 		paddingRight: "8px",
-		backgroundColor: tokens.colorNeutralBackground1,
-		borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
+		"@container (max-width: 480px)": {
+			gap: "4px",
+			paddingRight: "4px",
+		},
+	},
+	toolbar: {
+		flexShrink: 0,
+		"@container (max-width: 480px)": {
+			paddingLeft: "4px",
+			paddingRight: 0,
+		},
 	},
 	breadcrumb: {
 		flex: 1,
 		minWidth: 0,
 	},
 	title: {
+		flex: "0 1 auto",
+		minWidth: 0,
+		maxWidth: "35%",
+		"@container (max-width: 480px)": {
+			maxWidth: "25%",
+		},
+		overflow: "hidden",
+		textOverflow: "ellipsis",
 		color: tokens.colorNeutralForeground3,
 		whiteSpace: "nowrap",
 	},
@@ -81,44 +104,46 @@ export const AppShell = ({
 	const styles = useStyles();
 	return (
 		<div className={styles.root}>
-			<div className={styles.header}>
-				<Toolbar>
-					<Tooltip content="Navigation" relationship="label">
-						<Hamburger onClick={onOpenNav} />
-					</Tooltip>
-					{onBack ? (
-						<Tooltip content={backLabel} relationship="label">
-							<ToolbarButton icon={<ArrowLeft20Regular />} onClick={onBack} aria-label={backLabel} />
+			<div className={styles.bar}>
+				<div className={styles.header}>
+					<Toolbar className={styles.toolbar}>
+						<Tooltip content="Navigation" relationship="label">
+							<Hamburger onClick={onOpenNav} />
+						</Tooltip>
+						{onBack ? (
+							<Tooltip content={backLabel} relationship="label">
+								<ToolbarButton icon={<ArrowLeft20Regular />} onClick={onBack} aria-label={backLabel} />
+							</Tooltip>
+						) : null}
+					</Toolbar>
+					<div className={styles.breadcrumb}>
+						<AreaBreadcrumb path={breadcrumb} tooltip={tooltip} areas={moduleAreas} currentAreaId={currentAreaId} onNavigate={onNavigateArea} />
+					</div>
+					{actions}
+					{environmentName ? (
+						<Text size={200} className={styles.title} title={environmentName}>
+							{environmentName}
+						</Text>
+					) : null}
+					{onFocusTab ? (
+						<Tooltip content={focusTabTooltip} relationship="label">
+							<ToolbarButton icon={<TabDesktop20Regular />} onClick={onFocusTab} disabled={focusTabDisabled} aria-label={focusTabTooltip} />
 						</Tooltip>
 					) : null}
-				</Toolbar>
-				<div className={styles.breadcrumb}>
-					<AreaBreadcrumb path={breadcrumb} tooltip={tooltip} areas={moduleAreas} currentAreaId={currentAreaId} onNavigate={onNavigateArea} />
+					{onOpenSidePanel ? (
+						<Tooltip content="Dock Power Tools in the browser side panel" relationship="label">
+							<ToolbarButton icon={<PanelRightExpand20Regular />} onClick={onOpenSidePanel} aria-label="Open in the side panel" />
+						</Tooltip>
+					) : null}
+					{onPin ? (
+						<Tooltip content="Open in a window that stays open when you click away" relationship="label">
+							<ToolbarButton icon={<Pin20Regular />} onClick={onPin} aria-label="Open in a window" />
+						</Tooltip>
+					) : null}
+					<Tooltip content="Refresh page data" relationship="label">
+						<ToolbarButton icon={<ArrowClockwise20Regular />} onClick={onRefresh} aria-label="Refresh page data" />
+					</Tooltip>
 				</div>
-				{actions}
-				{environmentName ? (
-					<Text size={200} className={styles.title} title={environmentName}>
-						{environmentName}
-					</Text>
-				) : null}
-				{onFocusTab ? (
-					<Tooltip content={focusTabTooltip} relationship="label">
-						<ToolbarButton icon={<TabDesktop20Regular />} onClick={onFocusTab} disabled={focusTabDisabled} aria-label={focusTabTooltip} />
-					</Tooltip>
-				) : null}
-				{onOpenSidePanel ? (
-					<Tooltip content="Dock Power Tools in the browser side panel" relationship="label">
-						<ToolbarButton icon={<PanelRightExpand20Regular />} onClick={onOpenSidePanel} aria-label="Open in the side panel" />
-					</Tooltip>
-				) : null}
-				{onPin ? (
-					<Tooltip content="Open in a window that stays open when you click away" relationship="label">
-						<ToolbarButton icon={<Pin20Regular />} onClick={onPin} aria-label="Open in a window" />
-					</Tooltip>
-				) : null}
-				<Tooltip content="Refresh page data" relationship="label">
-					<ToolbarButton icon={<ArrowClockwise20Regular />} onClick={onRefresh} aria-label="Refresh page data" />
-				</Tooltip>
 			</div>
 			<LoadingBar />
 			<div>{banner ? <div className={styles.banner}>{banner}</div> : null}</div>

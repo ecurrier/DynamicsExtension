@@ -61,30 +61,6 @@ export interface LabelMetadata {
 	LocalizedLabels?: LocalizedLabel[];
 }
 
-export interface OptionMetadata {
-	Value: number;
-	Label?: LabelMetadata;
-}
-
-export interface OptionSetMetadata {
-	Options?: OptionMetadata[];
-	TrueOption?: OptionMetadata;
-	FalseOption?: OptionMetadata;
-	DisplayName?: LabelMetadata;
-	OptionSetType?: string;
-}
-
-export interface AttributeMetadataRecord {
-	LogicalName: string;
-	AttributeType: string;
-	AttributeOf?: string | null;
-	AttributeTypeName?: { Value?: string };
-	DisplayName?: LabelMetadata;
-	Targets?: string[];
-	Format?: string;
-	OptionSet?: OptionSetMetadata;
-}
-
 export interface EntityMetadataRecord {
 	LogicalName: string;
 	EntitySetName: string;
@@ -95,19 +71,6 @@ export interface EntityMetadataRecord {
 
 export const labelText = (label: LabelMetadata | undefined | null): string | null =>
 	label?.UserLocalizedLabel?.Label ?? label?.LocalizedLabels?.[0]?.Label ?? null;
-
-export type OptionSetAttributeKind = "Picklist" | "MultiSelectPicklist" | "Boolean" | "State" | "Status";
-
-export const fetchOptionSetAttributes = (entityLogicalName: string, kind: OptionSetAttributeKind) =>
-	fetchJson<{ value: AttributeMetadataRecord[] }>(
-		`EntityDefinitions(LogicalName='${entityLogicalName}')/Attributes/Microsoft.Dynamics.CRM.${kind}AttributeMetadata?$expand=OptionSet`
-	).then((response) => response.value);
-
-export const fetchAllOptionSetAttributes = async (entityLogicalName: string): Promise<AttributeMetadataRecord[]> => {
-	const kinds: OptionSetAttributeKind[] = ["Picklist", "MultiSelectPicklist", "Boolean", "State", "Status"];
-	const results = await Promise.all(kinds.map((kind) => fetchOptionSetAttributes(entityLogicalName, kind)));
-	return results.flat();
-};
 
 export const fetchEntityInfo = async (entityLogicalName: string): Promise<EntityInfo> => {
 	const record = await fetchJson<EntityMetadataRecord>(

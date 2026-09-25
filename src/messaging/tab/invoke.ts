@@ -13,7 +13,7 @@ const DEFAULT_TIMEOUT_MS = 30_000;
 
 const COMMAND_TIMEOUTS: Partial<Record<CommandName, number>> = {
 	"webapi.executeFetchXml": 90_000,
-	"webapi.getAttributeMetadata": 60_000,
+	"webapi.saveRecord": 120_000,
 	"forms.updateFormXml": 120_000,
 	"traces.query": 120_000,
 	"traces.delete": 300_000,

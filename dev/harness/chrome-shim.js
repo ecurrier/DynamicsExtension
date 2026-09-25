@@ -725,6 +725,109 @@
 		},
 		{ logicalName: "new_creditlimit", displayName: "Credit Limit", attributeType: "money", controls: [] },
 	];
+	// Add ?dirty=1 to the harness URL to make the form report unsaved changes after a Record Columns save.
+	const harnessRecord = {
+		dirty: new URLSearchParams(location.search).has("dirty"),
+		lastSave: null,
+		values: {
+			accountid: guid(960),
+			name: "Contoso Ltd",
+			telephone1: "555-0100",
+			description: "Key partner for the northwest region.\nRenewals are handled by the partner team.",
+			new_creditlimit: 5000,
+			"new_creditlimit@OData.Community.Display.V1.FormattedValue": "$5,000.00",
+			new_status: 100000001,
+			"new_status@OData.Community.Display.V1.FormattedValue": "In Progress",
+			industrycode: null,
+			new_tags: "1,2",
+			"new_tags@OData.Community.Display.V1.FormattedValue": "Key Account; Partner",
+			new_renewaldate: "2026-01-31",
+			"new_renewaldate@OData.Community.Display.V1.FormattedValue": "1/31/2026",
+			new_lastcontacted: "2026-09-20T15:30:00Z",
+			"new_lastcontacted@OData.Community.Display.V1.FormattedValue": "9/20/2026 8:30 AM",
+			new_meetingslot: "2026-09-25T10:00:00Z",
+			"new_meetingslot@OData.Community.Display.V1.FormattedValue": "9/25/2026 10:00 AM",
+			createdon: "2026-01-01T09:30:00Z",
+			"createdon@OData.Community.Display.V1.FormattedValue": "1/1/2026 1:30 AM",
+			modifiedon: "2026-09-22T18:04:00Z",
+			"modifiedon@OData.Community.Display.V1.FormattedValue": "9/22/2026 11:04 AM",
+			_ownerid_value: "systemuser-1",
+			"_ownerid_value@OData.Community.Display.V1.FormattedValue": "Jane Doe",
+			"_ownerid_value@Microsoft.Dynamics.CRM.lookuplogicalname": "systemuser",
+			_parentaccountid_value: "account-2",
+			"_parentaccountid_value@OData.Community.Display.V1.FormattedValue": "Fabrikam Inc",
+			"_parentaccountid_value@Microsoft.Dynamics.CRM.lookuplogicalname": "account",
+			_primarycontactid_value: null,
+			_new_customer_value: "contact-1",
+			"_new_customer_value@OData.Community.Display.V1.FormattedValue": "Alex Johnson",
+			"_new_customer_value@Microsoft.Dynamics.CRM.lookuplogicalname": "contact",
+			donotemail: false,
+			"donotemail@OData.Community.Display.V1.FormattedValue": "Allow",
+			numberofemployees: 120,
+			"numberofemployees@OData.Community.Display.V1.FormattedValue": "120",
+			new_riskscore: 42,
+			versionnumber: 99,
+			processid: guid(980),
+			entityimage: null,
+			new_contract: null,
+			...Object.fromEntries(
+				Array.from({ length: 40 }, (_, index) => [
+					`new_extra${String(index + 1).padStart(2, "0")}`,
+					index % 3 === 0 ? `Extra value ${index + 1}` : null,
+				])
+			),
+		},
+	};
+	const harnessOptionLabels = {
+		new_status: { 100000000: "New", 100000001: "In Progress", 100000002: "Done" },
+		industrycode: { 1: "Accounting", 2: "Agriculture and Non-petrol Natural Resource Extraction" },
+		donotemail: { false: "Allow", true: "Do Not Allow" },
+	};
+	const harnessTagLabels = { 1: "Key Account", 2: "Partner" };
+	const formatted = (key) => `${key}@OData.Community.Display.V1.FormattedValue`;
+	const applyHarnessSave = (payload) => {
+		if (payload.name === "FAIL") {
+			throw new Error("Contoso.Plugins.AccountValidation: The account name FAIL is not allowed (harness)");
+		}
+		const values = harnessRecord.values;
+		for (const [key, value] of Object.entries(payload)) {
+			if (key.endsWith("@odata.bind")) {
+				const navigation = key.slice(0, -"@odata.bind".length);
+				const column = Object.keys(values)
+					.map((candidate) => /^_(.+)_value$/.exec(candidate)?.[1])
+					.find((candidate) => candidate && (navigation === candidate || navigation.startsWith(`${candidate}_`)));
+				const valueKey = `_${column ?? navigation}_value`;
+				delete values[formatted(valueKey)];
+				delete values[`${valueKey}@Microsoft.Dynamics.CRM.lookuplogicalname`];
+				if (value === null) {
+					values[valueKey] = null;
+					continue;
+				}
+				const [, entitySet, id] = /^\/(\w+)\((.+)\)$/.exec(value) ?? [];
+				const entity = Object.values(entityInfos).find((info) => info.entitySetName === entitySet)?.logicalName ?? entitySet;
+				const index = Number(String(id).split("-").pop()) - 1;
+				values[valueKey] = id;
+				values[formatted(valueKey)] = sampleRecords[entity]?.[index] ?? id;
+				values[`${valueKey}@Microsoft.Dynamics.CRM.lookuplogicalname`] = entity;
+				continue;
+			}
+			values[key] = value;
+			delete values[formatted(key)];
+			if (value !== null && harnessOptionLabels[key]) {
+				values[formatted(key)] = harnessOptionLabels[key][value] ?? String(value);
+			}
+			if (value !== null && key === "new_tags") {
+				values[formatted(key)] = String(value)
+					.split(",")
+					.map((tag) => harnessTagLabels[tag] ?? tag)
+					.join("; ");
+			}
+		}
+		values.modifiedon = new Date().toISOString();
+		values.versionnumber += 1;
+		harnessRecord.lastSave = payload;
+		console.log("[harness] webapi.saveRecord", JSON.stringify(payload));
+	};
 	const responses = {
 		"global.getPageContext": () => "model-driven-app",
 		"global.showEnvironmentAlert": (args) => ({
@@ -882,6 +985,123 @@
 						attributeType: "String",
 						attributeOf: "parentaccountid",
 						isLogical: true,
+					}),
+					col({
+						logicalName: "telephone1",
+						schemaName: "Telephone1",
+						displayName: "Main Phone",
+						attributeType: "String",
+						maxLength: 50,
+					}),
+					col({
+						logicalName: "description",
+						schemaName: "Description",
+						displayName: "Description",
+						attributeType: "Memo",
+						maxLength: 2000,
+					}),
+					col({
+						logicalName: "primarycontactid",
+						schemaName: "PrimaryContactId",
+						displayName: "Primary Contact",
+						attributeType: "Lookup",
+						targets: [{ logicalName: "contact", navigationProperty: "primarycontactid", entitySetName: "contacts" }],
+					}),
+					col({
+						logicalName: "new_customer",
+						schemaName: "new_Customer",
+						displayName: "Billing Customer",
+						attributeType: "Customer",
+						targets: [
+							{ logicalName: "account", navigationProperty: "new_customer_account", entitySetName: "accounts" },
+							{ logicalName: "contact", navigationProperty: "new_customer_contact", entitySetName: "contacts" },
+						],
+					}),
+					col({
+						logicalName: "donotemail",
+						schemaName: "DoNotEMail",
+						displayName: "Do not allow Emails",
+						attributeType: "Boolean",
+						optionSet: {
+							name: `${name}_donotemail`,
+							displayName: `${name}_donotemail`,
+							isGlobal: false,
+							options: [
+								{ value: 0, label: "Allow" },
+								{ value: 1, label: "Do Not Allow" },
+							],
+						},
+					}),
+					col({
+						logicalName: "numberofemployees",
+						schemaName: "NumberOfEmployees",
+						displayName: "Number of Employees",
+						attributeType: "Integer",
+					}),
+					col({
+						logicalName: "new_riskscore",
+						schemaName: "new_RiskScore",
+						displayName: "Risk Score",
+						attributeType: "Integer",
+						isValidForCreate: false,
+						isValidForUpdate: false,
+					}),
+					col({
+						logicalName: "new_lastcontacted",
+						schemaName: "new_LastContacted",
+						displayName: "Last Contacted",
+						attributeType: "DateTime",
+						dateTimeBehavior: "UserLocal",
+						dateTimeFormat: "DateAndTime",
+					}),
+					col({
+						logicalName: "new_meetingslot",
+						schemaName: "new_MeetingSlot",
+						displayName: "Meeting Slot",
+						attributeType: "DateTime",
+						dateTimeBehavior: "TimeZoneIndependent",
+						dateTimeFormat: "DateAndTime",
+					}),
+					col({
+						logicalName: "modifiedon",
+						schemaName: "ModifiedOn",
+						displayName: "Modified On",
+						attributeType: "DateTime",
+						dateTimeBehavior: "UserLocal",
+						dateTimeFormat: "DateAndTime",
+						isValidForCreate: false,
+						isValidForUpdate: false,
+					}),
+					col({
+						logicalName: "processid",
+						schemaName: "ProcessId",
+						displayName: "Process",
+						attributeType: "Uniqueidentifier",
+						isCustom: false,
+					}),
+					col({
+						logicalName: "entityimage",
+						schemaName: "EntityImage",
+						displayName: "Default Image",
+						attributeType: "Virtual",
+						typeName: "ImageType",
+					}),
+					col({
+						logicalName: "new_contract",
+						schemaName: "new_Contract",
+						displayName: "Contract",
+						attributeType: "Virtual",
+						typeName: "FileType",
+					}),
+					...Array.from({ length: 40 }, (_, index) => {
+						const number = String(index + 1).padStart(2, "0");
+						return col({
+							logicalName: `new_extra${number}`,
+							schemaName: `new_Extra${number}`,
+							displayName: `Extra Field ${number}`,
+							attributeType: "String",
+							maxLength: 100,
+						});
 					}),
 					col({
 						logicalName: "versionnumber",
@@ -1479,105 +1699,20 @@
 			applied: Object.keys(args.fields).length - 1,
 			skipped: [Object.keys(args.fields)[0]],
 		}),
-		"webapi.getAttributeMetadata": () => ({
-			entityName: "account",
-			entityId: "abc",
-			attributes: [
-				{
-					logicalName: "accountcategorycode",
-					displayName: "Category",
-					attributeType: "Picklist",
-					targets: [],
-					options: [
-						{ value: 1, label: "Preferred Customer" },
-						{ value: 2, label: "Standard" },
-					],
-					dateTimeFormat: null,
-				},
-				{
-					logicalName: "creditlimit",
-					displayName: "Credit Limit",
-					attributeType: "Money",
-					targets: [],
-					options: [],
-					dateTimeFormat: null,
-				},
-				{
-					logicalName: "description",
-					displayName: "Description",
-					attributeType: "Memo",
-					targets: [],
-					options: [],
-					dateTimeFormat: null,
-				},
-				{
-					logicalName: "donotemail",
-					displayName: "Do not allow Emails",
-					attributeType: "Boolean",
-					targets: [],
-					options: [
-						{ value: 0, label: "Allow" },
-						{ value: 1, label: "Do Not Allow" },
-					],
-					dateTimeFormat: null,
-				},
-				{
-					logicalName: "lastonholdtime",
-					displayName: "Last On Hold Time",
-					attributeType: "DateTime",
-					targets: [],
-					options: [],
-					dateTimeFormat: "DateAndTime",
-				},
-				{
-					logicalName: "name",
-					displayName: "Account Name",
-					attributeType: "String",
-					targets: [],
-					options: [],
-					dateTimeFormat: null,
-				},
-				{
-					logicalName: "ownerid",
-					displayName: "Owner",
-					attributeType: "Owner",
-					targets: [
-						{ logicalName: "systemuser", navigationProperty: "ownerid" },
-						{ logicalName: "team", navigationProperty: "ownerid" },
-					],
-					options: [],
-					dateTimeFormat: null,
-				},
-				{
-					logicalName: "parentaccountid",
-					displayName: "Parent Account",
-					attributeType: "Lookup",
-					targets: [{ logicalName: "account", navigationProperty: "parentaccountid" }],
-					options: [],
-					dateTimeFormat: null,
-				},
-				{
-					logicalName: "primarycontactid",
-					displayName: "Primary Contact",
-					attributeType: "Lookup",
-					targets: [{ logicalName: "contact", navigationProperty: "primarycontactid" }],
-					options: [],
-					dateTimeFormat: null,
-				},
-			],
-		}),
-		"webapi.getRecordValues": () => ({
-			name: "Contoso Ltd",
-			creditlimit: 5000,
-			"creditlimit@OData.Community.Display.V1.FormattedValue": "$5,000.00",
-			accountcategorycode: 1,
-			"accountcategorycode@OData.Community.Display.V1.FormattedValue": "Preferred Customer",
-			_ownerid_value: "u1",
-			"_ownerid_value@OData.Community.Display.V1.FormattedValue": "Jane Doe",
-			"_ownerid_value@Microsoft.Dynamics.CRM.lookuplogicalname": "systemuser",
-		}),
-		"webapi.updateField": () => undefined,
-		"webapi.clearLookup": () => undefined,
+		"webapi.getRecordValues": () => {
+			const recordId = pageTarget.recordId ?? guid(960);
+			const values =
+				recordId === guid(960)
+					? { ...harnessRecord.values }
+					: { ...harnessRecord.values, accountid: recordId, name: "Northwind Traders", telephone1: "555-0199", versionnumber: 12 };
+			return { entityName: pageTarget.entityLogicalName, recordId, values };
+		},
+		"webapi.getFormState": () => ({ recordId: pageTarget.recordId ?? guid(960), isDirty: harnessRecord.dirty }),
+		"webapi.saveRecord": (args) => applyHarnessSave(args.payload),
+		"webapi.refreshForm": () => {
+			harnessRecord.dirty = false;
+			console.log("[harness] webapi.refreshForm");
+		},
 		"forms.getForms": () => [
 			{
 				id: "form-1",
@@ -2142,6 +2277,10 @@
 		},
 	};
 	window.__harness = {
+		setRecordValues: (changes) => {
+			Object.assign(harnessRecord.values, changes);
+			console.log("[harness] record values changed on the server", JSON.stringify(changes));
+		},
 		navigate: (recordId = guid(Math.floor(Math.random() * 900) + 1), tabId = 1) => {
 			pageTarget.recordId = recordId;
 			pageTarget.viewId = null;

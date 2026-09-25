@@ -1,16 +1,17 @@
 import {
 	type AdminModeResult,
-	type AttributeMetadataBundle,
+	type AttributeMatch,
+	type AttributeSearchRequest,
 	type AuditDetail,
 	type AuditDetailRequest,
 	type BusinessUnit,
 	type ClearEnvironmentVariableValueRequest,
-	type ClearLookupRequest,
 	type CodegenChoice,
 	type CodegenTable,
 	type ColumnUsage,
 	type ColumnUsageRequest,
 	type ControlDetails,
+	type CreatePolymorphicLookupRequest,
 	type CurrentUser,
 	type DirtyColumnsResult,
 	type EntityInfo,
@@ -23,6 +24,7 @@ import {
 	type FormAttributeInfo,
 	type FormColumnDetails,
 	type FormDiagnostics,
+	type FormState,
 	type GeneratedUrls,
 	type NamedFetchXml,
 	type PageContext,
@@ -34,6 +36,8 @@ import {
 	type PluginStepStateChange,
 	type PluginStepStateResult,
 	type PluginTraceLog,
+	type PolymorphicLookup,
+	type PrivilegeDepth,
 	type RecordAccessReport,
 	type RecordAccessRequest,
 	type RecordCountRequest,
@@ -43,23 +47,17 @@ import {
 	type RecordPayloadSource,
 	type RecordSearchRequest,
 	type RecordSearchResult,
-	type RecordValues,
+	type RecordSnapshot,
 	type RestoreFormStateRequest,
 	type RestoreFormStateResult,
 	type RetrievePageRequest,
 	type RetrievePageResult,
 	type RevealFormColumnRequest,
 	type RoleChangeSet,
-	type SavedView,
-	type PrivilegeDepth,
 	type RolePrivilege,
-	type AttributeMatch,
-	type CreatePolymorphicLookupRequest,
-	type PolymorphicLookup,
-	type TargetRequest,
-	type AttributeSearchRequest,
+	type SavedView,
+	type SaveRecordRequest,
 	type SecurityRole,
-	type UpdateAttributeRequest,
 	type SessionSnapshot,
 	type SetEnvironmentVariableValueRequest,
 	type Solution,
@@ -69,11 +67,12 @@ import {
 	type SystemUser,
 	type TableAutomation,
 	type TableMetadata,
+	type TargetRequest,
 	type TraceDeleteResult,
 	type TraceLogSetting,
 	type TraceQuery,
 	type TransportEntityMetadata,
-	type UpdateFieldRequest,
+	type UpdateAttributeRequest,
 	type UpdateFormXmlRequest,
 } from "@/shared/types";
 
@@ -104,10 +103,10 @@ export interface CommandMap {
 		result: { applied: number; skipped: string[] };
 		kind: "mutation";
 	};
-	"webapi.getAttributeMetadata": { args: void; result: AttributeMetadataBundle; kind: "query" };
-	"webapi.getRecordValues": { args: void; result: RecordValues; kind: "query" };
-	"webapi.updateField": { args: UpdateFieldRequest; result: void; kind: "mutation" };
-	"webapi.clearLookup": { args: ClearLookupRequest; result: void; kind: "mutation" };
+	"webapi.getRecordValues": { args: void; result: RecordSnapshot; kind: "query" };
+	"webapi.getFormState": { args: void; result: FormState; kind: "query" };
+	"webapi.saveRecord": { args: SaveRecordRequest; result: void; kind: "mutation" };
+	"webapi.refreshForm": { args: void; result: void; kind: "mutation" };
 	"webapi.getEntityInfo": { args: { logicalName: string }; result: EntityInfo; kind: "query" };
 	"webapi.searchRecords": { args: RecordSearchRequest; result: RecordSearchResult[]; kind: "query" };
 	"webapi.executeFetchXml": { args: { fetchXml: string }; result: Record<string, unknown>[]; kind: "query" };

@@ -48,47 +48,9 @@ export interface ControlDetails {
 	id: string;
 }
 
-export interface ChoiceOption {
-	value: number;
-	label: string;
-}
-
-export type AttributeType =
-	| "BigInt"
-	| "Boolean"
-	| "Customer"
-	| "DateTime"
-	| "Decimal"
-	| "Double"
-	| "Integer"
-	| "Lookup"
-	| "Memo"
-	| "Money"
-	| "Owner"
-	| "Picklist"
-	| "State"
-	| "Status"
-	| "String"
-	| "Virtual";
-
 export interface LookupTarget {
 	logicalName: string;
 	navigationProperty: string;
-}
-
-export interface AttributeDefinition {
-	logicalName: string;
-	displayName: string;
-	attributeType: AttributeType;
-	targets: LookupTarget[];
-	options: ChoiceOption[];
-	dateTimeFormat: "DateOnly" | "DateAndTime" | null;
-}
-
-export interface AttributeMetadataBundle {
-	entityName: string;
-	entityId: string;
-	attributes: AttributeDefinition[];
 }
 
 export interface EntityInfo {
@@ -121,22 +83,19 @@ export interface LookupSelection {
 
 export type RecordValues = Record<string, unknown>;
 
-export type FieldValue =
-	| { kind: "clear" }
-	| { kind: "text"; value: string }
-	| { kind: "dateTime"; value: string }
-	| { kind: "number"; value: number }
-	| { kind: "boolean"; value: boolean }
-	| { kind: "choice"; value: number }
-	| { kind: "multiChoice"; values: number[] }
-	| { kind: "lookup"; navigationProperty: string; entitySetName: string; id: string };
-
-export interface UpdateFieldRequest {
-	payload: Record<string, unknown>;
+export interface RecordSnapshot {
+	entityName: string;
+	recordId: string | null;
+	values: RecordValues;
 }
 
-export interface ClearLookupRequest {
-	navigationProperty: string;
+export interface FormState {
+	recordId: string | null;
+	isDirty: boolean;
+}
+
+export interface SaveRecordRequest {
+	payload: Record<string, unknown>;
 }
 
 export interface CurrentUser {

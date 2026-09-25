@@ -27,10 +27,22 @@ export interface RecordLookupProps extends RecordLookupServices {
 	value: LookupSelection | null;
 	disabled?: boolean;
 	placeholder?: string;
+	size?: "small" | "medium";
+	"aria-label"?: string;
 	onChange: (value: LookupSelection | null) => void;
 }
 
-export const RecordLookup = ({ targets, value, disabled = false, placeholder = "Search records...", onChange, search, getEntityInfo }: RecordLookupProps) => {
+export const RecordLookup = ({
+	targets,
+	value,
+	disabled = false,
+	placeholder = "Search records...",
+	size = "medium",
+	"aria-label": ariaLabel,
+	onChange,
+	search,
+	getEntityInfo,
+}: RecordLookupProps) => {
 	const styles = useStyles();
 	const id = useId("record-lookup");
 	const [anchor, setAnchor] = useState<HTMLDivElement | null>(null);
@@ -65,6 +77,8 @@ export const RecordLookup = ({ targets, value, disabled = false, placeholder = "
 		<div ref={setAnchor} className={styles.root}>
 			<Input
 				className={styles.input}
+				size={size}
+				aria-label={ariaLabel}
 				value={lookup.searchText}
 				placeholder={placeholder}
 				disabled={disabled}
