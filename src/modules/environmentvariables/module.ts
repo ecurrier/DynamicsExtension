@@ -15,6 +15,7 @@ export const environmentVariablesModule: ModuleDefinition = {
 			label: "Environment Variables",
 			breadcrumb: ["Environment Variables"],
 			tooltip: "Review environment variable definitions and set or remove their current values",
+			keywords: ["config", "configuration", "parameters", "app settings", "env var"],
 			component: EnvironmentVariablesArea,
 		},
 	],

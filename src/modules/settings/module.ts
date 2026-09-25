@@ -17,6 +17,7 @@ export const settingsModule: ModuleDefinition = {
 			label: "Environments",
 			breadcrumb: ["Settings", "Environments"],
 			tooltip: "Save environments to open them quickly from the Utilities module",
+			keywords: ["instances", "orgs", "organizations", "connections"],
 			component: EnvironmentsArea,
 		},
 		{
@@ -24,6 +25,7 @@ export const settingsModule: ModuleDefinition = {
 			label: "Service Principals",
 			breadcrumb: ["Settings", "Service Principals"],
 			tooltip: "App registrations that Power Tools can sign in with when a tool runs against a saved environment",
+			keywords: ["app registration", "client credentials", "client secret", "spn", "entra", "azure ad"],
 			component: ServicePrincipalsArea,
 		},
 		{
@@ -31,6 +33,7 @@ export const settingsModule: ModuleDefinition = {
 			label: "Extension Settings",
 			breadcrumb: ["Settings", "Extension Settings"],
 			tooltip: "Behaviour preferences for the extension",
+			keywords: ["preferences", "options", "theme", "dark mode", "side panel"],
 			component: ExtensionSettingsArea,
 		},
 	],

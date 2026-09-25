@@ -1,5 +1,7 @@
 import {
 	type AdminModeResult,
+	type AttributeDetails,
+	type AttributeDetailsRequest,
 	type AttributeMatch,
 	type AttributeSearchRequest,
 	type AuditDetail,
@@ -131,6 +133,7 @@ export interface CommandMap {
 	};
 	"security.getSystemUserRoles": { args: { systemUserId: string }; result: SecurityRoleAssignment[]; kind: "query" };
 	"schema.findAttributeAcrossTables": { args: AttributeSearchRequest; result: AttributeMatch[]; kind: "query" };
+	"schema.readAttributeDetails": { args: AttributeDetailsRequest; result: AttributeDetails; kind: "query" };
 	"schema.updateAttribute": { args: UpdateAttributeRequest; result: void; kind: "mutation" };
 	"schema.listPolymorphicLookups": { args: { tableLogicalName: string }; result: PolymorphicLookup[]; kind: "query" };
 	"schema.createPolymorphicLookup": { args: CreatePolymorphicLookupRequest; result: void; kind: "mutation" };

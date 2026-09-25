@@ -15,6 +15,7 @@ export const formsModule: ModuleDefinition = {
 			label: "Form XML",
 			breadcrumb: ["Forms", "Form XML"],
 			tooltip: "View and edit the XML definition of the forms for the current table",
+			keywords: ["formxml", "layout", "customize form"],
 			requires: "model-driven-app",
 			component: FormXmlArea,
 		},

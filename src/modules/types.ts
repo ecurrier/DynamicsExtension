@@ -5,11 +5,20 @@ import { type PageRequirement } from "@/shared/types";
 
 export type AreaId = string;
 
+export interface UtilityDefinition {
+	id: string;
+	title: string;
+	description: string;
+	keywords?: string[];
+}
+
 export interface AreaDefinition {
 	id: AreaId;
 	label: string;
 	breadcrumb: string[];
 	tooltip?: string;
+	keywords?: string[];
+	utilities?: UtilityDefinition[];
 	requires?: PageRequirement;
 	component: ComponentType;
 }

@@ -15,6 +15,7 @@ export const transporterModule: ModuleDefinition = {
 			label: "Data Transporter",
 			breadcrumb: ["Data Transporter"],
 			tooltip: "Copy or sync records between environments by primary key in a full-page tool",
+			keywords: ["migrate", "migration", "sync", "copy records", "export", "import", "move data"],
 			component: TransporterArea,
 		},
 	],

@@ -15,6 +15,11 @@ interface RelationshipRecord {
 	ReferencingAttribute: string;
 }
 
+interface LookupAttributeRecord {
+	LogicalName: string;
+	DisplayName?: { UserLocalizedLabel?: { Label?: string | null } | null } | null;
+}
+
 const escapeODataString = (value: string): string => value.replace(/'/g, "''");
 
 const label = (text: string) => ({
@@ -34,11 +39,17 @@ export interface PolymorphicOperations {
 
 export const polymorphicOperations = (http: DataverseHttp): PolymorphicOperations => ({
 	listPolymorphicLookups: async ({ tableLogicalName }) => {
+		const table = escapeODataString(tableLogicalName);
 		const path =
 			"RelationshipDefinitions/Microsoft.Dynamics.CRM.OneToManyRelationshipMetadata" +
 			"?$select=MetadataId,SchemaName,ReferencedEntity,ReferencingEntity,ReferencingAttribute" +
-			`&$filter=ReferencingEntity eq '${escapeODataString(tableLogicalName)}'`;
-		const response = await http.get<{ value?: RelationshipRecord[] }>(path);
+			`&$filter=ReferencingEntity eq '${table}'`;
+		const labelsPath = `EntityDefinitions(LogicalName='${table}')/Attributes/Microsoft.Dynamics.CRM.LookupAttributeMetadata?$select=LogicalName,DisplayName`;
+		const [response, attributes] = await Promise.all([
+			http.get<{ value?: RelationshipRecord[] }>(path),
+			http.get<{ value?: LookupAttributeRecord[] }>(labelsPath).catch(() => null),
+		]);
+		const labels = new Map((attributes?.value ?? []).map((attribute) => [attribute.LogicalName, attribute.DisplayName?.UserLocalizedLabel?.Label || null]));
 		const byAttribute = new Map<string, RelationshipRecord[]>();
 		for (const record of response?.value ?? []) {
 			byAttribute.set(record.ReferencingAttribute, [...(byAttribute.get(record.ReferencingAttribute) ?? []), record]);
@@ -47,6 +58,7 @@ export const polymorphicOperations = (http: DataverseHttp): PolymorphicOperation
 			.filter(([, records]) => records.length > 1)
 			.map(([attribute, records]) => ({
 				columnLogicalName: attribute,
+				label: labels.get(attribute) ?? null,
 				tableLogicalName,
 				targets: records
 					.map((record) => ({

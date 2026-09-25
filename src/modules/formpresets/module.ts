@@ -15,6 +15,7 @@ export const formPresetsModule: ModuleDefinition = {
 			label: "Pre-populate Forms",
 			breadcrumb: ["Form Presets", "Pre-populate Forms"],
 			tooltip: "Save form values as a preset and apply it to new records",
+			keywords: ["prefill", "defaults", "autofill", "sample data"],
 			requires: "bridge",
 			component: FormPresetsArea,
 		},

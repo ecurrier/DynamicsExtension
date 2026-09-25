@@ -28,7 +28,7 @@ import {
 
 import { AdminModeDialog, DirtyColumnsDialog, EnvironmentDetailsDialog, SolutionLayersDialog, UrlDialog } from "../../dialogs";
 import { useEnvironmentPicker } from "../../hooks";
-import { adminCenterUrl, controlEditorUrl, makerPortalUrl } from "../../lib";
+import { ADMIN_UTILITIES, adminCenterUrl, controlEditorUrl, makerPortalUrl } from "../../lib";
 
 const COMPONENT_NAMES: Record<string, string> = {
 	"form/edit": "SystemForm",
@@ -131,76 +131,66 @@ export const AdminArea = () => {
 		<>
 			<TaskGrid>
 				<TaskCard
-					title="Enable Admin Mode"
-					description="Unlock every field, tab, and section, and report which of them were hidden, read-only, or required."
+					utility={ADMIN_UTILITIES.adminMode}
 					icon={LockOpen20Regular}
 					loading={adminMode.isPending}
 					onAction={() => adminMode.mutate(undefined)}
 				/>
 				<TaskCard
-					title="Toggle Logical Names"
-					description="Switch form control labels between display names and logical names."
+					utility={ADMIN_UTILITIES.logicalNames}
 					icon={Rename20Regular}
 					loading={logicalNames.isPending}
 					onAction={() => logicalNames.mutate(undefined)}
 				/>
 				<TaskCard
-					title="Dirty Columns"
-					description="List every column on the open form with an unsaved change, its current value, and whether the next save will send it."
+					utility={ADMIN_UTILITIES.dirtyColumns}
 					icon={TextBulletListSquareEdit20Regular}
 					actionLabel="Show"
 					loading={dirtyCheck.running}
 					onAction={() => void showDirtyColumns()}
 				/>
 				<TaskCard
-					title="Record Links & Debug Flags"
-					description="Build record links, the Web API URL, and one-click command checker, form monitor, and perf URLs."
+					utility={ADMIN_UTILITIES.recordLinks}
 					icon={Link20Regular}
 					loading={generateUrls.isPending}
 					onAction={() => generateUrls.mutate(undefined)}
 				/>
 				<TaskCard
-					title="Solution Layers"
-					description="Show the layer stack for the current form or view and flag an unmanaged layer sitting on top."
+					utility={ADMIN_UTILITIES.solutionLayers}
 					icon={Layer20Regular}
 					actionLabel="Show"
 					loading={solutionLayers.running}
 					onAction={() => void showSolutionLayers()}
 				/>
 				<TaskCard
-					title="Refresh Command Bar"
-					description="Refresh the main command bar of the current record or view."
+					utility={ADMIN_UTILITIES.refreshCommandBar}
 					icon={ArrowSync20Regular}
 					loading={refreshCommandBar.isPending}
 					onAction={() => refreshCommandBar.mutate(undefined)}
 				/>
 				<TaskCard
-					title="Open Maker Portal"
-					description="Open make.powerapps.com for the current or a saved environment."
+					utility={ADMIN_UTILITIES.makerPortal}
 					icon={Wrench20Regular}
 					actionLabel="Open"
 					loading={makerPortal.running}
 					onAction={() => void openMakerPortal()}
 				/>
 				<TaskCard
-					title="Open Form/View Editor"
-					description="Open the current form or view in the maker portal designer."
+					utility={ADMIN_UTILITIES.formViewEditor}
 					icon={DocumentEdit20Regular}
 					actionLabel="Open"
 					loading={controlEditor.running}
 					onAction={() => void openControlEditor()}
 				/>
 				<TaskCard
-					title="Open Admin Center"
-					description="Open the Power Platform Admin Center for the current or a saved environment."
+					utility={ADMIN_UTILITIES.adminCenter}
 					icon={Settings20Regular}
 					actionLabel="Open"
 					loading={adminCenter.running}
 					onAction={() => void openAdminCenter()}
 				/>
 				<TaskCard
-					title="Environment & Session"
-					description="Environment, current user, platform diagnostic, and session/app context."
+					utility={ADMIN_UTILITIES.environmentSession}
 					icon={Info20Regular}
 					actionLabel="Show"
 					loading={environmentDetails.running}

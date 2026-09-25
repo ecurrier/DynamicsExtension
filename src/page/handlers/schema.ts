@@ -9,6 +9,7 @@ const operations = () => {
 
 export const schemaHandlers = defineHandlers({
 	"schema.findAttributeAcrossTables": (args) => runOperation(() => operations().findAttributeAcrossTables(args)),
+	"schema.readAttributeDetails": (args) => runOperation(() => operations().readAttributeDetails(args)),
 	"schema.updateAttribute": (args) => runOperation(() => operations().updateAttribute(args)),
 	"schema.listPolymorphicLookups": (args) => runOperation(() => operations().listPolymorphicLookups(args)),
 	"schema.createPolymorphicLookup": (args) => runOperation(() => operations().createPolymorphicLookup(args)),

@@ -20,6 +20,7 @@ export const investigateModule: ModuleDefinition = {
 			label: "Table Automation",
 			breadcrumb: ["Investigate", "Table Automation"],
 			tooltip: "Every plug-in step, workflow, business rule, and cloud flow registered against a table",
+			keywords: ["plugins", "triggers", "processes", "power automate", "what runs"],
 			component: AutomationArea,
 		},
 		{
@@ -27,6 +28,7 @@ export const investigateModule: ModuleDefinition = {
 			label: "Record Access",
 			breadcrumb: ["Investigate", "Record Access"],
 			tooltip: "Check what a specific user can do with a specific record, and why",
+			keywords: ["permissions", "sharing", "privileges", "security", "why can't"],
 			component: AccessArea,
 		},
 		{
@@ -34,6 +36,7 @@ export const investigateModule: ModuleDefinition = {
 			label: "Record History",
 			breadcrumb: ["Investigate", "Record History"],
 			tooltip: "Audit timeline for a record, with the auditing configuration that explains gaps",
+			keywords: ["changes", "changed by", "who changed"],
 			component: HistoryArea,
 		},
 		{
@@ -41,6 +44,7 @@ export const investigateModule: ModuleDefinition = {
 			label: "Column Usage",
 			breadcrumb: ["Investigate", "Column Usage"],
 			tooltip: "Find every component and cloud flow that depends on a column before changing it",
+			keywords: ["dependencies", "attribute", "field", "where used", "impact"],
 			component: ColumnUsageArea,
 		},
 		{
@@ -48,6 +52,7 @@ export const investigateModule: ModuleDefinition = {
 			label: "Row Counts",
 			breadcrumb: ["Investigate", "Row Counts"],
 			tooltip: "Row counts per table, so you can see what is actually big before scoping work",
+			keywords: ["record count", "entity", "size", "volume", "how many"],
 			component: RecordCountsArea,
 		},
 		{
@@ -55,6 +60,7 @@ export const investigateModule: ModuleDefinition = {
 			label: "Form Diagnostics",
 			breadcrumb: ["Investigate", "Form Diagnostics"],
 			tooltip: "Scripts, handlers, business rules, and control state for the open form",
+			keywords: ["javascript", "events", "onload", "onchange", "web resources"],
 			requires: "model-driven-app",
 			component: FormDiagnosticsArea,
 		},

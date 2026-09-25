@@ -20,6 +20,7 @@ import { useNavigationStore } from "@/shared/stores";
 import { type CodegenTable, type FormAttributeInfo, type NamedFetchXml, type TableMetadata, type TemplateKind } from "@/shared/types";
 
 import { ColumnBrowserDialog, FetchXmlDialog, FindColumnDialog, RecordPayloadDialog, type RecordPayloadDialogSource, TableMetadataDialog } from "../../dialogs";
+import { DEVELOPER_UTILITIES } from "../../lib";
 
 interface ColumnBrowserState {
 	table: CodegenTable;
@@ -110,62 +111,54 @@ export const DeveloperArea = () => {
 		<>
 			<TaskGrid>
 				<TaskCard
-					title="Generate Query"
-					description="Fetch XML for the current record, its subgrids, or the view as displayed. Plus Web API and JavaScript equivalents."
+					utility={DEVELOPER_UTILITIES.generateQuery}
 					icon={Code20Regular}
 					loading={generateFetchXml.isPending}
 					onAction={() => generateFetchXml.mutate(undefined)}
 				/>
 				<TaskCard
-					title="Record Payload"
-					description="The open record as a Web API create or update body, with lookups bound and read-only columns left out."
+					utility={DEVELOPER_UTILITIES.recordPayload}
 					icon={DocumentCopy20Regular}
 					actionLabel="Show"
 					loading={recordPayload.running}
 					onAction={() => void openRecordPayload()}
 				/>
 				<TaskCard
-					title="Table Metadata"
-					description="Schema names, entity set, primary columns, alternate keys, and every relationship with its navigation property."
+					utility={DEVELOPER_UTILITIES.tableMetadata}
 					icon={DatabaseSearch20Regular}
 					actionLabel="Show"
 					loading={tableMetadata.running}
 					onAction={() => void showTableMetadata()}
 				/>
 				<TaskCard
-					title="Column Browser"
-					description="Search the current table's columns by display, logical, or schema name, and copy the one you need."
+					utility={DEVELOPER_UTILITIES.columnBrowser}
 					icon={Table20Regular}
 					actionLabel="Browse"
 					loading={columnBrowser.running}
 					onAction={() => void openColumnBrowser()}
 				/>
 				<TaskCard
-					title="Open Web API URL"
-					description="Open the current environment's Web API root in a new tab."
+					utility={DEVELOPER_UTILITIES.webApiUrl}
 					icon={Globe20Regular}
 					actionLabel="Open"
 					loading={webApiUrl.isPending}
 					onAction={() => webApiUrl.mutate(undefined)}
 				/>
 				<TaskCard
-					title="Find Column on Form"
-					description="Locate a column on the open form, see its tab, section, and state, and reveal it when it is hidden."
+					utility={DEVELOPER_UTILITIES.findColumn}
 					icon={Eye20Regular}
 					actionLabel="Find"
 					loading={findColumn.running}
 					onAction={() => void openFindColumn(null)}
 				/>
 				<TaskCard
-					title="Generate Choice Code Snippet"
-					description="Enums or objects for this table's choices and the global ones, from your default choice Template."
+					utility={DEVELOPER_UTILITIES.choiceSnippet}
 					icon={TextBulletListSquare20Regular}
 					loading={generator.running}
 					onAction={() => void openGenerator("choice")}
 				/>
 				<TaskCard
-					title="Generate Table Class"
-					description="A class or interface for the current table's columns, from your default table Template."
+					utility={DEVELOPER_UTILITIES.tableClass}
 					icon={Braces20Regular}
 					loading={generator.running}
 					onAction={() => void openGenerator("table")}

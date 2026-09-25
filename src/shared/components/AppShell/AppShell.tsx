@@ -2,6 +2,7 @@ import { Hamburger, makeStyles, Text, tokens, Toolbar, ToolbarButton, Tooltip } 
 import { ArrowClockwise20Regular, ArrowLeft20Regular, PanelRightExpand20Regular, Pin20Regular, TabDesktop20Regular } from "@fluentui/react-icons";
 import { type ReactNode } from "react";
 
+import { NAV_SEARCH_KEYSHORTCUTS, NAV_SEARCH_SHORTCUT } from "../AppNavDrawer";
 import { AreaBreadcrumb, type BreadcrumbArea } from "../AreaBreadcrumb";
 import { LoadingBar } from "../Loading";
 
@@ -107,8 +108,8 @@ export const AppShell = ({
 			<div className={styles.bar}>
 				<div className={styles.header}>
 					<Toolbar className={styles.toolbar}>
-						<Tooltip content="Navigation" relationship="label">
-							<Hamburger onClick={onOpenNav} />
+						<Tooltip content={`Navigation (${NAV_SEARCH_SHORTCUT})`} relationship="label">
+							<Hamburger onClick={onOpenNav} aria-keyshortcuts={NAV_SEARCH_KEYSHORTCUTS} />
 						</Tooltip>
 						{onBack ? (
 							<Tooltip content={backLabel} relationship="label">

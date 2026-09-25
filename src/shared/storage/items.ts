@@ -63,6 +63,10 @@ export const lastVisitedAreaItem: StorageItem<string | null> = storage.defineIte
 	fallback: null,
 });
 
+export const recentAreasItem: StorageItem<string[]> = storage.defineItem<string[], Record<string, unknown>>("local:recentAreas", {
+	fallback: [],
+});
+
 export const resultsShareItem: StorageItem<ResultsShare | null> = storage.defineItem<ResultsShare | null, Record<string, unknown>>("session:resultsShare", {
 	fallback: null,
 });

@@ -71,7 +71,7 @@ src/
 2. Put each area under `areas/<area>/` with its component, and pure logic under `lib/`.
 3. Register the module in `src/modules/registry.ts`.
 
-Navigation, breadcrumbs, page-context gating, and last-visited persistence derive from the registry.
+Navigation, navigation search, breadcrumbs, page-context gating, and last-visited and recent Area persistence derive from the registry. Search matches an Area by its label, its Module, its `tooltip`, and its `keywords`; give `keywords` the words people type that the label and tooltip do not contain, starting with the terms `CONTEXT.md` says to avoid (attribute, entity, option set). A Utilities Area also lists its cards in `utilities`, from the catalog in `src/modules/utilities/lib/catalog.ts` that its `TaskCard`s render, so a search can open the Area and outline the card it found.
 
 Three shared components exist so screens behave the same way. Filter a long table with `TableFilter` and `useTableFilter`; selection is held by the caller, so filtering narrows what is shown and never what is picked, which is how a set is assembled over several searches. Render a value from a fixed set with `ValueChip` and a palette from `ValueChip/palettes.ts`, so the same privilege depth is the same colour everywhere. Pick from a long list with `MultiSelectPicker`. And never ask the user to type something the environment knows: tables come from `investigate.listTables`, solutions and publisher prefixes from `global.getSolutions`.
 

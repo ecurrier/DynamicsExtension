@@ -7,6 +7,7 @@ export const schemaGateway = defineGateway({
 	namespace: "schema",
 	operations: [
 		"findAttributeAcrossTables",
+		"readAttributeDetails",
 		"updateAttribute",
 		"publishTables",
 		"listPolymorphicLookups",

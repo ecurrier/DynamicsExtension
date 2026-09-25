@@ -37,6 +37,6 @@ export const WorkspaceOutlet = ({ workspace }: WorkspaceOutletProps) => (
 		) : null}
 		{workspace.id === "results-viewer" ? <ResultsViewer share={workspace.share} /> : null}
 		{workspace.id === "security-tools" ? <SecurityTools launch={workspace.launch} /> : null}
-		{workspace.id === "schema-tools" ? <SchemaTools launch={workspace.launch} /> : null}
+		{workspace.id === "schema-tools" ? <SchemaTools launch={workspace.launch} hosted /> : null}
 	</Suspense>
 );

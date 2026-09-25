@@ -6,7 +6,7 @@ import { ensurePageBridge, invoke, pageKeys } from "@/messaging/client";
 import { DEFAULT_AREA, resolveArea } from "@/modules";
 import { getActiveTab, getTabById, listOrgTabs, type PopupLaunch, readPopupLaunch } from "@/shared/extension";
 import { isOrgUrl } from "@/shared/lib";
-import { lastVisitedAreaItem, settingsItem } from "@/shared/storage";
+import { lastVisitedAreaItem, recentAreasItem, settingsItem } from "@/shared/storage";
 import { useNavigationStore, useSessionStore } from "@/shared/stores";
 import { type PageTarget } from "@/shared/types";
 
@@ -33,6 +33,15 @@ const resolveInitialArea = async (): Promise<string> => {
 		return resolveArea(await lastVisitedAreaItem.getValue()).id;
 	} catch {
 		return DEFAULT_AREA;
+	}
+};
+
+const readRecentAreas = async (): Promise<string[]> => {
+	try {
+		const stored = await recentAreasItem.getValue();
+		return Array.isArray(stored) ? stored.filter((id): id is string => typeof id === "string") : [];
+	} catch {
+		return [];
 	}
 };
 
@@ -222,9 +231,9 @@ export const useSessionBootstrap = () => {
 		const launch = readPopupLaunch();
 		let cancelled = false;
 		const run = async () => {
-			const initialArea = await resolveInitialArea();
+			const [initialArea, recentAreaIds] = await Promise.all([resolveInitialArea(), readRecentAreas()]);
 			if (!cancelled && !useNavigationStore.getState().currentAreaId) {
-				useNavigationStore.setState({ currentAreaId: initialArea });
+				useNavigationStore.setState({ currentAreaId: initialArea, recentAreaIds });
 			}
 			try {
 				const session = await connectToTab(launch);

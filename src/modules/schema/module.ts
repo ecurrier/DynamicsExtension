@@ -15,6 +15,7 @@ export const schemaModule: ModuleDefinition = {
 			label: "Cross-Table Columns",
 			breadcrumb: ["Schema", "Cross-Table Columns"],
 			tooltip: "Change a column's label, description, or requirement level across every table that has it",
+			keywords: ["attribute", "field", "rename", "required", "metadata"],
 			component: CrossTableColumnsArea,
 		},
 		{
@@ -22,6 +23,7 @@ export const schemaModule: ModuleDefinition = {
 			label: "Polymorphic Lookups",
 			breadcrumb: ["Schema", "Polymorphic Lookups"],
 			tooltip: "List and create lookups that can reference more than one table",
+			keywords: ["multi-table lookup", "customer", "relationship", "regarding"],
 			component: PolymorphicLookupsArea,
 		},
 	],

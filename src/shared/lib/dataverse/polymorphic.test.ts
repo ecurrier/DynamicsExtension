@@ -41,6 +41,23 @@ describe("listPolymorphicLookups", () => {
 		expect(lookups[0]?.targets[0]?.relationshipId).toBe("r1");
 	});
 
+	it("reads each lookup's display name, and falls back to none when the labels cannot be read", async () => {
+		const relationships = { value: [relationship("r1", "contact", "new_relatedto"), relationship("r2", "lead", "new_relatedto")] };
+		const { http, calls } = createFakeHttp({
+			RelationshipDefinitions: relationships,
+			LookupAttributeMetadata: { value: [{ LogicalName: "new_relatedto", DisplayName: { UserLocalizedLabel: { Label: "Related To" } } }] },
+		});
+		const [lookup] = await polymorphicOperations(http).listPolymorphicLookups({ tableLogicalName: "account" });
+		expect(lookup?.label).toBe("Related To");
+		expect(calls[1]?.path).toContain("EntityDefinitions(LogicalName='account')/Attributes");
+		const failing = createFakeHttp({
+			RelationshipDefinitions: relationships,
+			LookupAttributeMetadata: () => Promise.reject(new Error("forbidden")),
+		});
+		const [fallback] = await polymorphicOperations(failing.http).listPolymorphicLookups({ tableLogicalName: "account" });
+		expect(fallback?.label).toBeNull();
+	});
+
 	it("asks only for the relationships of the table it was given", async () => {
 		const { http, calls } = createFakeHttp({ RelationshipDefinitions: { value: [] } });
 		await polymorphicOperations(http).listPolymorphicLookups({ tableLogicalName: "account" });

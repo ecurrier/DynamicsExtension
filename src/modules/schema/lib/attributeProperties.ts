@@ -2,6 +2,8 @@ export type AttributeProperty = "label" | "description" | "requiredLevel" | "max
 
 export const COMMON_PROPERTIES: AttributeProperty[] = ["label", "description", "requiredLevel"];
 
+export const TYPE_PROPERTIES: AttributeProperty[] = ["maxLength", "minValue", "maxValue", "precision"];
+
 const NUMERIC_TYPES = ["Integer", "BigInt", "Decimal", "Double", "Money"];
 const PRECISION_TYPES = ["Decimal", "Double", "Money"];
 

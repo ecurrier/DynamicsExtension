@@ -6,6 +6,7 @@ export interface ColumnEditArgs extends AttributeEdit {
 	tableLogicalName: string;
 	columnLogicalName: string;
 	attributeType: string;
+	metadataType: string | null;
 	metadataId: string;
 }
 
@@ -30,6 +31,23 @@ export const typeMismatches = (matches: AttributeMatch[]): Set<string> => {
 	return new Set(matches.filter((match) => match.attributeType !== majority).map((match) => match.tableLogicalName));
 };
 
+export interface TypeCount {
+	type: string;
+	count: number;
+	majority: boolean;
+}
+
+export const typeCounts = (matches: AttributeMatch[]): TypeCount[] => {
+	const majority = majorityType(matches);
+	const counts = new Map<string, number>();
+	for (const match of matches) {
+		counts.set(match.attributeType, (counts.get(match.attributeType) ?? 0) + 1);
+	}
+	return [...counts.entries()]
+		.map(([type, count]) => ({ type, count, majority: type === majority }))
+		.sort((left, right) => right.count - left.count || left.type.localeCompare(right.type));
+};
+
 export const customisableReason = (match: AttributeMatch): string | null =>
 	match.isCustomizable ? null : "This column is locked by its managed solution and cannot be customised.";
 
@@ -43,6 +61,8 @@ const CURRENT: Record<AttributeProperty, (match: AttributeMatch) => unknown> = {
 	precision: (match) => match.precision,
 };
 
+export const currentValue = (match: AttributeMatch, property: AttributeProperty): unknown => CURRENT[property](match);
+
 export const allowedEdit = (edit: AttributeEdit, matches: AttributeMatch[]): AttributeEdit => {
 	const allowed = new Set<string>(editablePropertiesFor(matches.map((match) => match.attributeType)));
 	return Object.fromEntries(Object.entries(edit).filter(([key]) => allowed.has(key)));
@@ -50,6 +70,9 @@ export const allowedEdit = (edit: AttributeEdit, matches: AttributeMatch[]): Att
 
 const changes = (match: AttributeMatch, edit: AttributeEdit): AttributeProperty[] =>
 	(Object.keys(edit) as AttributeProperty[]).filter((key) => edit[key] !== undefined && edit[key] !== CURRENT[key](match));
+
+export const countPropertyChanges = (matches: AttributeMatch[], edit: AttributeEdit, property: AttributeProperty): number | null =>
+	edit[property] === undefined ? null : matches.filter((match) => match.isCustomizable && changes(match, { [property]: edit[property] }).length > 0).length;
 
 const unchanged = (match: AttributeMatch, edit: AttributeEdit): boolean => changes(match, edit).length === 0;
 
@@ -76,6 +99,7 @@ export const columnEditPlan = (matches: AttributeMatch[], requested: AttributeEd
 					tableLogicalName: match.tableLogicalName,
 					columnLogicalName: match.columnLogicalName,
 					attributeType: match.attributeType,
+					metadataType: match.metadataType,
 					metadataId: match.metadataId,
 					...edit,
 				},

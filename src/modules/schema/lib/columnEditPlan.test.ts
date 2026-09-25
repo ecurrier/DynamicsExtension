@@ -9,6 +9,7 @@ const match = (overrides: Partial<AttributeMatch> = {}): AttributeMatch => ({
 	tableDisplayName: "Account",
 	columnLogicalName: "new_region",
 	attributeType: "String",
+	metadataType: null,
 	label: "Region",
 	description: "Sales region",
 	requiredLevel: "None",

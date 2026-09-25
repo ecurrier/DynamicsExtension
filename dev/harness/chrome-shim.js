@@ -1837,6 +1837,12 @@
 				},
 			];
 		},
+		"schema.readAttributeDetails": (args) => ({
+			maxLength: args.attributeType === "Memo" ? 2000 : 100,
+			minValue: null,
+			maxValue: null,
+			precision: null,
+		}),
 		"schema.updateAttribute": (args) => {
 			if (args.tableLogicalName === "contact") {
 				throw new Error("The Contact table is locked by another publisher");
@@ -1848,11 +1854,41 @@
 				? [
 						{
 							columnLogicalName: "contoso_relatedto",
+							label: "Related To",
 							tableLogicalName: "account",
 							targets: [
 								{ tableLogicalName: "contact", relationshipSchemaName: "contact_account_contoso_RelatedTo", relationshipId: guid(901) },
 								{ tableLogicalName: "lead", relationshipSchemaName: "lead_account_contoso_RelatedTo", relationshipId: guid(902) },
 							],
+						},
+						{
+							columnLogicalName: "contoso_regardingid",
+							label: "Regarding",
+							tableLogicalName: "account",
+							targets: [
+								"account",
+								"appointment",
+								"campaign",
+								"competitor",
+								"contact",
+								"contract",
+								"email",
+								"incident",
+								"invoice",
+								"lead",
+								"opportunity",
+								"phonecall",
+								"product",
+								"quote",
+								"salesorder",
+								"systemuser",
+								"task",
+								"team",
+							].map((table, index) => ({
+								tableLogicalName: table,
+								relationshipSchemaName: `${table}_account_contoso_RegardingId`,
+								relationshipId: guid(920 + index),
+							})),
 						},
 					]
 				: [],
@@ -2072,6 +2108,7 @@
 			},
 			codeTemplates$: { v: 1 },
 			codeTemplateDefaults: { table: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" },
+			recentAreas: ["utilities.admin", "schema.columns", "investigate.access", "utilities.developer"],
 			schemaVersion: 4,
 			environments: seededEnvironments,
 			environments$: { v: 3 },

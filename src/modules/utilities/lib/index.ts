@@ -1,4 +1,5 @@
 export * from "./adminMode";
+export * from "./catalog";
 export * from "./cloudUrls";
 export * from "./columnBrowser";
 export * from "./dirtyColumns";

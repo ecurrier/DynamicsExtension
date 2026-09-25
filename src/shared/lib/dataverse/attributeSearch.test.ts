@@ -65,6 +65,52 @@ describe("findAttributeAcrossTables", () => {
 		await attributeSearchOperations(http).findAttributeAcrossTables({ logicalName: "new_o'brien" });
 		expect(decodeURIComponent(calls[0]!.path)).toContain("new_o''brien");
 	});
+
+	it("selects only properties every column type has, so the request works whatever the column is", async () => {
+		const { http, calls } = createFakeHttp({ EntityDefinitions: { value: [] } });
+		await attributeSearchOperations(http).findAttributeAcrossTables({ logicalName: "new_region" });
+		const path = decodeURIComponent(calls[0]!.path);
+		for (const property of ["MaxLength", "MinValue", "MaxValue", "Precision"]) {
+			expect(path).not.toContain(property);
+		}
+	});
+
+	it("keeps each column's exact metadata type when the response names one", async () => {
+		const { http } = createFakeHttp({
+			EntityDefinitions: {
+				value: [
+					entity("account", attribute({ "@odata.type": "#Microsoft.Dynamics.CRM.StringAttributeMetadata" })),
+					entity("contact", attribute({ MetadataId: "m2" })),
+				],
+			},
+		});
+		const matches = await attributeSearchOperations(http).findAttributeAcrossTables({ logicalName: "new_region" });
+		expect(matches.map((match) => match.metadataType)).toEqual(["Microsoft.Dynamics.CRM.StringAttributeMetadata", null]);
+		expect(matches[0]?.maxLength).toBeNull();
+	});
+});
+
+describe("readAttributeDetails", () => {
+	it("reads a text column's maximum length through its own metadata type", async () => {
+		const { http, calls } = createFakeHttp({ StringAttributeMetadata: { MaxLength: 200 } });
+		const details = await attributeSearchOperations(http).readAttributeDetails({ tableLogicalName: "account", metadataId: "m1", attributeType: "String" });
+		expect(details).toEqual({ maxLength: 200, minValue: null, maxValue: null, precision: null });
+		expect(calls[0]?.path).toBe("EntityDefinitions(LogicalName='account')/Attributes(m1)/Microsoft.Dynamics.CRM.StringAttributeMetadata?$select=MaxLength");
+	});
+
+	it("reads a decimal column's range and decimal places", async () => {
+		const { http, calls } = createFakeHttp({ DecimalAttributeMetadata: { MinValue: 0, MaxValue: 1000, Precision: 2 } });
+		const details = await attributeSearchOperations(http).readAttributeDetails({ tableLogicalName: "account", metadataId: "m1", attributeType: "Decimal" });
+		expect(details).toEqual({ maxLength: null, minValue: 0, maxValue: 1000, precision: 2 });
+		expect(calls[0]?.path).toContain("$select=MinValue,MaxValue,Precision");
+	});
+
+	it("sends nothing for a type without extra settings", async () => {
+		const { http, calls } = createFakeHttp();
+		const details = await attributeSearchOperations(http).readAttributeDetails({ tableLogicalName: "account", metadataId: "m1", attributeType: "Lookup" });
+		expect(details).toEqual({ maxLength: null, minValue: null, maxValue: null, precision: null });
+		expect(calls).toEqual([]);
+	});
 });
 
 describe("updateAttribute", () => {
@@ -76,6 +122,17 @@ describe("updateAttribute", () => {
 		const body = calls[0]?.body as Record<string, unknown>;
 		expect(Object.keys(body)).toEqual(["@odata.type", "MetadataId", "LogicalName", "DisplayName"]);
 		expect(body["@odata.type"]).toBe("Microsoft.Dynamics.CRM.StringAttributeMetadata");
+	});
+
+	it("declares the metadata type the search reported, which is not always the attribute type", async () => {
+		const { http, calls } = createFakeHttp();
+		await attributeSearchOperations(http).updateAttribute({
+			...base,
+			attributeType: "Customer",
+			metadataType: "Microsoft.Dynamics.CRM.LookupAttributeMetadata",
+			label: "Customer",
+		});
+		expect((calls[0]?.body as Record<string, unknown>)["@odata.type"]).toBe("Microsoft.Dynamics.CRM.LookupAttributeMetadata");
 	});
 
 	it("PUTs to the attribute with merge labels on", async () => {

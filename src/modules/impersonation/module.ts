@@ -15,6 +15,7 @@ export const impersonationModule: ModuleDefinition = {
 			label: "Impersonate User",
 			breadcrumb: ["Impersonate User"],
 			tooltip: "Run this tab as another user by adding the Dataverse impersonation header to its Web API requests",
+			keywords: ["sudo", "act as", "run as", "switch user", "callerid"],
 			requires: "model-driven-app",
 			component: ImpersonationArea,
 		},

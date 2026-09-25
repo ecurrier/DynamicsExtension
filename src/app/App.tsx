@@ -27,6 +27,7 @@ export const App = () => {
 	const tabUrl = useSessionStore((state) => state.tabUrl);
 	const currentAreaId = useNavigationStore((state) => state.currentAreaId);
 	const drawerOpen = useNavigationStore((state) => state.drawerOpen);
+	const recentAreaIds = useNavigationStore((state) => state.recentAreaIds);
 	const workspace = useNavigationStore((state) => state.workspace);
 	const navigate = useNavigationStore((state) => state.navigate);
 	const setDrawerOpen = useNavigationStore((state) => state.setDrawerOpen);
@@ -93,7 +94,14 @@ export const App = () => {
 
 	return (
 		<>
-			<AppNavDrawer modules={modules} open={drawerOpen} selectedAreaId={area.id} onOpenChange={setDrawerOpen} onNavigate={navigate} />
+			<AppNavDrawer
+				modules={modules}
+				open={drawerOpen}
+				selectedAreaId={area.id}
+				recentAreaIds={recentAreaIds}
+				onOpenChange={setDrawerOpen}
+				onNavigate={navigate}
+			/>
 			<AppShell
 				breadcrumb={area.breadcrumb}
 				tooltip={workspace ? undefined : area.tooltip}

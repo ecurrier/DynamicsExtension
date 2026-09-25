@@ -1,12 +1,22 @@
-export interface AttributeMatch {
+export interface AttributeDetails {
 	maxLength: number | null;
 	minValue: number | null;
 	maxValue: number | null;
 	precision: number | null;
+}
+
+export interface AttributeDetailsRequest {
+	tableLogicalName: string;
+	metadataId: string;
+	attributeType: string;
+}
+
+export interface AttributeMatch extends AttributeDetails {
 	tableLogicalName: string;
 	tableDisplayName: string;
 	columnLogicalName: string;
 	attributeType: string;
+	metadataType: string | null;
 	label: string;
 	description: string;
 	requiredLevel: string;
@@ -34,6 +44,7 @@ export interface UpdateAttributeRequest extends AttributeEdit {
 	tableLogicalName: string;
 	columnLogicalName: string;
 	attributeType: string;
+	metadataType?: string | null;
 	metadataId: string;
 	solutionUniqueName?: string | null;
 }
@@ -48,6 +59,7 @@ export interface PolymorphicTarget {
 
 export interface PolymorphicLookup {
 	columnLogicalName: string;
+	label: string | null;
 	tableLogicalName: string;
 	targets: PolymorphicTarget[];
 }

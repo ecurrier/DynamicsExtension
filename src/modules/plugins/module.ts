@@ -17,6 +17,7 @@ export const pluginsModule: ModuleDefinition = {
 			label: "Steps",
 			breadcrumb: ["Plug-ins", "Steps"],
 			tooltip: "Enable or disable plug-in steps, grouped by assembly and plug-in type",
+			keywords: ["plugin", "sdk message processing step", "registration", "enable", "disable"],
 			component: PluginStepsArea,
 		},
 		{
@@ -24,6 +25,7 @@ export const pluginsModule: ModuleDefinition = {
 			label: "Packages",
 			breadcrumb: ["Plug-ins", "Packages"],
 			tooltip: "Update a plug-in package from a freshly built nupkg and see the assemblies and plug-in types it contains",
+			keywords: ["plugin", "nuget", "nupkg", "assembly", "dll", "deploy", "upload"],
 			component: PackagesArea,
 		},
 		{
@@ -31,6 +33,7 @@ export const pluginsModule: ModuleDefinition = {
 			label: "Traces",
 			breadcrumb: ["Plug-ins", "Traces"],
 			tooltip: "Control plug-in trace logging and open the full-page trace log viewer",
+			keywords: ["plugin", "trace log", "logs", "logging", "exceptions"],
 			requires: "model-driven-app",
 			component: PluginTracesArea,
 		},

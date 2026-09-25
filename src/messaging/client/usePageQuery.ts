@@ -41,6 +41,7 @@ const STALE_TIMES: Record<QueryCommandName, number> = {
 	"security.getSystemUserRoles": 0,
 	"security.getRolePrivileges": Infinity,
 	"schema.findAttributeAcrossTables": 0,
+	"schema.readAttributeDetails": 0,
 	"schema.listPolymorphicLookups": 0,
 	"environmentVariables.getDefinitions": 0,
 	"pluginSteps.getSteps": 0,

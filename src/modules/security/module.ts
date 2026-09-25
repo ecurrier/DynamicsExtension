@@ -17,6 +17,7 @@ export const securityModule: ModuleDefinition = {
 			label: "Single User",
 			breadcrumb: ["Security", "Single User"],
 			tooltip: "Review and change the security roles assigned to one user",
+			keywords: ["roles", "permissions", "assign roles"],
 			component: RolesArea,
 		},
 		{
@@ -24,6 +25,7 @@ export const securityModule: ModuleDefinition = {
 			label: "Bulk Users",
 			breadcrumb: ["Security", "Bulk Users"],
 			tooltip: "Add or remove security roles across a set of users in one run",
+			keywords: ["roles", "assign roles", "many users"],
 			component: BulkUsersArea,
 		},
 		{
@@ -31,6 +33,7 @@ export const securityModule: ModuleDefinition = {
 			label: "Role Compare",
 			breadcrumb: ["Security", "Role Compare"],
 			tooltip: "See how two or more security roles differ",
+			keywords: ["diff", "difference"],
 			component: RoleCompareArea,
 		},
 		{
@@ -38,6 +41,7 @@ export const securityModule: ModuleDefinition = {
 			label: "Privilege Editor",
 			breadcrumb: ["Security", "Privilege Editor"],
 			tooltip: "Bulk change privilege depth across roles and tables",
+			keywords: ["privileges", "permissions", "access level"],
 			component: PrivilegeEditorArea,
 		},
 	],
