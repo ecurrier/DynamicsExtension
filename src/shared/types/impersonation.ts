@@ -1,3 +1,5 @@
+import { type SecurityRoleAssignment } from "./dynamics";
+
 export interface ImpersonatedUser {
 	id: string;
 	fullName: string;
@@ -10,6 +12,7 @@ export interface ImpersonationState {
 	tabId: number;
 	orgOrigin: string;
 	user: ImpersonatedUser;
+	roles: SecurityRoleAssignment[] | null;
 	header: ImpersonationHeader;
 	startedAt: string;
 }
@@ -20,4 +23,5 @@ export interface StartImpersonationRequest {
 	tabId: number;
 	orgOrigin: string;
 	user: ImpersonatedUser;
+	roles: SecurityRoleAssignment[] | null;
 }

@@ -152,6 +152,10 @@ export interface SecurityRole {
 	parentRootRoleId: string | null;
 }
 
+export interface SecurityRoleAssignment extends SecurityRole {
+	viaTeam: string | null;
+}
+
 export interface BusinessUnit {
 	id: string;
 	name: string;

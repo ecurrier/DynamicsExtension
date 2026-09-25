@@ -59,16 +59,22 @@ describe("securityOperations", () => {
 		});
 	});
 
-	it("loads every role a user holds without a business unit filter", async () => {
+	it("loads every role a user holds, directly or through a team, without a business unit filter", async () => {
 		const { http, calls } = createFakeHttp({
-			"roles?fetchXml": { value: [{ roleid: ROLE_A, name: "Admin", _businessunitid_value: UNIT }] },
+			systemuserroles: { value: [{ roleid: ROLE_A, name: "Admin", _businessunitid_value: UNIT }] },
+			teammembership: {
+				value: [{ roleid: `{${ROLE_B.toUpperCase()}}`, name: "Salesperson", _businessunitid_value: UNIT, "team.name": "Sales" }],
+			},
 		});
 		await expect(securityOperations(http).getSystemUserRoles({ systemUserId: USER })).resolves.toEqual([
-			{ id: ROLE_A, name: "Admin", businessUnitId: UNIT, parentRootRoleId: null },
+			{ id: ROLE_A, name: "Admin", businessUnitId: UNIT, parentRootRoleId: null, viaTeam: null },
+			{ id: ROLE_B, name: "Salesperson", businessUnitId: UNIT, parentRootRoleId: null, viaTeam: "Sales" },
 		]);
-		const fetchXml = decodeURIComponent(calls[0]?.path ?? "");
-		expect(fetchXml).toContain(`<condition attribute="systemuserid" operator="eq" value="${USER}" />`);
-		expect(fetchXml).not.toContain('attribute="businessunitid" operator');
+		const [direct = "", viaTeams = ""] = calls.map((call) => decodeURIComponent(call.path));
+		expect(direct).toContain(`<condition attribute="systemuserid" operator="eq" value="${USER}" />`);
+		expect(viaTeams).toContain('<link-entity name="teamroles"');
+		expect(viaTeams).toContain(`<condition attribute="systemuserid" operator="eq" value="${USER}" />`);
+		expect(`${direct}${viaTeams}`).not.toContain('attribute="businessunitid" operator');
 		await expect(securityOperations(http).getSystemUserRoles({ systemUserId: "nope" })).rejects.toMatchObject({
 			code: "InvalidArgument",
 		});

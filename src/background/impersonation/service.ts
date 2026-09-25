@@ -18,7 +18,7 @@ const originOf = (url: string): string | null => {
 	}
 };
 
-export const startImpersonation = async ({ tabId, orgOrigin, user }: StartImpersonationRequest): Promise<ImpersonationState> => {
+export const startImpersonation = async ({ tabId, orgOrigin, user, roles }: StartImpersonationRequest): Promise<ImpersonationState> => {
 	const headerValue = impersonationHeaderFor(user);
 	const rule = buildImpersonationRule(tabId, orgOrigin, headerValue);
 	await browser.declarativeNetRequest.updateSessionRules({ removeRuleIds: [rule.id], addRules: [rule as never] });
@@ -26,6 +26,7 @@ export const startImpersonation = async ({ tabId, orgOrigin, user }: StartImpers
 		tabId,
 		orgOrigin,
 		user,
+		roles,
 		header: headerValue.header,
 		startedAt: new Date().toISOString(),
 	};
