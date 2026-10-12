@@ -1,7 +1,31 @@
 import { defineHandlers, PageError } from "@/messaging/page";
 import { getFormContext, getXrm } from "@/page/xrm";
-import { normalizeGuid } from "@/shared/lib";
+import { normalizeGuid, withChoiceValue, withoutChoiceValue } from "@/shared/lib";
 import { type AdminModeResult, type CapturedControlState, type FormStateSnapshot, type RestoreFormStateResult } from "@/shared/types";
+
+const CHOICE_ATTRIBUTE_TYPES: readonly string[] = ["optionset", "multiselectoptionset"];
+
+type ChoiceControl = Xrm.Controls.OptionSetControl | Xrm.Controls.MultiSelectOptionSetControl;
+
+const isChoiceControl = (control: Xrm.Controls.Control): control is ChoiceControl => {
+	const candidate = control as Partial<ChoiceControl>;
+	const attributeType = (control as Partial<Xrm.Controls.StandardControl>).getAttribute?.()?.getAttributeType?.() ?? "";
+	return !!candidate.getOptions && !!candidate.clearOptions && !!candidate.addOption && CHOICE_ATTRIBUTE_TYPES.includes(attributeType);
+};
+
+export const relabelChoices = (formContext: Xrm.Page, relabel: (option: Xrm.OptionSetValue) => Xrm.OptionSetValue): void => {
+	formContext.ui.controls.forEach((control) => {
+		if (!isChoiceControl(control)) {
+			return;
+		}
+		const options = control.getOptions();
+		if (options.length === 0) {
+			return;
+		}
+		control.clearOptions();
+		options.forEach((option) => control.addOption(relabel(option)));
+	});
+};
 
 const hasLabelApi = (control: Xrm.Controls.Control): control is Xrm.Controls.Control & Xrm.Controls.UiLabelElement =>
 	"setLabel" in control && "getLabel" in control;
@@ -76,6 +100,7 @@ export const formStateHandlers = defineHandlers({
 		const formContext = getFormContext();
 		const snapshot = captureSnapshot(formContext);
 		relaxForm(formContext);
+		relabelChoices(formContext, withChoiceValue);
 		return {
 			total: snapshot.controls.length,
 			hidden: snapshot.controls.filter((control) => !control.visible),
@@ -103,6 +128,7 @@ export const formStateHandlers = defineHandlers({
 			candidate.getAttribute?.()?.setRequiredLevel?.(previous.requiredLevel as Xrm.Attributes.RequirementLevel);
 			restored += 1;
 		});
+		relabelChoices(formContext, withoutChoiceValue);
 		return { restored };
 	},
 });

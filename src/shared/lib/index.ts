@@ -1,5 +1,6 @@
 export * from "./base64";
 export * from "./bulkRun";
+export * from "./choiceLabel";
 export * from "./chunk";
 export * from "./clipboard";
 export * from "./controlState";

@@ -66,7 +66,7 @@ export const AdminModeDialog = ({ result, restoring, onRestore, onClose }: Admin
 						{result ? (
 							<FormStack>
 								<Text size={200} className={styles.caption}>
-									{`Every field, tab, and section is now visible, editable, and optional. ` +
+									{`Every field, tab, and section is now visible, editable, and optional, and choice options show their value beside the label. ` +
 										`${findings.length} of ${result.total} controls were restricted before this ran.`}
 								</Text>
 								{findings.length === 0 ? (

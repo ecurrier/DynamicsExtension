@@ -4,8 +4,8 @@ export const ADMIN_UTILITIES = {
 	adminMode: {
 		id: "admin-mode",
 		title: "Enable Admin Mode",
-		description: "Unlock every field, tab, and section, and report which of them were hidden, read-only, or required.",
-		keywords: ["god mode", "unlock", "show hidden fields"],
+		description: "Unlock every field, tab, and section, show choice values beside their labels, and report what was hidden, read-only, or required.",
+		keywords: ["god mode", "unlock", "show hidden fields", "choice values", "option set values"],
 	},
 	logicalNames: {
 		id: "logical-names",
