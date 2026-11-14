@@ -13,7 +13,6 @@ import {
 	FillAccordionPanel,
 	FormRow,
 	FormStack,
-	Grow,
 	InfoTip,
 	PageRequirementGate,
 	type ExplainerStep,
@@ -37,6 +36,11 @@ const COLUMN_USAGE_STEPS: ExplainerStep[] = [
 ];
 
 const useStyles = makeStyles({
+	// A basis, so the switch and the button take their own line in the side panel.
+	column: {
+		flex: "1 1 240px",
+		minWidth: 0,
+	},
 	caption: {
 		color: tokens.colorNeutralForeground3,
 	},
@@ -153,7 +157,7 @@ export const ColumnUsageArea = () => {
 		<FormStack fill>
 			<TablePicker />
 			<FormRow>
-				<Grow>
+				<div className={styles.column}>
 					<Field label="Column">
 						<Combobox
 							freeform
@@ -179,7 +183,7 @@ export const ColumnUsageArea = () => {
 							))}
 						</Combobox>
 					</Field>
-				</Grow>
+				</div>
 				<Switch
 					label={
 						<>

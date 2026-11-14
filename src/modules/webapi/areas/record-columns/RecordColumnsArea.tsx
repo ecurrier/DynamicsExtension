@@ -1,17 +1,21 @@
 import {
 	Button,
 	makeStyles,
+	Menu,
+	MenuItemRadio,
+	MenuList,
+	MenuPopover,
+	MenuTrigger,
 	MessageBar,
 	MessageBarActions,
 	MessageBarBody,
-	Select,
 	Spinner,
 	Text,
 	ToggleButton,
 	tokens,
 	Tooltip,
 } from "@fluentui/react-components";
-import { ArrowClockwise20Regular, Dismiss16Regular } from "@fluentui/react-icons";
+import { ArrowClockwise20Regular, ArrowSortRegular, Dismiss16Regular } from "@fluentui/react-icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { usePageFetcher, usePageMutation, usePageQuery } from "@/messaging/client";
@@ -368,10 +372,23 @@ export const RecordColumnsArea = () => {
 			actions={
 				<>
 					{/* Sort is not a filter, so it does not sit behind the Filters button or add to its count. */}
-					<Select aria-label="Sort columns by" value={sort} onChange={(_, data) => setSort(data.value as RecordColumnSort)}>
-						<option value="displayName">Display name</option>
-						<option value="logicalName">Logical name</option>
-					</Select>
+					<Menu checkedValues={{ sort: [sort] }} onCheckedValueChange={(_, data) => setSort(data.checkedItems[0] as RecordColumnSort)}>
+						<MenuTrigger disableButtonEnhancement>
+							<Tooltip content="Sort columns by" relationship="label">
+								<Button appearance="subtle" icon={<ArrowSortRegular />} aria-label="Sort columns by" />
+							</Tooltip>
+						</MenuTrigger>
+						<MenuPopover>
+							<MenuList>
+								<MenuItemRadio name="sort" value="displayName">
+									Display name
+								</MenuItemRadio>
+								<MenuItemRadio name="sort" value="logicalName">
+									Logical name
+								</MenuItemRadio>
+							</MenuList>
+						</MenuPopover>
+					</Menu>
 					<Tooltip content="Reload the record" relationship="label">
 						<Button appearance="subtle" icon={<ArrowClockwise20Regular />} disabled={fetching} onClick={reload} aria-label="Reload the record" />
 					</Tooltip>

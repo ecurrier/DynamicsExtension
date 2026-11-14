@@ -34,6 +34,8 @@ import {
 const useStyles = makeStyles({
 	caption: { color: tokens.colorNeutralForeground3 },
 	chips: { paddingBottom: "4px" },
+	// A basis, so the selection buttons take their own line in the side panel.
+	filter: { flex: "1 1 220px", minWidth: 0 },
 });
 
 export const BulkUsersArea = () => {
@@ -105,7 +107,7 @@ export const BulkUsersArea = () => {
 			</MessageBar>
 			<Field label="Users">
 				<FormRow>
-					<Grow>
+					<div className={styles.filter}>
 						<TableFilter
 							query={userFilter.query}
 							onChange={userFilter.setQuery}
@@ -114,7 +116,7 @@ export const BulkUsersArea = () => {
 							placeholder="Search users"
 							label="Search users by name or sign-in name"
 						/>
-					</Grow>
+					</div>
 					<Button
 						appearance="subtle"
 						disabled={userFilter.filtered.length === 0}
@@ -165,7 +167,7 @@ export const BulkUsersArea = () => {
 			</Field>
 			<Field label="Security roles" hint="Listed once per role. A change applies to the root business unit copy and follows its inherited copies.">
 				<FormRow>
-					<Grow>
+					<div className={styles.filter}>
 						<TableFilter
 							query={roleFilter.query}
 							onChange={roleFilter.setQuery}
@@ -173,7 +175,7 @@ export const BulkUsersArea = () => {
 							total={roleFilter.total}
 							placeholder="Search roles"
 						/>
-					</Grow>
+					</div>
 				</FormRow>
 				<DataTable
 					items={roleFilter.filtered}

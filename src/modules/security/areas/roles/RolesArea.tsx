@@ -15,6 +15,9 @@ import { resolveBusinessUnitId, rolesViewModel } from "../../lib";
 import { useSecurityStore } from "../../store";
 
 const useStyles = makeStyles({
+	area: {
+		containerType: "inline-size",
+	},
 	body: {
 		display: "grid",
 		gridTemplateColumns: "minmax(0, 2fr) minmax(200px, 1fr)",
@@ -22,6 +25,11 @@ const useStyles = makeStyles({
 		gap: "12px",
 		flex: 1,
 		minHeight: "200px",
+		// The pending list needs 200px of its own, which leaves the role table too little.
+		"@container (max-width: 560px)": {
+			gridTemplateColumns: "minmax(0, 1fr)",
+			gridTemplateRows: "minmax(160px, 1fr) auto",
+		},
 	},
 	caption: {
 		color: tokens.colorNeutralForeground3,
@@ -234,7 +242,7 @@ export const RolesArea = () => {
 					</MenuPopover>
 				</Menu>
 			}>
-			<AreaContainer fill>
+			<AreaContainer fill className={styles.area}>
 				<FormRow>
 					<Grow>
 						<ConnectionPicker

@@ -26,6 +26,7 @@ const useStyles = makeStyles({
 		flexDirection: "column",
 		gap: "8px",
 		minHeight: 0,
+		minWidth: 0,
 	},
 	fill: {
 		flex: 1,
@@ -36,6 +37,7 @@ const useStyles = makeStyles({
 	},
 	scroller: {
 		overflow: "auto",
+		minWidth: 0,
 		border: `1px solid ${tokens.colorNeutralStroke2}`,
 		borderRadius: tokens.borderRadiusMedium,
 		backgroundColor: tokens.colorNeutralBackground1,

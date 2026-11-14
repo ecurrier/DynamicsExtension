@@ -9,6 +9,11 @@ import { describeCounts, formatTimestamp, packageCounts, type PackageTypeRow, pa
 
 export const PACKAGE_GRID = "minmax(160px, 2fr) 72px 150px minmax(80px, 1fr)";
 
+/** The four columns need 486px before padding, so they pair up in the side panel. */
+export const PACKAGE_GRID_NARROW = "minmax(0, 1fr) auto";
+
+export const PACKAGE_GRID_BREAKPOINT = "@container (max-width: 560px)";
+
 const useStyles = makeStyles({
 	row: {
 		display: "flex",
@@ -33,6 +38,10 @@ const useStyles = makeStyles({
 		alignItems: "center",
 		width: "100%",
 		minWidth: 0,
+		[PACKAGE_GRID_BREAKPOINT]: {
+			gridTemplateColumns: PACKAGE_GRID_NARROW,
+			rowGap: "2px",
+		},
 	},
 	cell: {
 		overflow: "hidden",

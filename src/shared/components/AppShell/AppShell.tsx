@@ -67,9 +67,12 @@ const useStyles = makeStyles({
 			flexBasis: "100%",
 			order: 1,
 			paddingBottom: "8px",
+			minWidth: 0,
 		},
-		flex: "100 1 240px",
-		minWidth: 0,
+		flex: "100 1 300px",
+		// A floor, so the pressure falls on the breadcrumb, which truncates, instead of on the
+		// search field, which has nowhere to go.
+		minWidth: "320px",
 		gap: "8px",
 		rowGap: "4px",
 		paddingBlock: "4px",

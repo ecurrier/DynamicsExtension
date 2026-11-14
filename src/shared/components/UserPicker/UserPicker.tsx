@@ -8,6 +8,19 @@ import { FormRow, Grow } from "../Layout";
 import { TextBadge } from "../TextBadge";
 
 const useStyles = makeStyles({
+	// A basis rather than zero, so the two halves wrap onto their own lines in the side panel
+	// instead of squeezing a Fluent control below the width it will take.
+	search: {
+		display: "flex",
+		alignItems: "flex-end",
+		gap: "8px",
+		flex: "1 1 260px",
+		minWidth: 0,
+	},
+	picked: {
+		flex: "1 1 200px",
+		minWidth: 0,
+	},
 	option: {
 		display: "flex",
 		alignItems: "center",
@@ -42,25 +55,27 @@ export const UserPicker = ({ users, selectedUser, searching, label = "Username /
 	};
 	return (
 		<FormRow>
-			<Grow>
-				<Field label={label}>
-					<Input
-						value={query}
-						placeholder="Search users..."
-						contentBefore={<Search20Regular />}
-						onChange={(_, data) => setQuery(data.value)}
-						onKeyDown={(event) => {
-							if (event.key === "Enter") {
-								submit();
-							}
-						}}
-					/>
-				</Field>
-			</Grow>
-			<Button disabled={searching || !query.trim()} onClick={submit}>
-				{searching ? "Searching..." : "Search"}
-			</Button>
-			<Grow>
+			<div className={styles.search}>
+				<Grow>
+					<Field label={label}>
+						<Input
+							value={query}
+							placeholder="Search users..."
+							contentBefore={<Search20Regular />}
+							onChange={(_, data) => setQuery(data.value)}
+							onKeyDown={(event) => {
+								if (event.key === "Enter") {
+									submit();
+								}
+							}}
+						/>
+					</Field>
+				</Grow>
+				<Button disabled={searching || !query.trim()} onClick={submit}>
+					{searching ? "Searching..." : "Search"}
+				</Button>
+			</div>
+			<div className={styles.picked}>
 				<Field label="System User">
 					<Dropdown
 						placeholder="Select a user..."
@@ -88,7 +103,7 @@ export const UserPicker = ({ users, selectedUser, searching, label = "Username /
 						))}
 					</Dropdown>
 				</Field>
-			</Grow>
+			</div>
 		</FormRow>
 	);
 };

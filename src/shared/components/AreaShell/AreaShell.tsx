@@ -23,7 +23,9 @@ const useStyles = makeStyles({
 	actions: {
 		display: "flex",
 		alignItems: "center",
-		flexShrink: 0,
+		// It gives way before the search does, so a wide action never pushes the field to nothing.
+		flexShrink: 1,
+		minWidth: 0,
 		gap: "4px",
 	},
 });

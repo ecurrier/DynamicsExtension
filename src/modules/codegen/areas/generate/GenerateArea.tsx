@@ -29,6 +29,15 @@ import { generate, type GenerationSource, localChoicesOf, resolveSettings } from
 import { useCodegenStore } from "../../store";
 
 const useStyles = makeStyles({
+	// A basis, so the switch and the settings take their own line in the side panel.
+	field: {
+		flex: "1 1 240px",
+		minWidth: 0,
+	},
+	setting: {
+		flex: "1 1 200px",
+		minWidth: 0,
+	},
 	fileName: {
 		fontFamily: tokens.fontFamilyMonospace,
 		color: tokens.colorNeutralForeground3,
@@ -121,7 +130,7 @@ export const GenerateArea = () => {
 					</Field>
 				) : null}
 				<FormRow>
-					<Grow>
+					<div className={styles.field}>
 						<Field label="Template">
 							<Dropdown
 								placeholder="Select a template..."
@@ -135,7 +144,7 @@ export const GenerateArea = () => {
 								))}
 							</Dropdown>
 						</Field>
-					</Grow>
+					</div>
 					{kind === "table" ? (
 						<Switch label="Show system columns" checked={includeSystemColumns} onChange={(_, data) => setIncludeSystemColumns(data.checked)} />
 					) : null}
@@ -143,7 +152,7 @@ export const GenerateArea = () => {
 				{template && template.settings.length > 0 ? (
 					<FormRow>
 						{template.settings.map((setting) => (
-							<Grow key={setting.key}>
+							<div className={styles.setting} key={setting.key}>
 								<SettingCombobox
 									label={setting.label}
 									value={settings[setting.key] ?? ""}
@@ -155,7 +164,7 @@ export const GenerateArea = () => {
 									onCommit={(value) => void preferences.remember(setting.key, value)}
 									onForget={(value) => void preferences.forget(setting.key, value)}
 								/>
-							</Grow>
+							</div>
 						))}
 					</FormRow>
 				) : null}

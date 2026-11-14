@@ -10,7 +10,7 @@ import { useSessionStore } from "@/shared/stores";
 import { type PluginPackage } from "@/shared/types";
 
 import { PackageLayerBadge, PackageLayersLine } from "./PackageLayers";
-import { PACKAGE_GRID, PackageRow } from "./PackageRow";
+import { PACKAGE_GRID, PACKAGE_GRID_BREAKPOINT, PACKAGE_GRID_NARROW, PackageRow } from "./PackageRow";
 import { UpdatePackageDialog, type UpdatePackageTarget } from "./UpdatePackageDialog";
 import { usePluginPackagesGateway, usePluginsConnection } from "../../hooks";
 import { packageMatches } from "../../lib";
@@ -21,6 +21,8 @@ const useStyles = makeStyles({
 		color: tokens.colorNeutralForeground3,
 	},
 	list: {
+		// The package rows read their own width, not the viewport's (ADR 0002).
+		containerType: "inline-size",
 		flex: 1,
 		minHeight: "160px",
 		overflow: "auto",
@@ -51,6 +53,9 @@ const useStyles = makeStyles({
 		gap: "8px",
 		flex: 1,
 		minWidth: 0,
+		[PACKAGE_GRID_BREAKPOINT]: {
+			gridTemplateColumns: PACKAGE_GRID_NARROW,
+		},
 	},
 	labelSpacer: {
 		width: "84px",
