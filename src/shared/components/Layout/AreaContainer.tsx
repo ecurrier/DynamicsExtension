@@ -9,7 +9,9 @@ const useStyles = makeStyles({
 		padding: "16px",
 	},
 	fill: {
-		height: "100%",
+		// A minimum, not a height: with a height the container stops at the fold and its bottom
+		// padding sits above content that scrolls past it, so the last control met the page edge.
+		minHeight: "100%",
 		boxSizing: "border-box",
 	},
 	grow: {

@@ -8,6 +8,9 @@ const useStyles = makeStyles({
 	root: {
 		flex: 1,
 		minWidth: 0,
+		// A column-direction parent reads flex-grow on the vertical axis, which stretched the field
+		// to the height of the list below it. It is 32px tall at every size we use.
+		maxHeight: "32px",
 	},
 	after: {
 		display: "inline-flex",

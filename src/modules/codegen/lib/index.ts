@@ -1,3 +1,4 @@
+export * from "./choiceSearch";
 export * from "./choiceView";
 export * from "./engine";
 export * from "./generate";

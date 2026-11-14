@@ -1,31 +1,28 @@
-import { makeStyles } from "@fluentui/react-components";
+import { makeStyles, tokens } from "@fluentui/react-components";
 import { type ReactNode } from "react";
-import { createPortal } from "react-dom";
-
-import { useAreaShellSlot } from "./slot";
 
 const useStyles = makeStyles({
-	/** Only used when there is no shell to render into, so the row is never lost. */
-	fallback: {
+	row: {
 		display: "flex",
 		alignItems: "center",
 		flexWrap: "wrap",
 		gap: "8px",
-		padding: "8px 16px 0",
+		rowGap: "8px",
+		flexShrink: 0,
+		padding: "12px 16px 0",
+		backgroundColor: tokens.colorNeutralBackground2,
 	},
 	search: {
 		display: "flex",
 		alignItems: "center",
 		gap: "8px",
-		flex: "1 1 140px",
+		flex: "1 1 220px",
 		minWidth: 0,
 	},
 	actions: {
 		display: "flex",
 		alignItems: "center",
-		// It gives way before the search does, so a wide action never pushes the field to nothing.
-		flexShrink: 1,
-		minWidth: 0,
+		flexShrink: 0,
 		gap: "4px",
 	},
 });
@@ -43,27 +40,27 @@ export interface AreaShellProps {
 }
 
 /**
- * The chrome every Area renders inside. It owns the toolbar row and gives an Area no other place to
- * put one, which is why the placement holds. An empty slot renders nothing and costs no height, so
- * the Areas with nothing to put in the row show no row.
+ * The chrome every Area renders inside. It owns the toolbar row, at the top of the Area's own page
+ * rather than in the app header: a form control belongs on the page it works on, and the header has
+ * too little room to hold one without squeezing its labels. An Area has no other place to put a
+ * toolbar, which is why the placement holds.
  *
- * A tab bar is not a toolbar: an Area with tabs passes them in `children`, below the row.
+ * An empty row renders nothing and costs no height, so the Areas with nothing to put in it show no
+ * row. A tab bar is not a toolbar: an Area with tabs passes them in `children`, below the row.
  */
 export const AreaShell = ({ search, filters, actions, primaryAction, children }: AreaShellProps) => {
 	const styles = useStyles();
-	const slot = useAreaShellSlot();
-	const row =
-		search === undefined && filters === undefined && actions === undefined && primaryAction === undefined ? null : (
-			<>
+	if (search === undefined && filters === undefined && actions === undefined && primaryAction === undefined) {
+		return <>{children}</>;
+	}
+	return (
+		<>
+			<div className={styles.row}>
 				{search === undefined ? null : <div className={styles.search}>{search}</div>}
 				{filters}
 				{actions === undefined ? null : <div className={styles.actions}>{actions}</div>}
 				{primaryAction}
-			</>
-		);
-	return (
-		<>
-			{row === null ? null : slot ? createPortal(row, slot) : <div className={styles.fallback}>{row}</div>}
+			</div>
 			{children}
 		</>
 	);

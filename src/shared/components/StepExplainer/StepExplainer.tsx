@@ -10,7 +10,7 @@ const useStyles = makeStyles({
 	steps: {
 		display: "grid",
 		// Follows the length of the list, and the width it is given.
-		gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+		gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
 		columnGap: tokens.spacingHorizontalXL,
 		rowGap: tokens.spacingVerticalL,
 		margin: 0,

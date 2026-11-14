@@ -6,7 +6,6 @@ import {
 	MessageBar,
 	MessageBarBody,
 	Option,
-	OptionGroup,
 	Spinner,
 	Switch,
 	Tab,
@@ -20,8 +19,9 @@ import { useEffect, useMemo } from "react";
 import { usePageQuery } from "@/messaging/client";
 import { AreaContainer, CodeBlock, CopyButton, FormRow, FormStack, Grow } from "@/shared/components";
 import { downloadTextFile } from "@/shared/lib";
-import { type CodegenChoice, type TemplateKind } from "@/shared/types";
+import { type TemplateKind } from "@/shared/types";
 
+import { ChoiceCombobox } from "./ChoiceCombobox";
 import { SettingCombobox } from "./SettingCombobox";
 import { TableCombobox } from "./TableCombobox";
 import { useCodegenPreferences, useCodeTemplates, useGlobalChoices, useTableModel } from "../../hooks";
@@ -43,8 +43,6 @@ const useStyles = makeStyles({
 		color: tokens.colorNeutralForeground3,
 	},
 });
-
-const choiceLabel = (choice: CodegenChoice): string => (choice.isGlobal ? `${choice.displayName} (global)` : choice.displayName);
 
 export const GenerateArea = () => {
 	const styles = useStyles();
@@ -104,30 +102,7 @@ export const GenerateArea = () => {
 				</TabList>
 				<TableCombobox value={tableLogicalName} pageTable={pageTable} onChange={setTable} />
 				{kind === "choice" ? (
-					<Field label="Choice">
-						<Dropdown
-							placeholder={loading ? "Loading choices..." : "Select a choice..."}
-							value={choice ? choiceLabel(choice) : ""}
-							selectedOptions={choice ? [choice.name] : []}
-							onOptionSelect={(_, data) => data.optionValue && setChoice(data.optionValue)}>
-							{localChoices.length > 0 ? (
-								<OptionGroup label="This table">
-									{localChoices.map((candidate) => (
-										<Option key={candidate.name} value={candidate.name} text={choiceLabel(candidate)}>
-											{candidate.displayName}
-										</Option>
-									))}
-								</OptionGroup>
-							) : null}
-							<OptionGroup label="Global">
-								{(globals.data ?? []).map((candidate) => (
-									<Option key={candidate.name} value={candidate.name} text={choiceLabel(candidate)}>
-										{candidate.displayName}
-									</Option>
-								))}
-							</OptionGroup>
-						</Dropdown>
-					</Field>
+					<ChoiceCombobox value={choice} local={localChoices} global={globals.data ?? []} loading={loading} onChange={setChoice} />
 				) : null}
 				<FormRow>
 					<div className={styles.field}>

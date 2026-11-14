@@ -49,7 +49,7 @@ The condition an Area states about the active tab before it will render.
 _Avoid_: Gate, guard, precondition
 
 **Area shell**:
-The shared chrome every Area renders inside. It owns the one toolbar row, which it renders into the row the app shell already draws, and takes named slots: search, filters, actions, and at most one primary action. An Area has nowhere else to put a toolbar.
+The shared chrome every Area renders inside. It owns the one toolbar row, at the top of the Area's own page, and takes named slots: search, filters, actions, and at most one primary action. An Area has nowhere else to put a toolbar. The row is on the page rather than in the app header, because a form control belongs on the page it works on and the header has too little room to hold one without squeezing its labels.
 _Avoid_: Toolbar, header, command bar, action bar
 
 **Width tier**:
