@@ -14,6 +14,8 @@ import {
 	PageRequirementGate,
 	SearchField,
 	useBanner,
+	type ExplainerStep,
+	StepExplainer,
 } from "@/shared/components";
 import { type EntitySummary } from "@/shared/types";
 
@@ -21,6 +23,12 @@ import { InvestigateConnection } from "../../components";
 import { useInvestigateGateway } from "../../hooks";
 import { type CountRow, recordCountsViewModel } from "../../lib";
 import { useInvestigateStore } from "../../store";
+
+const ROW_COUNT_STEPS: ExplainerStep[] = [
+	{ title: "Load the counts", text: "One call reads every table in the environment." },
+	{ title: "Sort and search", text: "The biggest tables first, or search for the one you are about to copy." },
+	{ title: "Read as sizing", text: "The counts come from a platform snapshot taken within the last 24 hours, not a live query." },
+];
 
 const useStyles = makeStyles({
 	caption: {
@@ -89,9 +97,7 @@ export const RecordCountsArea = () => {
 		<FormStack fill>
 			{tables.isError ? <EmptyState intent="error" title={tables.error.message} /> : null}
 			{model.rows.length === 0 ? (
-				<EmptyState intent="info" title="Load row counts to see what is actually big in this environment.">
-					The platform returns these from a snapshot taken within the last 24 hours, so a row you created a moment ago will not be reflected yet.
-				</EmptyState>
+				<StepExplainer steps={ROW_COUNT_STEPS} />
 			) : (
 				<>
 					<DataTable
@@ -117,7 +123,9 @@ export const RecordCountsArea = () => {
 
 	return (
 		<AreaShell
-			search={<SearchField value={filter} onChange={setFilter} placeholder="Search tables" aria-label="Search tables" disabled={model.rows.length === 0} />}
+			search={
+				<SearchField value={filter} onChange={setFilter} placeholder="Search tables" aria-label="Search tables" disabled={model.rows.length === 0} />
+			}
 			primaryAction={
 				<Button
 					appearance="primary"

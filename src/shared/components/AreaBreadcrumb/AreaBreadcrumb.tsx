@@ -9,10 +9,11 @@ import {
 	MenuList,
 	MenuPopover,
 	MenuTrigger,
-	Tooltip,
 } from "@fluentui/react-components";
-import { ChevronDown12Regular, Info16Regular } from "@fluentui/react-icons";
+import { ChevronDown12Regular } from "@fluentui/react-icons";
 import { Fragment } from "react";
+
+import { InfoTip } from "../InfoTip";
 
 const useStyles = makeStyles({
 	list: {
@@ -101,9 +102,7 @@ export const AreaBreadcrumb = ({ path, tooltip, areas, currentAreaId, onNavigate
 			})}
 			{tooltip ? (
 				<BreadcrumbItem className={styles.fixed}>
-					<Tooltip content={tooltip} relationship="description">
-						<Info16Regular aria-label="Area description" />
-					</Tooltip>
+					<InfoTip content={tooltip} />
 				</BreadcrumbItem>
 			) : null}
 		</Breadcrumb>

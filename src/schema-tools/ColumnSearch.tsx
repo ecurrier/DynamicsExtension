@@ -1,27 +1,11 @@
-import {
-	Badge,
-	Button,
-	Checkbox,
-	Input,
-	Label,
-	makeStyles,
-	mergeClasses,
-	MessageBar,
-	MessageBarBody,
-	Popover,
-	PopoverSurface,
-	PopoverTrigger,
-	Text,
-	tokens,
-	useId,
-} from "@fluentui/react-components";
-import { Info20Regular, Search24Regular } from "@fluentui/react-icons";
+import { Button, Checkbox, Input, Label, makeStyles, MessageBar, MessageBarBody, Text, tokens, useId } from "@fluentui/react-components";
+import { Search24Regular } from "@fluentui/react-icons";
 import { type KeyboardEvent } from "react";
 
-import { SearchField } from "@/shared/components";
+import { type ExplainerStep, SearchField, StepExplainer, StepExplainerButton } from "@/shared/components";
 import { describeError } from "@/shared/lib";
 
-const STEPS = [
+export const COLUMN_SEARCH_STEPS: ExplainerStep[] = [
 	{ title: "Find", text: "Every table carrying the column, with its current label, type, and requirement level side by side." },
 	{
 		title: "Pick and set",
@@ -83,27 +67,6 @@ const useStyles = makeStyles({
 	muted: {
 		color: tokens.colorNeutralForeground3,
 	},
-	steps: {
-		display: "grid",
-		gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-		columnGap: tokens.spacingHorizontalXL,
-		rowGap: tokens.spacingVerticalL,
-		margin: 0,
-		padding: 0,
-		listStyleType: "none",
-	},
-	stacked: {
-		gridTemplateColumns: "minmax(0, 1fr)",
-	},
-	step: {
-		display: "flex",
-		flexDirection: "column",
-		alignItems: "flex-start",
-		rowGap: tokens.spacingVerticalXS,
-	},
-	stepTitle: {
-		marginTop: tokens.spacingVerticalXS,
-	},
 	bar: {
 		display: "flex",
 		flexWrap: "wrap",
@@ -118,9 +81,6 @@ const useStyles = makeStyles({
 	spacer: {
 		flexGrow: 1,
 	},
-	popover: {
-		width: "300px",
-	},
 });
 
 export interface ColumnSearchProps {
@@ -133,31 +93,6 @@ export interface ColumnSearchProps {
 	disabled: boolean;
 	error: Error | null;
 }
-
-interface HowItWorksProps {
-	stacked?: boolean;
-}
-
-export const HowItWorks = ({ stacked = false }: HowItWorksProps) => {
-	const styles = useStyles();
-	return (
-		<ol className={mergeClasses(styles.steps, stacked && styles.stacked)}>
-			{STEPS.map((step, index) => (
-				<li key={step.title} className={styles.step}>
-					<Badge appearance="tint" color="brand" shape="circular" size="large">
-						{index + 1}
-					</Badge>
-					<Text weight="semibold" className={styles.stepTitle}>
-						{step.title}
-					</Text>
-					<Text size={200} className={styles.muted}>
-						{step.text}
-					</Text>
-				</li>
-			))}
-		</ol>
-	);
-};
 
 const onEnter = (action: () => void) => (event: KeyboardEvent<HTMLInputElement>) => {
 	if (event.key === "Enter") {
@@ -217,7 +152,7 @@ export const ColumnSearchStart = ({ query, onQueryChange, customOnly, onCustomOn
 					</div>
 					<SearchError error={error} />
 				</div>
-				<HowItWorks />
+				<StepExplainer steps={COLUMN_SEARCH_STEPS} />
 			</div>
 		</div>
 	);
@@ -241,16 +176,7 @@ export const ColumnSearchBar = ({ query, onQueryChange, customOnly, onCustomOnly
 					{finding ? "Finding..." : "Find tables"}
 				</Button>
 				<div className={styles.spacer} />
-				<Popover positioning="below-end" withArrow>
-					<PopoverTrigger disableButtonEnhancement>
-						<Button appearance="subtle" icon={<Info20Regular />}>
-							How it works
-						</Button>
-					</PopoverTrigger>
-					<PopoverSurface className={styles.popover} aria-label="How Cross-Table Columns works">
-						<HowItWorks stacked />
-					</PopoverSurface>
-				</Popover>
+				<StepExplainerButton steps={COLUMN_SEARCH_STEPS} label="How Cross-Table Columns works" />
 			</div>
 			<SearchError error={error} />
 		</>

@@ -1,8 +1,8 @@
-import { Button, Dropdown, Field, makeStyles, MessageBar, MessageBarBody, MessageBarTitle, Option, Text, tokens } from "@fluentui/react-components";
+import { Button, Dropdown, Field, makeStyles, MessageBar, MessageBarBody, Option, Text, tokens } from "@fluentui/react-components";
 import { ArrowRight20Regular, PlugConnected20Regular } from "@fluentui/react-icons";
 import { useState } from "react";
 
-import { FormRow, FormStack, Grow, TextBadge, useAppToast } from "@/shared/components";
+import { type ExplainerStep, FormRow, FormStack, Grow, StepExplainer, TextBadge, useAppToast } from "@/shared/components";
 import { getEnvironmentHttp, PAGE_CONNECTION, requestEnvironmentAccess } from "@/shared/connections";
 import { useAsyncAction } from "@/shared/hooks";
 import { findEnvironmentByOrigin, whoAmI } from "@/shared/lib";
@@ -12,6 +12,13 @@ import { type TransporterLaunch } from "@/shared/types";
 import { useTransporterStore } from "../store";
 
 const PAGE_OPTION = "__page__";
+
+const TRANSPORTER_STEPS: ExplainerStep[] = [
+	{ title: "Connect", text: "A source to read from, this page or a saved environment, and a target to write to through its service principal." },
+	{ title: "Query", text: "Pick the table and a view, or write the FetchXML yourself, and retrieve the rows." },
+	{ title: "Plan", text: "Rows are matched to the target by primary key, so you see what would be created, updated or deleted before anything runs." },
+	{ title: "Run", text: "Ids stay the same in both environments, so the rows a lookup points at must already be in the target." },
+];
 
 const useStyles = makeStyles({
 	hint: {
@@ -61,13 +68,7 @@ export const ConnectionsStep = ({ launch, pageAvailable, environments }: Connect
 
 	return (
 		<FormStack>
-			<MessageBar intent="info" layout="multiline">
-				<MessageBarBody>
-					<MessageBarTitle>How it works</MessageBarTitle>
-					Records are read from the source with a view or FetchXML, matched to the target by primary key, then created, updated, or deleted in the
-					target through its service principal. Lookups keep their ids, so the records they point to must already exist in the target.
-				</MessageBarBody>
-			</MessageBar>
+			<StepExplainer steps={TRANSPORTER_STEPS} />
 			{launch.tabId !== null && !pageAvailable ? (
 				<MessageBar intent="warning">
 					<MessageBarBody>

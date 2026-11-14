@@ -16,7 +16,9 @@ import {
 	tokens,
 } from "@fluentui/react-components";
 import { ChevronLeft20Regular, ChevronRight20Regular } from "@fluentui/react-icons";
-import { type ReactNode, useMemo, useState } from "react";
+import { type KeyboardEvent as ReactKeyboardEvent, type ReactNode, useMemo, useState } from "react";
+
+import { rowKeyAction } from "./rowKeys";
 
 const useStyles = makeStyles({
 	root: {
@@ -198,7 +200,19 @@ export const DataTable = <T,>({
 								className={rowClassName?.(item.item)}
 								style={onRowClick ? { cursor: "pointer" } : undefined}
 								selectionCell={selectionMode ? { checkboxIndicator: { "aria-label": "Select row" } } : undefined}
-								onClick={onRowClick ? () => onRowClick(item.item) : undefined}>
+								onClick={onRowClick ? () => onRowClick(item.item) : undefined}
+								onKeyDown={
+									onRowClick
+										? (event: ReactKeyboardEvent<HTMLDivElement>) => {
+												// Only the row itself: a key pressed in a control inside a cell belongs to that control.
+												if (event.target !== event.currentTarget || rowKeyAction(event.key, selectionMode !== undefined) !== "open") {
+													return;
+												}
+												event.preventDefault();
+												onRowClick(item.item);
+											}
+										: undefined
+								}>
 								{({ renderCell }) => <DataGridCell className={styles.cell}>{renderCell(item)}</DataGridCell>}
 							</DataGridRow>
 						)}

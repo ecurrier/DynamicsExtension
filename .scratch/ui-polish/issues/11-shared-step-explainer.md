@@ -1,6 +1,6 @@
 # Shared step explainer
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 
 See `../spec.md`, decision 8.
@@ -15,3 +15,12 @@ See `../spec.md`, decision 8.
 - "Niche" is not the rule and must not become it. The rule is "this Area is empty on arrival", because a reviewer can check that and cannot check niche.
 
 Blocked by: 07
+
+## Answer
+
+- `src/shared/components/StepExplainer` holds `StepExplainer` (the numbered display) and `StepExplainerButton` (the subtle "How it works" button with the stacked steps in a popover).
+- The grid is `repeat(auto-fit, minmax(200px, 1fr))`, so the column count follows the length of the list and the width it is given. The old rule hard-coded three columns whatever the list held.
+- The steps stay beside the Area that owns them: `COLUMN_SEARCH_STEPS`, `POLYMORPHIC_STEPS`, `TRANSPORTER_STEPS`, `ROLE_COMPARE_STEPS`, `PRIVILEGE_EDITOR_STEPS`, `ACCESS_STEPS`, `COLUMN_USAGE_STEPS`, `ROW_COUNT_STEPS`. Only the rendering is shared.
+- Given to every Area that shows nothing until the user picks something: Polymorphic Lookups (which had two prose paragraphs), the Data Transporter (which had a "How it works" `MessageBar`), Role Compare, the Privilege Editor, Record Access, Column Usage and Row Counts. Cross-Table Columns keeps both of its renderings on the shared component.
+- Role Compare shows the full-size steps until two roles are picked, then collapses to the button, which is the behaviour Cross-Table Columns already had.
+- There is no stored preference. The state follows the work, so the explainer comes back by itself on an empty screen.

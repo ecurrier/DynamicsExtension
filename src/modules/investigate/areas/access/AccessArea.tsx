@@ -31,8 +31,11 @@ import {
 	PageRequirementGate,
 	useAppToast,
 	UserPicker,
+	type ExplainerStep,
+	StepExplainer,
+	TextBadge,
+	useBanner,
 } from "@/shared/components";
-import { TextBadge, useBanner } from "@/shared/components";
 import { isGuid } from "@/shared/lib";
 import { type AccessPrivilege, type AccessRole, type AccessShare, type AccessTeam, type SystemUser } from "@/shared/types";
 
@@ -40,6 +43,12 @@ import { InvestigateConnection, TablePicker } from "../../components";
 import { useInvestigateGateway, usePageTarget } from "../../hooks";
 import { accessReasons, accessSummary, describeRights } from "../../lib";
 import { useInvestigateStore } from "../../store";
+
+const ACCESS_STEPS: ExplainerStep[] = [
+	{ title: "Pick the record", text: "The table and the record id. The open form fills both in for you." },
+	{ title: "Pick the user", text: "Search by name or sign-in name. Teams and roles come with them." },
+	{ title: "Read the answer", text: "What the platform actually grants, with the privileges and the shares that gave it." },
+];
 
 const useStyles = makeStyles({
 	caption: {
@@ -288,9 +297,7 @@ export const AccessArea = () => {
 					</FillAccordion>
 				</>
 			) : (
-				<Text size={200} className={styles.caption}>
-					Pick a table, a record, and a user, then check what the platform actually grants them.
-				</Text>
+				<StepExplainer steps={ACCESS_STEPS} />
 			)}
 		</FormStack>
 	);

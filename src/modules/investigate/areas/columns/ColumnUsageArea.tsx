@@ -16,8 +16,11 @@ import {
 	Grow,
 	InfoTip,
 	PageRequirementGate,
+	type ExplainerStep,
+	StepExplainer,
+	TextBadge,
+	useBanner,
 } from "@/shared/components";
-import { TextBadge, useBanner } from "@/shared/components";
 import { type DependentComponent, type FlowReference, type StepReference, type TransportAttribute } from "@/shared/types";
 
 import { InvestigateConnection, TablePicker } from "../../components";
@@ -25,6 +28,12 @@ import { useInvestigateGateway } from "../../hooks";
 import { useInvestigateStore } from "../../store";
 
 const MAX_OPTIONS = 60;
+
+const COLUMN_USAGE_STEPS: ExplainerStep[] = [
+	{ title: "Pick the column", text: "Choose its table first, then the column you are about to change or retire." },
+	{ title: "Scan", text: "Forms, views, charts, business rules and plug-in steps. Cloud flows are a separate switch, because they take longer to read." },
+	{ title: "Read before you change", text: "Everything that touches the column, in one list, so nothing breaks unseen." },
+];
 
 const useStyles = makeStyles({
 	caption: {
@@ -191,9 +200,7 @@ export const ColumnUsageArea = () => {
 				</Button>
 			</FormRow>
 			{!result ? (
-				<Text size={200} className={styles.caption}>
-					Pick a column to see every form, view, chart, business rule, plug-in step, and cloud flow that touches it before you change or retire it.
-				</Text>
+				<StepExplainer steps={COLUMN_USAGE_STEPS} />
 			) : (
 				<FillAccordion collapsible multiple defaultOpenItems={["dependents", "flows"]}>
 					<FillAccordionItem value="dependents">

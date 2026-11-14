@@ -26,7 +26,7 @@ import { type AreaDefinition, type ModuleDefinition } from "@/modules/types";
 import { Keycap } from "./Keycap";
 import { EMPTY_NAV_SEARCH, searchNav } from "./navSearch";
 import { NavSearchResults } from "./NavSearchResults";
-import { isNavSearchShortcut, NAV_SEARCH_KEYSHORTCUTS, NAV_SEARCH_SHORTCUT } from "./navShortcut";
+import { isNavSearchShortcut, isTypingTarget, NAV_SEARCH_KEYSHORTCUTS, NAV_SEARCH_SHORTCUT } from "./navShortcut";
 
 const RECENT_PREFIX = "recent:";
 const RECENT_LIMIT = 3;
@@ -306,7 +306,8 @@ export const AppNavDrawer = ({ modules, open, selectedAreaId, recentAreaIds, onO
 
 	useEffect(() => {
 		const onKeyDown = (event: globalThis.KeyboardEvent) => {
-			if (!isNavSearchShortcut(event)) {
+			// Not while the user is typing: the handler used to take Ctrl+K from every text field.
+			if (!isNavSearchShortcut(event) || isTypingTarget(event.target)) {
 				return;
 			}
 			event.preventDefault();

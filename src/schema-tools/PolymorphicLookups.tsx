@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
 import { usePageQuery } from "@/messaging/client";
-import { useAppToast, useBanner, useConfirm } from "@/shared/components";
+import { type ExplainerStep, StepExplainer, useAppToast, useBanner, useConfirm } from "@/shared/components";
 import { type PolymorphicLookup, type PolymorphicTarget } from "@/shared/types";
 
 import { LookupDetail } from "./LookupDetail";
@@ -13,6 +13,12 @@ import { type NewLookupDraft, NewLookupForm } from "./NewLookupForm";
 import { usePanelStyles } from "./panelStyles";
 import { type SchemaSolution } from "./useSchemaSolution";
 import { type SchemaGateway } from "./useSchemaToolsBootstrap";
+
+const POLYMORPHIC_STEPS: ExplainerStep[] = [
+	{ title: "Choose a table", text: "The table that holds the lookup column, or will hold the new one." },
+	{ title: "Pick a lookup", text: "Its target tables are listed. Add a target, or remove one that is no longer wanted." },
+	{ title: "Or create one", text: "Name the column, choose the tables it may point at, and it is created in the solution you picked." },
+];
 
 const useStyles = makeStyles({
 	container: {
@@ -169,7 +175,7 @@ export const PolymorphicLookups = ({ gateway, solution }: PolymorphicLookupsProp
 							A polymorphic lookup points at a row in any one of several tables. The maker portal can't create or change them, so this is where
 							you do it.
 						</Text>
-						<Text className={panel.muted}>Choose a table to see its lookups, add or remove their target tables, or create a new one.</Text>
+						<StepExplainer steps={POLYMORPHIC_STEPS} />
 					</div>
 				</div>
 			);

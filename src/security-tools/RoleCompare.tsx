@@ -14,11 +14,20 @@ import {
 	TableFilter,
 	useTableFilter,
 	ValueChip,
+	type ExplainerStep,
+	StepExplainer,
+	StepExplainerButton,
 } from "@/shared/components";
 import { dedupeLogicalRoles } from "@/shared/lib";
 import { type LogicalRole } from "@/shared/types";
 
 import { type SecurityToolsGateway } from "./useSecurityToolsBootstrap";
+
+const ROLE_COMPARE_STEPS: ExplainerStep[] = [
+	{ title: "Pick two or more roles", text: "Each role is listed once and compared at its root business unit, not once per copy." },
+	{ title: "Read the matrix", text: "One row per table privilege, one column per role, with the depth each role grants." },
+	{ title: "Narrow it", text: "Differences only hides the rows where the roles agree, which is most of them." },
+];
 
 const useStyles = makeStyles({ caption: { color: tokens.colorNeutralForeground3 } });
 
@@ -81,6 +90,7 @@ export const RoleCompare = ({ gateway }: RoleCompareProps) => {
 
 	return (
 		<>
+			{selected.length < 2 ? <StepExplainer steps={ROLE_COMPARE_STEPS} /> : null}
 			<Field label="Security roles to compare" hint="Pick two or more. Each role is listed once and compared at its root business unit.">
 				<FormRow>
 					<Grow>
@@ -129,6 +139,7 @@ export const RoleCompare = ({ gateway }: RoleCompareProps) => {
 					label="Copy"
 					successMessage="Comparison copied to clipboard"
 				/>
+				{selected.length < 2 ? null : <StepExplainerButton steps={ROLE_COMPARE_STEPS} label="How Role Compare works" />}
 			</FormRow>
 			{shownRows.length > 0 ? (
 				<FormRow>

@@ -15,11 +15,19 @@ import {
 	TableFilter,
 	useTableFilter,
 	ValueChip,
+	type ExplainerStep,
+	StepExplainer,
 } from "@/shared/components";
 import { dedupeLogicalRoles } from "@/shared/lib";
 import { type BulkRunPlan, type LogicalRole, type PrivilegeDepth, PRIVILEGE_DEPTHS } from "@/shared/types";
 
 import { type SecurityToolsGateway } from "./useSecurityToolsBootstrap";
+
+const PRIVILEGE_EDITOR_STEPS: ExplainerStep[] = [
+	{ title: "Pick the roles", text: "Changes apply to the root business unit copy and follow its inherited copies." },
+	{ title: "Pick the privileges", text: "Search by role, table or privilege, and narrow by the depth they have now." },
+	{ title: "Set the depth", text: "Choose the new depth for everything selected, review the plan, then run it." },
+];
 
 const useStyles = makeStyles({ caption: { color: tokens.colorNeutralForeground3 } });
 
@@ -91,6 +99,7 @@ export const PrivilegeEditor = ({ gateway }: PrivilegeEditorProps) => {
 
 	return (
 		<>
+			{selectedRoleIds.length === 0 ? <StepExplainer steps={PRIVILEGE_EDITOR_STEPS} /> : null}
 			<Field label="Security roles" hint="Changes apply to the root business unit copy and follow its inherited copies.">
 				<FormRow>
 					<Grow>

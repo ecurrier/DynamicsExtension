@@ -1,6 +1,6 @@
 # Keyboard baseline
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 
 See `../spec.md`, decision 13. There is no WCAG target. The bar is Tab, a visible focus ring, Escape and Enter.
@@ -16,3 +16,10 @@ Then walk every Area once in the harness: Tab reaches every control, the focus r
 Deliberately not fixed here, and recorded in the spec as known gaps: arrow-key navigation inside tables, a skip link, `main` and heading landmarks, and the 53 `title`-only tooltips.
 
 Blocked by: 08
+
+## Answer
+
+- **Table rows.** `DataTable` answers Enter, and Space when the table has no selection. `rowKeyAction` holds the rule and is unit tested: with `selectionMode` set, Space keeps toggling selection and Enter opens the row, which is what the Trace Viewer needs. The handler ignores a key that came from a control inside a cell, so a button in a row still gets its own keys. Checked in the harness: a row takes focus (`tabindex="0"`), and Enter on the focused row opens the Environment Variables editor.
+- **`InfoTip`.** The trigger is a transparent 20px icon button instead of a bare svg, so the tooltip can be reached by keyboard at all 10 call sites. `AreaBreadcrumb`'s description tip had the same fault and now uses `InfoTip` too.
+- **Ctrl+K.** `isTypingTarget` (unit tested) stops the global handler when the key went to an input, a textarea or a contenteditable element, so the shortcut is no longer taken from every text field. Checked in the harness: in a text field the drawer stays shut, from the page it still opens.
+- Walked every Area in the harness with an automatic check: every button, input, select, combobox and switch has an accessible name, on all 24. There is no `outline: none`, no `:focus` override and no `tabIndex` in the codebase, so Fluent's focus rings are intact. Escape closes the new `FilterPanel` popover, which is the one panel this work added.
