@@ -1,8 +1,8 @@
-import { Badge, Button, Dropdown, Field, Input, makeStyles, MessageBar, MessageBarBody, Option, Text, Textarea, tokens } from "@fluentui/react-components";
+import { Button, Dropdown, Field, Input, makeStyles, MessageBar, MessageBarBody, Option, Text, Textarea, tokens } from "@fluentui/react-components";
 import { Delete20Regular, Save20Regular } from "@fluentui/react-icons";
 import { useState } from "react";
 
-import { CodeEditor, CopyButton, FormStack } from "@/shared/components";
+import { CodeEditor, CopyButton, FormStack, TextBadge } from "@/shared/components";
 import { ENVIRONMENT_VARIABLE_TYPE_LABELS, type EnvironmentVariable } from "@/shared/types";
 
 import { isEditableType, isTrueValue, normalizeVariableValue, validateVariableValue } from "../../lib";
@@ -97,13 +97,13 @@ export const VariableEditor = ({ variable, saving, onSave, onClear }: VariableEd
 				<Text weight="semibold">{variable.displayName}</Text>
 				<span className={styles.mono}>{variable.schemaName}</span>
 				<CopyButton text={variable.schemaName} iconOnly appearance="subtle" label="Copy schema name" />
-				<Badge appearance="tint" size="small">
+				<TextBadge appearance="tint" size="small">
 					{ENVIRONMENT_VARIABLE_TYPE_LABELS[variable.type]}
-				</Badge>
+				</TextBadge>
 				{variable.isManaged ? (
-					<Badge appearance="tint" size="small" color="informative">
+					<TextBadge appearance="tint" size="small" color="informative">
 						Managed
-					</Badge>
+					</TextBadge>
 				) : null}
 			</div>
 			{variable.description ? (

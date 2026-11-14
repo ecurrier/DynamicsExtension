@@ -1,16 +1,14 @@
-import { Badge } from "@fluentui/react-components";
-
+import { TextBadge } from "../TextBadge";
 import { type ChipColor, chipColor } from "./palettes";
 
 interface ValueChipProps {
 	value: string;
 	palette: Record<string, ChipColor>;
-	title?: string;
 }
 
-export const ValueChip = ({ value, palette, title }: ValueChipProps) =>
+export const ValueChip = ({ value, palette }: ValueChipProps) =>
 	value === "" ? null : (
-		<Badge appearance="tint" size="small" color={chipColor(palette, value)} title={title}>
+		<TextBadge appearance="tint" size="small" color={chipColor(palette, value)}>
 			{value}
-		</Badge>
+		</TextBadge>
 	);

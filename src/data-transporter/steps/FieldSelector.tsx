@@ -1,8 +1,8 @@
-import { Badge, Button, makeStyles, type TableRowId, Text, tokens } from "@fluentui/react-components";
+import { Button, makeStyles, type TableRowId, Text, tokens } from "@fluentui/react-components";
 import { ArrowReset20Regular } from "@fluentui/react-icons";
 import { useMemo } from "react";
 
-import { DataTable, type DataTableColumn, FormRow, Grow } from "@/shared/components";
+import { DataTable, type DataTableColumn, FormRow, Grow, TextBadge } from "@/shared/components";
 import { type TransportAttribute } from "@/shared/types";
 
 import { defaultSelection } from "../lib";
@@ -58,14 +58,14 @@ export const FieldSelector = ({ fields, selected, onChange }: FieldSelectorProps
 				render: (field) => (
 					<span className={styles.flags}>
 						{field.isValidForCreate ? (
-							<Badge appearance="tint" size="small" color="success">
+							<TextBadge appearance="tint" size="small" color="success">
 								Create
-							</Badge>
+							</TextBadge>
 						) : null}
 						{field.isValidForUpdate ? (
-							<Badge appearance="tint" size="small" color="brand">
+							<TextBadge appearance="tint" size="small" color="brand">
 								Update
-							</Badge>
+							</TextBadge>
 						) : null}
 					</span>
 				),

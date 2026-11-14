@@ -11,13 +11,14 @@ const SYNTAX_HINT =
 
 interface TemplateEditorProps {
 	draft: Template;
+	nameProblem?: string;
 	readOnly: boolean;
 	isSample: boolean;
 	generation: Generation;
 	onChange: (draft: Template) => void;
 }
 
-export const TemplateEditor = ({ draft, readOnly, isSample, generation, onChange }: TemplateEditorProps) => {
+export const TemplateEditor = ({ draft, nameProblem, readOnly, isSample, generation, onChange }: TemplateEditorProps) => {
 	const languageLabel = TEMPLATE_LANGUAGES.find((language) => language.value === draft.language)?.label ?? "";
 	return (
 		<FormStack>
@@ -28,7 +29,7 @@ export const TemplateEditor = ({ draft, readOnly, isSample, generation, onChange
 			) : null}
 			<FormRow>
 				<Grow>
-					<Field label="Name" required>
+					<Field label="Name" required validationMessage={nameProblem}>
 						<Input
 							value={draft.name}
 							placeholder="Enter a template name..."

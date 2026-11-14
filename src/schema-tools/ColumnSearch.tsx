@@ -15,9 +15,10 @@ import {
 	tokens,
 	useId,
 } from "@fluentui/react-components";
-import { Info20Regular, Search20Regular, Search24Regular } from "@fluentui/react-icons";
+import { Info20Regular, Search24Regular } from "@fluentui/react-icons";
 import { type KeyboardEvent } from "react";
 
+import { SearchField } from "@/shared/components";
 import { describeError } from "@/shared/lib";
 
 const STEPS = [
@@ -227,13 +228,12 @@ export const ColumnSearchBar = ({ query, onQueryChange, customOnly, onCustomOnly
 	return (
 		<>
 			<div className={styles.bar}>
-				<Input
+				<SearchField
 					className={styles.barInput}
 					aria-label="Column logical name"
-					contentBefore={<Search20Regular />}
-					placeholder="new_region"
+					placeholder="Search for a column, such as new_region"
 					value={query}
-					onChange={(_, data) => onQueryChange(data.value)}
+					onChange={onQueryChange}
 					onKeyDown={onEnter(onFind)}
 				/>
 				<Checkbox label="Custom tables only" checked={customOnly} onChange={(_, data) => onCustomOnlyChange(data.checked === true)} />

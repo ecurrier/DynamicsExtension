@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { usePageQuery } from "@/messaging/client";
 import { useSchemaGateway } from "@/modules/schema/hooks";
-import { EmptyState } from "@/shared/components";
+import { EmptyState, FailureBanner } from "@/shared/components";
 import { type SchemaTool, type SchemaToolsLaunch } from "@/shared/types";
 
 import { CrossTableColumns } from "./CrossTableColumns";
@@ -129,6 +129,7 @@ export const SchemaTools = ({ launch, hosted = false }: SchemaToolsProps) => {
 				) : null}
 				<SolutionButton solution={solution} compact={hosted} />
 			</div>
+			<FailureBanner />
 			<div className={styles.body}>
 				{opened.includes("columns") ? (
 					<div className={styles.tool} hidden={tool !== "columns"}>

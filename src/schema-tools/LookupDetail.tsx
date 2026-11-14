@@ -187,7 +187,7 @@ export const LookupDetail = ({ lookup, tableLabel, tables, solutionName, adding,
 							onChange={filter.setQuery}
 							shown={filter.shown}
 							total={filter.total}
-							placeholder="Filter target tables"
+							placeholder="Search target tables"
 						/>
 					</div>
 				) : null}

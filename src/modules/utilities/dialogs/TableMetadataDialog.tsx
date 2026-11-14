@@ -3,7 +3,6 @@ import {
 	AccordionHeader,
 	AccordionItem,
 	AccordionPanel,
-	Badge,
 	Button,
 	Dialog,
 	DialogActions,
@@ -11,15 +10,13 @@ import {
 	DialogContent,
 	DialogSurface,
 	DialogTitle,
-	Input,
 	makeStyles,
 	Text,
 	tokens,
 } from "@fluentui/react-components";
-import { Search20Regular } from "@fluentui/react-icons";
 import { Fragment, useMemo, useState } from "react";
 
-import { CopyButton, DataTable, type DataTableColumn, FormStack } from "@/shared/components";
+import { CopyButton, DataTable, type DataTableColumn, FormStack, SearchField, TextBadge } from "@/shared/components";
 import { type TableKey, type TableMetadata, type TableRelationship } from "@/shared/types";
 
 import { metadataFacts, metadataToText, relationshipMatches } from "../lib";
@@ -71,9 +68,9 @@ export const TableMetadataDialog = ({ metadata, onClose }: TableMetadataDialogPr
 				label: "Kind",
 				width: 70,
 				render: (row) => (
-					<Badge appearance="tint" size="small">
+					<TextBadge appearance="tint" size="small">
 						{row.kind}
-					</Badge>
+					</TextBadge>
 				),
 				sortValue: (row) => row.kind,
 			},
@@ -130,9 +127,9 @@ export const TableMetadataDialog = ({ metadata, onClose }: TableMetadataDialogPr
 				label: "Index",
 				width: 110,
 				render: (row) => (
-					<Badge appearance="tint" size="small" color={row.statusLabel === "Active" ? "success" : "warning"}>
+					<TextBadge appearance="tint" size="small" color={row.statusLabel === "Active" ? "success" : "warning"}>
 						{row.statusLabel}
-					</Badge>
+					</TextBadge>
 				),
 				sortValue: (row) => row.statusLabel,
 			},
@@ -177,11 +174,11 @@ export const TableMetadataDialog = ({ metadata, onClose }: TableMetadataDialogPr
 										<AccordionHeader>{`Relationships (${metadata.relationships.length})`}</AccordionHeader>
 										<AccordionPanel>
 											<FormStack>
-												<Input
-													contentBefore={<Search20Regular />}
-													placeholder="Filter relationships..."
+												<SearchField
 													value={filter}
-													onChange={(_, data) => setFilter(data.value)}
+													onChange={setFilter}
+													placeholder="Search relationships"
+													aria-label="Search relationships"
 												/>
 												<DataTable
 													items={relationships}

@@ -1,5 +1,6 @@
-import { Badge, makeStyles, Text, tokens } from "@fluentui/react-components";
+import { makeStyles, Text, tokens } from "@fluentui/react-components";
 
+import { TextBadge } from "@/shared/components";
 import { type SecurityRole } from "@/shared/types";
 
 const useStyles = makeStyles({
@@ -50,14 +51,14 @@ export const PendingChangesList = ({ roles, assignedIds, stagedIds, userSelected
 					<div key={role.id} className={styles.row}>
 						<Text size={200}>{role.name}</Text>
 						{staged && !assigned ? (
-							<Badge color="success" appearance="tint" size="small">
+							<TextBadge color="success" appearance="tint" size="small">
 								Adding
-							</Badge>
+							</TextBadge>
 						) : null}
 						{assigned && !staged ? (
-							<Badge color="danger" appearance="tint" size="small">
+							<TextBadge color="danger" appearance="tint" size="small">
 								Removing
-							</Badge>
+							</TextBadge>
 						) : null}
 					</div>
 				);

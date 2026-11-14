@@ -53,6 +53,7 @@ export const FormXmlArea = () => {
 	const styles = useStyles();
 	const toast = useAppToast();
 	const confirm = useConfirm();
+	const [xmlProblem, setXmlProblem] = useState<string | null>(null);
 	const tabId = useSessionStore((state) => state.tabId);
 	const { settings } = useExtensionSettings();
 	const forms = usePageQuery("forms.getForms", undefined);
@@ -116,8 +117,8 @@ export const FormXmlArea = () => {
 			return;
 		}
 		const problem = validateFormXml(text);
+		setXmlProblem(problem);
 		if (problem) {
-			toast.error("The form XML is not valid", problem);
 			return;
 		}
 		if (settings.formsRequireSaveConfirmation) {
@@ -218,7 +219,7 @@ export const FormXmlArea = () => {
 					{update.isPending ? <Text size={200}>Saving...</Text> : null}
 				</div>
 			) : null}
-			<div className={styles.editor}>
+			<Field className={styles.editor} validationMessage={xmlProblem ?? undefined}>
 				<CodeEditor
 					fill
 					value={text}
@@ -227,11 +228,12 @@ export const FormXmlArea = () => {
 					placeholder={xml.isLoading ? "Loading form XML..." : "Select a form to view its XML"}
 					onChange={(value) => {
 						if (formId && canEdit) {
+							setXmlProblem(null);
 							setDraft({ formId, text: value });
 						}
 					}}
 				/>
-			</div>
+			</Field>
 		</AreaContainer>
 	);
 };

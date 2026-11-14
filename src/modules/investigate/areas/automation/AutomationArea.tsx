@@ -1,5 +1,5 @@
-import { AccordionHeader, Badge, Button, Input, Link, makeStyles, Text, tokens, Tooltip } from "@fluentui/react-components";
-import { ArrowClockwise20Regular, Search20Regular } from "@fluentui/react-icons";
+import { AccordionHeader, Button, Link, makeStyles, Text, tokens, Tooltip } from "@fluentui/react-components";
+import { ArrowClockwise20Regular } from "@fluentui/react-icons";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo, useState } from "react";
 
@@ -14,8 +14,9 @@ import {
 	FillAccordionItem,
 	FillAccordionPanel,
 	FormStack,
-	Grow,
 	PageRequirementGate,
+	SearchField,
+	TextBadge,
 } from "@/shared/components";
 import { useNavigationStore } from "@/shared/stores";
 import { AUTOMATION_KIND_LABELS, type AutomationItem, type AutomationRun, type TriggerRegistration } from "@/shared/types";
@@ -92,9 +93,9 @@ export const AutomationArea = () => {
 				label: "Type",
 				width: 130,
 				render: (item) => (
-					<Badge appearance="tint" size="small" color={KIND_COLORS[item.kind] ?? "informative"}>
+					<TextBadge appearance="tint" size="small" color={KIND_COLORS[item.kind] ?? "informative"}>
 						{AUTOMATION_KIND_LABELS[item.kind]}
-					</Badge>
+					</TextBadge>
 				),
 				sortValue: (item) => item.kind,
 			},
@@ -131,9 +132,9 @@ export const AutomationArea = () => {
 				label: "State",
 				width: 90,
 				render: (item) => (
-					<Badge appearance="tint" size="small" color={item.enabled ? "success" : "danger"}>
+					<TextBadge appearance="tint" size="small" color={item.enabled ? "success" : "danger"}>
 						{item.enabled ? "On" : "Off"}
-					</Badge>
+					</TextBadge>
 				),
 				sortValue: (item) => (item.enabled ? 1 : 0),
 			},
@@ -198,9 +199,9 @@ export const AutomationArea = () => {
 				label: "Status",
 				width: 120,
 				render: (row) => (
-					<Badge appearance="tint" size="small" color={row.failed ? "danger" : "informative"}>
+					<TextBadge appearance="tint" size="small" color={row.failed ? "danger" : "informative"}>
 						{row.statusLabel}
-					</Badge>
+					</TextBadge>
 				),
 				sortValue: (row) => row.statusLabel,
 			},
@@ -227,14 +228,12 @@ export const AutomationArea = () => {
 		<FormStack fill>
 			<TablePicker />
 			<AreaToolbar>
-				<Grow>
-					<Input
-						contentBefore={<Search20Regular />}
-						placeholder="Filter by name, type, message, or column..."
-						value={filter}
-						onChange={(_, input) => setFilter(input.value)}
-					/>
-				</Grow>
+				<SearchField
+					value={filter}
+					onChange={setFilter}
+					placeholder="Search automation"
+					aria-label="Search automation by name, type, message or column"
+				/>
 				<Tooltip content="Reload" relationship="label">
 					<Button
 						icon={<ArrowClockwise20Regular />}

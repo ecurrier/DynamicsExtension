@@ -1,8 +1,8 @@
-import { Badge, Button, makeStyles, Tab, TabList, Text, tokens } from "@fluentui/react-components";
+import { Button, makeStyles, Tab, TabList, Text, tokens } from "@fluentui/react-components";
 import { Filter20Regular } from "@fluentui/react-icons";
 import { type ReactNode, useState } from "react";
 
-import { CopyButton, EmptyState } from "@/shared/components";
+import { CopyButton, EmptyState, TextBadge } from "@/shared/components";
 import { modeLabel, operationTypeLabel } from "@/shared/lib";
 import { type PluginTraceLog } from "@/shared/types";
 
@@ -120,9 +120,9 @@ export const TraceDetails = ({ trace, ...actions }: TraceDetailsProps) => {
 					{trace.exceptionDetails ? (
 						<>
 							{" "}
-							<Badge appearance="tint" color="danger" size="small">
+							<TextBadge appearance="tint" color="danger" size="small">
 								Exception
-							</Badge>
+							</TextBadge>
 						</>
 					) : null}
 				</Text>

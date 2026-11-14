@@ -1,7 +1,7 @@
-import { Badge, makeStyles, mergeClasses, tokens } from "@fluentui/react-components";
+import { makeStyles, mergeClasses, tokens } from "@fluentui/react-components";
 import { useMemo } from "react";
 
-import { type DataTableColumn } from "@/shared/components";
+import { type DataTableColumn, TextBadge } from "@/shared/components";
 import { modeLabel } from "@/shared/lib";
 import { type PluginTraceLog } from "@/shared/types";
 
@@ -77,9 +77,9 @@ export const useTraceColumns = (highlightedGuid: string | null): DataTableColumn
 				width: 100,
 				render: (trace) =>
 					trace.exceptionDetails ? (
-						<Badge appearance="tint" color="danger" size="small">
+						<TextBadge appearance="tint" color="danger" size="small">
 							Exception
-						</Badge>
+						</TextBadge>
 					) : null,
 				sortValue: (trace) => (trace.exceptionDetails ? 1 : 0),
 			},

@@ -1,9 +1,9 @@
-import { Badge, Button, makeStyles, ProgressBar, Text, tokens } from "@fluentui/react-components";
+import { Button, makeStyles, MessageBar, MessageBarBody, MessageBarTitle, ProgressBar, Text, tokens } from "@fluentui/react-components";
 import { ArrowLeft20Regular, Play20Regular, Stop20Regular } from "@fluentui/react-icons";
 import { useMemo, useRef } from "react";
 
 import { cellText } from "@/modules/webapi/lib";
-import { CopyButton, DataTable, type DataTableColumn, FormRow, FormStack, Grow, useAppToast, useConfirm } from "@/shared/components";
+import { CopyButton, DataTable, type DataTableColumn, FormRow, FormStack, Grow, TextBadge, useAppToast, useBanner, useConfirm } from "@/shared/components";
 import { type Environment } from "@/shared/storage";
 
 import { useTargetMetadata } from "../hooks";
@@ -39,6 +39,7 @@ interface RunStepProps {
 export const RunStep = ({ target }: RunStepProps) => {
 	const styles = useStyles();
 	const toast = useAppToast();
+	const banner = useBanner();
 	const confirm = useConfirm();
 	const { entity, plan, selectedFields, results, progress, running, startRun, recordResult, finishRun, setPlan, setStep } = useTransporterStore();
 	const { targetOps, metadata, entitySets } = useTargetMetadata(target, entity?.logicalName ?? null);
@@ -118,14 +119,14 @@ export const RunStep = ({ target }: RunStepProps) => {
 			);
 			const summary = summarize(outcome);
 			if (summary.failed > 0) {
-				toast.error(`${summary.failed} of ${summary.total} failed`, "Copy the failures below to review them");
+				// The results table below is the result view, and it names every failure.
 			} else if (summary.cancelled > 0) {
 				toast.info("Run cancelled", `${summary.succeeded} done, ${summary.cancelled} not started`);
 			} else {
 				toast.success("Run complete", `${summary.succeeded} record${summary.succeeded === 1 ? "" : "s"} written to ${target.name}`);
 			}
 		} catch (error) {
-			toast.error("The run stopped unexpectedly", error);
+			banner.show("The run stopped unexpectedly", error);
 		} finally {
 			finishRun();
 			abortRef.current = null;
@@ -139,9 +140,9 @@ export const RunStep = ({ target }: RunStepProps) => {
 				label: "Action",
 				width: 90,
 				render: (result) => (
-					<Badge appearance="tint" size="small" color={ACTION_COLORS[result.action]}>
+					<TextBadge appearance="tint" size="small" color={ACTION_COLORS[result.action]}>
 						{result.action}
-					</Badge>
+					</TextBadge>
 				),
 				sortValue: (result) => result.action,
 			},
@@ -150,9 +151,9 @@ export const RunStep = ({ target }: RunStepProps) => {
 				label: "Status",
 				width: 100,
 				render: (result) => (
-					<Badge appearance="tint" size="small" color={STATUS_COLORS[result.status]}>
+					<TextBadge appearance="tint" size="small" color={STATUS_COLORS[result.status]}>
 						{result.status}
-					</Badge>
+					</TextBadge>
 				),
 				sortValue: (result) => result.status,
 			},
@@ -222,6 +223,16 @@ export const RunStep = ({ target }: RunStepProps) => {
 			) : null}
 			{results.length > 0 ? (
 				<>
+					{finished && summary.failed > 0 ? (
+						<MessageBar intent="error">
+							<MessageBarBody>
+								<MessageBarTitle>
+									{summary.failed} of {summary.total} failed
+								</MessageBarTitle>
+								Every failure is in the table below, with the message the target gave.
+							</MessageBarBody>
+						</MessageBar>
+					) : null}
 					<FormRow>
 						<Grow>
 							<span />

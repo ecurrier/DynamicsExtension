@@ -1,10 +1,11 @@
-import { Badge, Button, Dropdown, Field, Input, makeStyles, Option, tokens } from "@fluentui/react-components";
+import { Button, Dropdown, Field, Input, makeStyles, Option, tokens } from "@fluentui/react-components";
 import { Search20Regular } from "@fluentui/react-icons";
 import { useState } from "react";
 
 import { type SystemUser } from "@/shared/types";
 
 import { FormRow, Grow } from "../Layout";
+import { TextBadge } from "../TextBadge";
 
 const useStyles = makeStyles({
 	option: {
@@ -78,9 +79,9 @@ export const UserPicker = ({ users, selectedUser, searching, label = "Username /
 									<span>{user.fullName}</span>
 									{user.domainName ? <span className={styles.secondary}>{user.domainName}</span> : null}
 									{user.isDisabled ? (
-										<Badge size="small" appearance="tint" color="danger">
+										<TextBadge size="small" appearance="tint" color="danger">
 											Disabled
-										</Badge>
+										</TextBadge>
 									) : null}
 								</span>
 							</Option>

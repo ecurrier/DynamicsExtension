@@ -147,7 +147,7 @@ export const RecordsArea = () => {
 			{rows.length > 0 ? (
 				<FormRow>
 					<Grow>
-						<TableFilter query={filter.query} onChange={filter.setQuery} shown={filter.shown} total={filter.total} placeholder="Filter records" />
+						<TableFilter query={filter.query} onChange={filter.setQuery} shown={filter.shown} total={filter.total} placeholder="Search records" />
 					</Grow>
 				</FormRow>
 			) : null}

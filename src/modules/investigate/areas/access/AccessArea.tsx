@@ -1,6 +1,5 @@
 import {
 	AccordionHeader,
-	Badge,
 	Button,
 	Field,
 	Input,
@@ -33,6 +32,7 @@ import {
 	useAppToast,
 	UserPicker,
 } from "@/shared/components";
+import { TextBadge, useBanner } from "@/shared/components";
 import { isGuid } from "@/shared/lib";
 import { type AccessPrivilege, type AccessRole, type AccessShare, type AccessTeam, type SystemUser } from "@/shared/types";
 
@@ -54,6 +54,7 @@ const useStyles = makeStyles({
 export const AccessArea = () => {
 	const styles = useStyles();
 	const toast = useAppToast();
+	const banner = useBanner();
 	const connection = useInvestigateStore((state) => state.connection);
 	const table = useInvestigateStore((state) => state.table);
 	const recordId = useInvestigateStore((state) => state.recordId);
@@ -72,7 +73,8 @@ export const AccessArea = () => {
 				toast.info("No users matched that search");
 			}
 		},
-		onError: (error) => toast.error("User search failed", error),
+		meta: { silent: true },
+		onError: (error) => banner.show("User search failed", error),
 	});
 
 	const check = useMutation({
@@ -82,7 +84,8 @@ export const AccessArea = () => {
 				recordId,
 				systemUserId: selectedUser?.id ?? "",
 			}),
-		onError: (error) => toast.error("Could not check access", error),
+		meta: { silent: true },
+		onError: (error) => banner.show("Could not check access", error),
 	});
 
 	const report = check.data ?? null;
@@ -98,11 +101,11 @@ export const AccessArea = () => {
 				width: 180,
 				render: (row) =>
 					row.viaTeam ? (
-						<Badge appearance="tint" size="small" color="warning">{`Team: ${row.viaTeam}`}</Badge>
+						<TextBadge appearance="tint" size="small" color="warning">{`Team: ${row.viaTeam}`}</TextBadge>
 					) : (
-						<Badge appearance="tint" size="small">
+						<TextBadge appearance="tint" size="small">
 							Direct
-						</Badge>
+						</TextBadge>
 					),
 				sortValue: (row) => row.viaTeam ?? "",
 			},

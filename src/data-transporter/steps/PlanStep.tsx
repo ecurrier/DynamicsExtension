@@ -1,9 +1,9 @@
-import { Badge, Button, Checkbox, CounterBadge, makeStyles, MessageBar, MessageBarBody, Spinner, Tab, TabList, Text, tokens } from "@fluentui/react-components";
+import { Button, Checkbox, CounterBadge, makeStyles, MessageBar, MessageBarBody, Spinner, Tab, TabList, Text, tokens } from "@fluentui/react-components";
 import { ArrowRight20Regular, ArrowSwap20Regular } from "@fluentui/react-icons";
 import { useEffect, useMemo, useState } from "react";
 
 import { cellText } from "@/modules/webapi/lib";
-import { CodeBlock, DataTable, type DataTableColumn, FormRow, Grow, useAppToast } from "@/shared/components";
+import { CodeBlock, DataTable, type DataTableColumn, FormRow, Grow, TextBadge, useAppToast } from "@/shared/components";
 import { useAsyncAction } from "@/shared/hooks";
 import { type Environment } from "@/shared/storage";
 
@@ -162,9 +162,9 @@ export const PlanStep = ({ target }: PlanStepProps) => {
 				label: "Action",
 				width: 90,
 				render: (row) => (
-					<Badge appearance="tint" size="small" color={ACTION_COLORS[row.action]}>
+					<TextBadge appearance="tint" size="small" color={ACTION_COLORS[row.action]}>
 						{row.action}
-					</Badge>
+					</TextBadge>
 				),
 				sortValue: (row) => row.action,
 			},

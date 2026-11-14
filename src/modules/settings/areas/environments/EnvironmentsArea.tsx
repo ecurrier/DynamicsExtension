@@ -1,11 +1,11 @@
-import { Dropdown, Menu, MenuButton, MenuDivider, MenuItem, MenuList, MenuPopover, MenuTrigger, Option, Text } from "@fluentui/react-components";
+import { Dropdown, Field, Menu, MenuButton, MenuDivider, MenuItem, MenuList, MenuPopover, MenuTrigger, Option, Text } from "@fluentui/react-components";
 import { Add20Regular, Copy20Regular, Delete20Regular, Save20Regular } from "@fluentui/react-icons";
 import { useState } from "react";
 
 import { invoke, usePageQuery } from "@/messaging/client";
-import { AreaContainer, AreaToolbar, Grow, useAppToast, useConfirm } from "@/shared/components";
+import { AreaContainer, AreaToolbar, Grow, useAppToast, useBanner, useConfirm } from "@/shared/components";
 import { getEnvironmentHttp } from "@/shared/connections";
-import { useAsyncAction } from "@/shared/hooks";
+import { useAsyncAction, useFieldProblem } from "@/shared/hooks";
 import { generateGuid, originOf, whoAmI } from "@/shared/lib";
 import { useNavigationStore, useSessionStore } from "@/shared/stores";
 import { type EnvironmentAlert } from "@/shared/types";
@@ -27,6 +27,8 @@ const NEW_ENVIRONMENT = "__new__";
 
 export const EnvironmentsArea = () => {
 	const toast = useAppToast();
+	const banner = useBanner();
+	const problems = useFieldProblem<"environment">();
 	const confirm = useConfirm();
 	const navigate = useNavigationStore((state) => state.navigate);
 	const { environments, byId, upsert, remove, isSaving } = useEnvironments();
@@ -80,9 +82,10 @@ export const EnvironmentsArea = () => {
 	const copySelected = () => {
 		const environment = selectedId ? byId[selectedId] : undefined;
 		if (!environment) {
-			toast.error("Select a saved environment to copy");
+			problems.raise("environment", "Select a saved environment to copy");
 			return;
 		}
+		problems.clear();
 		setSelectedId(NEW_ENVIRONMENT);
 		setDraft(copyDraft(environment));
 		setValidation(null);
@@ -91,9 +94,10 @@ export const EnvironmentsArea = () => {
 
 	const save = async () => {
 		if (!draft) {
-			toast.error("Select an environment or add a new one first");
+			problems.raise("environment", "Select an environment or add a new one first");
 			return;
 		}
+		problems.clear();
 		const problem = validateDraft(draft);
 		setValidation(problem);
 		if (problem) {
@@ -107,7 +111,7 @@ export const EnvironmentsArea = () => {
 			syncAlert(environment.id, environment.modelDrivenAppUrl, environment.alert);
 			toast.success("Environment saved");
 		} catch (error) {
-			toast.error("Could not save the environment", error);
+			banner.show("Could not save the environment", error);
 		}
 	};
 
@@ -130,9 +134,10 @@ export const EnvironmentsArea = () => {
 	const removeSelected = async () => {
 		const environment = selectedId ? byId[selectedId] : undefined;
 		if (!environment) {
-			toast.error("Select a saved environment to remove");
+			problems.raise("environment", "Select a saved environment to remove");
 			return;
 		}
+		problems.clear();
 		const confirmed = await confirm({
 			content: `Remove the environment "${environment.name}"?`,
 			confirmLabel: "Remove",
@@ -147,7 +152,7 @@ export const EnvironmentsArea = () => {
 			setDraft(null);
 			toast.success("Environment removed");
 		} catch (error) {
-			toast.error("Could not remove the environment", error);
+			banner.show("Could not remove the environment", error);
 		}
 	};
 
@@ -158,22 +163,24 @@ export const EnvironmentsArea = () => {
 		<AreaContainer>
 			<AreaToolbar>
 				<Grow>
-					<Dropdown
-						placeholder="Select an environment..."
-						value={selectedLabel}
-						selectedOptions={selectedId ? [selectedId] : []}
-						onOptionSelect={(_, data) => data.optionValue && select(data.optionValue)}>
-						{selectedId === NEW_ENVIRONMENT ? (
-							<Option value={NEW_ENVIRONMENT} text="New environment">
-								New environment
-							</Option>
-						) : null}
-						{environments.map((environment) => (
-							<Option key={environment.id} value={environment.id} text={environment.name}>
-								{environment.name}
-							</Option>
-						))}
-					</Dropdown>
+					<Field validationMessage={problems.messageFor("environment")}>
+						<Dropdown
+							placeholder="Select an environment..."
+							value={selectedLabel}
+							selectedOptions={selectedId ? [selectedId] : []}
+							onOptionSelect={(_, data) => data.optionValue && select(data.optionValue)}>
+							{selectedId === NEW_ENVIRONMENT ? (
+								<Option value={NEW_ENVIRONMENT} text="New environment">
+									New environment
+								</Option>
+							) : null}
+							{environments.map((environment) => (
+								<Option key={environment.id} value={environment.id} text={environment.name}>
+									{environment.name}
+								</Option>
+							))}
+						</Dropdown>
+					</Field>
 				</Grow>
 				<Menu>
 					<MenuTrigger disableButtonEnhancement>

@@ -1,7 +1,7 @@
 import { makeStyles, Text } from "@fluentui/react-components";
 import { useMemo } from "react";
 
-import { DataTable, type DataTableColumn, useAppToast } from "@/shared/components";
+import { DataTable, type DataTableColumn, useAppToast, useBanner } from "@/shared/components";
 import { type WorkspaceTarget } from "@/shared/types";
 import { useWorkspaceLauncher, WorkspaceLaunchButton } from "@/workspaces";
 
@@ -24,6 +24,7 @@ interface ResultsPreviewProps {
 export const ResultsPreview = ({ entityName, rows }: ResultsPreviewProps) => {
 	const styles = useStyles();
 	const toast = useAppToast();
+	const banner = useBanner();
 	const workspaces = useWorkspaceLauncher();
 	const columns = useMemo(() => columnsFromRows(rows), [rows]);
 	const tableColumns = useMemo<DataTableColumn<ResultRow>[]>(
@@ -45,7 +46,7 @@ export const ResultsPreview = ({ entityName, rows }: ResultsPreviewProps) => {
 				toast.info("Results truncated", `The viewer shows the first ${share.rows.length} records.`);
 			}
 		} catch (error) {
-			toast.error("Could not open the results viewer", error);
+			banner.show("Could not open the results viewer", error);
 		}
 	};
 

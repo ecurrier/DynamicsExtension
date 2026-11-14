@@ -2,7 +2,7 @@ import { Spinner, Tab, TabList } from "@fluentui/react-components";
 import { useState } from "react";
 
 import { useSecurityGateway } from "@/modules/security/hooks";
-import { AreaContainer, EmptyState } from "@/shared/components";
+import { AreaContainer, EmptyState, FailureBanner } from "@/shared/components";
 import { type SecurityTool, type SecurityToolsLaunch } from "@/shared/types";
 
 import { PrivilegeEditor } from "./PrivilegeEditor";
@@ -22,6 +22,7 @@ export const SecurityTools = ({ launch }: SecurityToolsProps) => {
 				<Tab value="compare">Role Compare</Tab>
 				<Tab value="privileges">Privilege Editor</Tab>
 			</TabList>
+			<FailureBanner />
 			{tool === "compare" ? <RoleCompare gateway={gateway} /> : <PrivilegeEditor gateway={gateway} />}
 		</AreaContainer>
 	);

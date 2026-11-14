@@ -1,5 +1,5 @@
-import { Badge, Button, Dropdown, Input, makeStyles, Option, Text, tokens, Tooltip } from "@fluentui/react-components";
-import { ArrowClockwise20Regular, Search20Regular } from "@fluentui/react-icons";
+import { Button, Dropdown, makeStyles, Option, Text, tokens, Tooltip } from "@fluentui/react-components";
+import { ArrowClockwise20Regular } from "@fluentui/react-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 
@@ -12,10 +12,12 @@ import {
 	type DataTableColumn,
 	FormRow,
 	FormStack,
-	Grow,
 	PageRequirementGate,
 	useAppToast,
 	useConfirm,
+	SearchField,
+	TextBadge,
+	Grow,
 } from "@/shared/components";
 import { type ConnectionTarget, requestEnvironmentAccess } from "@/shared/connections";
 import { useAsyncAction } from "@/shared/hooks";
@@ -167,9 +169,9 @@ export const EnvironmentVariablesArea = () => {
 				label: "Type",
 				width: 90,
 				render: (variable) => (
-					<Badge appearance="tint" size="small">
+					<TextBadge appearance="tint" size="small">
 						{ENVIRONMENT_VARIABLE_TYPE_LABELS[variable.type]}
-					</Badge>
+					</TextBadge>
 				),
 				sortValue: (variable) => variable.type,
 			},
@@ -185,9 +187,9 @@ export const EnvironmentVariablesArea = () => {
 								{preview(effective.value)}
 							</span>
 							{effective.source === "default" ? (
-								<Badge appearance="outline" size="small">
+								<TextBadge appearance="outline" size="small">
 									default
-								</Badge>
+								</TextBadge>
 							) : null}
 						</span>
 					);
@@ -200,9 +202,9 @@ export const EnvironmentVariablesArea = () => {
 				width: 80,
 				render: (variable) =>
 					variable.isManaged ? (
-						<Badge appearance="tint" size="small" color="informative">
+						<TextBadge appearance="tint" size="small" color="informative">
 							Managed
-						</Badge>
+						</TextBadge>
 					) : null,
 				sortValue: (variable) => (variable.isManaged ? 1 : 0),
 			},
@@ -213,14 +215,12 @@ export const EnvironmentVariablesArea = () => {
 	const body = (
 		<FormStack fill>
 			<AreaToolbar>
-				<Grow>
-					<Input
-						contentBefore={<Search20Regular />}
-						placeholder="Filter by name, schema name, or description..."
-						value={filter}
-						onChange={(_, data) => setFilter(data.value)}
-					/>
-				</Grow>
+				<SearchField
+					value={filter}
+					onChange={setFilter}
+					placeholder="Search variables"
+					aria-label="Search variables by name, schema name or description"
+				/>
 				<Dropdown
 					style={{ minWidth: "140px" }}
 					value={typeFilter === null ? "All types" : ENVIRONMENT_VARIABLE_TYPE_LABELS[typeFilter]}

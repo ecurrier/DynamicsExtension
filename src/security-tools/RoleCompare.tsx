@@ -89,7 +89,8 @@ export const RoleCompare = ({ gateway }: RoleCompareProps) => {
 							onChange={roleFilter.setQuery}
 							shown={roleFilter.shown}
 							total={roleFilter.total}
-							placeholder="Filter roles by name or prefix"
+							placeholder="Search roles"
+							label="Search roles by name or prefix"
 						/>
 					</Grow>
 				</FormRow>
@@ -137,7 +138,8 @@ export const RoleCompare = ({ gateway }: RoleCompareProps) => {
 							onChange={matrixFilter.setQuery}
 							shown={matrixFilter.shown}
 							total={matrixFilter.total}
-							placeholder="Filter by table or privilege"
+							placeholder="Search privileges"
+							label="Search privileges by table or privilege"
 						/>
 					</Grow>
 				</FormRow>

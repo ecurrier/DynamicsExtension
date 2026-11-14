@@ -1,8 +1,7 @@
-import { Input, makeStyles, type TableRowId, tokens } from "@fluentui/react-components";
-import { Filter20Regular } from "@fluentui/react-icons";
+import { makeStyles, type TableRowId, tokens } from "@fluentui/react-components";
 import { useMemo, useState } from "react";
 
-import { DataTable, type DataTableColumn } from "@/shared/components";
+import { DataTable, type DataTableColumn, SearchField } from "@/shared/components";
 import { type SecurityRole } from "@/shared/types";
 
 const useStyles = makeStyles({
@@ -50,13 +49,7 @@ export const RoleTable = ({ roles, assignedIds, stagedIds, enabled, onStagedChan
 
 	return (
 		<div className={styles.root}>
-			<Input
-				contentBefore={<Filter20Regular />}
-				placeholder="Filter roles..."
-				value={filter}
-				onChange={(_, data) => setFilter(data.value)}
-				size="small"
-			/>
+			<SearchField value={filter} onChange={setFilter} placeholder="Search roles" aria-label="Search security roles" />
 			<DataTable
 				items={filtered}
 				columns={columns}

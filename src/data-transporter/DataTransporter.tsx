@@ -2,6 +2,7 @@ import { makeStyles, Tab, TabList, Text, Title3, tokens } from "@fluentui/react-
 import { useEffect } from "react";
 
 import { useConnectableEnvironments } from "@/modules/settings";
+import { FailureBanner } from "@/shared/components";
 import { PAGE_CONNECTION } from "@/shared/connections";
 import { type TransporterLaunch } from "@/shared/types";
 
@@ -81,6 +82,7 @@ export const DataTransporter = ({ launch, pageAvailable }: DataTransporterProps)
 					4. Run
 				</Tab>
 			</TabList>
+			<FailureBanner />
 			<div className={styles.body}>
 				{step === "connections" ? <ConnectionsStep launch={launch} pageAvailable={pageAvailable} environments={environments} /> : null}
 				{step === "query" ? <QueryStep target={target} /> : null}

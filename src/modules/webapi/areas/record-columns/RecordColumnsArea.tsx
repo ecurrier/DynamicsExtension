@@ -3,7 +3,7 @@ import { ArrowClockwise20Regular, Dismiss16Regular } from "@fluentui/react-icons
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { usePageFetcher, usePageMutation, usePageQuery } from "@/messaging/client";
-import { AreaContainer, EmptyState, type RecordLookupServices, TableFilter, useAppToast, useConfirm, useTableFilter } from "@/shared/components";
+import { AreaContainer, EmptyState, type RecordLookupServices, TableFilter, useAppToast, useBanner, useConfirm, useTableFilter } from "@/shared/components";
 
 import { ColumnRow } from "./ColumnRow";
 import { type ReviewEntry, SaveBar } from "./SaveBar";
@@ -93,6 +93,7 @@ const focusRow = (element: HTMLElement) => {
 export const RecordColumnsArea = () => {
 	const styles = useStyles();
 	const toast = useAppToast();
+	const banner = useBanner();
 	const confirm = useConfirm();
 	const fetchPage = usePageFetcher();
 	const snapshot = usePageQuery("webapi.getRecordValues", undefined);
@@ -254,7 +255,7 @@ export const RecordColumnsArea = () => {
 			return next;
 		});
 
-	const refreshForm = usePageMutation("webapi.refreshForm", { silent: true, onError: (error) => toast.error("Could not refresh the form", error) });
+	const refreshForm = usePageMutation("webapi.refreshForm", { silent: true, onError: (error) => banner.show("Could not refresh the form", error) });
 	const save = usePageMutation("webapi.saveRecord", { silent: true });
 
 	const refreshAfterSave = async () => {

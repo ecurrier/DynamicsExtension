@@ -1,6 +1,6 @@
 # Badges give way
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 
 See `../spec.md`, decision 4.
@@ -14,3 +14,12 @@ No badge in the codebase carries a `className`. Fluent's `Badge` root sets only 
 - Inside a `DataTable` cell a badge is currently hard-cut by `.cell`'s `max-width: 260px` with no ellipsis of its own. After this change it must ellipsise inside the cell.
 - `ValueChip` accepts a `title` prop that no call site passes. Either pass it from the three call sites or drop the prop.
 - Verify in the harness side panel at 400px: no badge label spills out of its row, and none is cut without an ellipsis.
+
+## Answer
+
+- `src/shared/components/TextBadge` holds the shared badge: `useBadgeStyles` (the `makeStyles` hook) and `TextBadge`, a `Badge` whose label sits in a span that truncates with an ellipsis. The root gets `min-width: 0`, `max-width: 100%`, `flex-shrink: 1` and `overflow: hidden`. Fluent renders children straight into an `inline-flex` root, so `text-overflow` on the root alone does nothing; the span is what makes the ellipsis work.
+- `badgeText` (unit tested) reads the plain text of the children, so every badge carries its full label in a `title` without a call site passing one.
+- 27 files moved to `TextBadge`. `ValueChip` is rebuilt on it, and its unused `title` prop is dropped.
+- Kept as a plain `Badge`, because the badges there wrap: `ControlStateBadges`, `ColumnMatchesCard` `.badges`. The `ColumnSearch` step number is a circular number, not a label.
+- `ImpersonationIndicator` keeps "Impersonating" at `flex-shrink: 0`, truncates the name, and carries the full text in `title` and `aria-label`.
+- A badge in a `DataTable` cell now ellipsises inside the cell's 260px bound, because `max-width: 100%` makes it give way.

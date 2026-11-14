@@ -3,7 +3,8 @@ import { ArrowDownload20Regular, ArrowUpload20Regular, Delete20Regular, Document
 import { useRef, useState } from "react";
 
 import { usePageMutation, usePageQuery } from "@/messaging/client";
-import { AreaContainer, AreaToolbar, CodeEditor, FormStack, Grow, useAppToast, useConfirm } from "@/shared/components";
+import { AreaContainer, AreaToolbar, CodeEditor, FormStack, Grow, useAppToast, useBanner, useConfirm } from "@/shared/components";
+import { useFieldProblem } from "@/shared/hooks";
 import { generateGuid } from "@/shared/lib";
 
 import { useFormPresets } from "../../hooks";
@@ -18,6 +19,8 @@ interface Draft {
 
 export const FormPresetsArea = () => {
 	const toast = useAppToast();
+	const banner = useBanner();
+	const problems = useFieldProblem<"preset" | "name" | "fields">();
 	const confirm = useConfirm();
 	const pageContext = usePageQuery("global.getPageContext", undefined);
 	const context = pageContext.data ?? null;
@@ -65,21 +68,23 @@ export const FormPresetsArea = () => {
 	const onApply = () => {
 		const fields = readFields();
 		if (!fields || Object.keys(fields).length === 0) {
-			toast.error("No preset fields to apply");
+			problems.raise("fields", "This preset has no fields to apply");
 			return;
 		}
+		problems.clear();
 		apply.mutate({ fields });
 	};
 
 	const onSave = async () => {
 		if (!draft) {
-			toast.error("Generate or select a preset first");
+			problems.raise("preset", "Capture or select a preset first");
 			return;
 		}
 		if (!draft.name.trim()) {
-			toast.error("Enter a preset name");
+			problems.raise("name", "Enter a preset name");
 			return;
 		}
+		problems.clear();
 		const fields = readFields();
 		if (!fields) {
 			return;
@@ -90,16 +95,17 @@ export const FormPresetsArea = () => {
 			setSelectedId(id);
 			toast.success(`Saved preset ${draft.name.trim()}`);
 		} catch (error) {
-			toast.error("Could not save the preset", error);
+			banner.show("Could not save the preset", error);
 		}
 	};
 
 	const onDelete = async () => {
 		const preset = selectedId ? byId[selectedId] : undefined;
 		if (!preset) {
-			toast.error("Select a saved preset to delete");
+			problems.raise("preset", "Select a saved preset to delete");
 			return;
 		}
+		problems.clear();
 		if (!(await confirm({ content: `Delete the preset "${preset.name}"?`, confirmLabel: "Delete" }))) {
 			return;
 		}
@@ -109,16 +115,17 @@ export const FormPresetsArea = () => {
 			setDraft(null);
 			toast.success("Preset deleted");
 		} catch (error) {
-			toast.error("Could not delete the preset", error);
+			banner.show("Could not delete the preset", error);
 		}
 	};
 
 	const onExport = () => {
 		const fields = readFields();
 		if (!draft || !fields || Object.keys(fields).length === 0) {
-			toast.error("No preset to export");
+			problems.raise("fields", "This preset has no fields to export");
 			return;
 		}
+		problems.clear();
 		const blob = new Blob([serializeFormPreset({ name: draft.name, fields })], { type: "application/json" });
 		const url = URL.createObjectURL(blob);
 		const anchor = document.createElement("a");
@@ -138,7 +145,7 @@ export const FormPresetsArea = () => {
 			setDraft({ name: preset.name, json: formatFields(preset.fields) });
 			setJsonError(null);
 		} catch (error) {
-			toast.error("Could not import the preset", error);
+			banner.show("Could not import the preset", error);
 		}
 	};
 
@@ -148,23 +155,25 @@ export const FormPresetsArea = () => {
 		<AreaContainer>
 			<AreaToolbar>
 				<Grow>
-					<Dropdown
-						placeholder={context ? "Select a preset..." : "Form presets are available on model-driven apps and Power Pages"}
-						value={selectedLabel}
-						selectedOptions={selectedId ? [selectedId] : []}
-						disabled={!context}
-						onOptionSelect={(_, data) => data.optionValue && select(data.optionValue)}>
-						{selectedId === NEW_PRESET ? (
-							<Option value={NEW_PRESET} text="New preset">
-								New preset
-							</Option>
-						) : null}
-						{presets.map((preset) => (
-							<Option key={preset.id} value={preset.id} text={preset.name}>
-								{preset.name}
-							</Option>
-						))}
-					</Dropdown>
+					<Field validationMessage={problems.messageFor("preset")}>
+						<Dropdown
+							placeholder={context ? "Select a preset..." : "Form presets are available on model-driven apps and Power Pages"}
+							value={selectedLabel}
+							selectedOptions={selectedId ? [selectedId] : []}
+							disabled={!context}
+							onOptionSelect={(_, data) => data.optionValue && select(data.optionValue)}>
+							{selectedId === NEW_PRESET ? (
+								<Option value={NEW_PRESET} text="New preset">
+									New preset
+								</Option>
+							) : null}
+							{presets.map((preset) => (
+								<Option key={preset.id} value={preset.id} text={preset.name}>
+									{preset.name}
+								</Option>
+							))}
+						</Dropdown>
+					</Field>
 				</Grow>
 				<Menu>
 					<MenuTrigger disableButtonEnhancement>
@@ -208,10 +217,10 @@ export const FormPresetsArea = () => {
 			</AreaToolbar>
 			{draft ? (
 				<FormStack>
-					<Field label="Preset Name" required>
+					<Field label="Preset Name" required validationMessage={problems.messageFor("name")}>
 						<Input value={draft.name} placeholder="Enter a preset name..." onChange={(_, data) => setDraft({ ...draft, name: data.value })} />
 					</Field>
-					<Field label="Fields" validationMessage={jsonError ?? undefined}>
+					<Field label="Fields" validationMessage={jsonError ?? problems.messageFor("fields")}>
 						<CodeEditor value={draft.json} language="json" height="300px" onChange={(json) => setDraft({ ...draft, json })} />
 					</Field>
 				</FormStack>

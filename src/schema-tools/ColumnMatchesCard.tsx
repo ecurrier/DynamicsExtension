@@ -232,7 +232,7 @@ export const ColumnMatchesCard = ({ logicalName, matches, customOnly, selectedId
 				</div>
 				{filtering ? (
 					<div className={styles.filter}>
-						<TableFilter query={filter.query} onChange={filter.setQuery} shown={filter.shown} total={filter.total} placeholder="Filter tables" />
+						<TableFilter query={filter.query} onChange={filter.setQuery} shown={filter.shown} total={filter.total} placeholder="Search tables" />
 					</div>
 				) : null}
 			</div>

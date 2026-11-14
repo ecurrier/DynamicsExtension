@@ -1,9 +1,9 @@
-import { Button, Input, makeStyles, Spinner, Text, tokens, Tooltip } from "@fluentui/react-components";
-import { ArrowClockwise20Regular, Search20Regular } from "@fluentui/react-icons";
+import { Button, makeStyles, Spinner, Text, tokens, Tooltip } from "@fluentui/react-components";
+import { ArrowClockwise20Regular } from "@fluentui/react-icons";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
-import { AreaContainer, AreaToolbar, ConnectionPicker, FillAccordion, FormRow, FormStack, Grow, PageRequirementGate } from "@/shared/components";
+import { AreaContainer, AreaToolbar, ConnectionPicker, FillAccordion, FormRow, FormStack, Grow, PageRequirementGate, SearchField } from "@/shared/components";
 import { environmentOrigin } from "@/shared/connections";
 import { droppedFile, resolveOrgOrigin } from "@/shared/lib";
 import { useSessionStore } from "@/shared/stores";
@@ -92,14 +92,12 @@ export const PackagesArea = () => {
 	const body = (
 		<FormStack fill>
 			<AreaToolbar>
-				<Grow>
-					<Input
-						contentBefore={<Search20Regular />}
-						placeholder="Filter by package, assembly, or plug-in type..."
-						value={packagesFilter}
-						onChange={(_, data) => setPackagesFilter(data.value)}
-					/>
-				</Grow>
+				<SearchField
+					value={packagesFilter}
+					onChange={setPackagesFilter}
+					placeholder="Search packages"
+					aria-label="Search packages by package, assembly or plug-in type"
+				/>
 				<Tooltip content="Reload packages" relationship="label">
 					<Button
 						icon={<ArrowClockwise20Regular />}

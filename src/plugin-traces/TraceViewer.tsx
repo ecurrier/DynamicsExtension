@@ -2,7 +2,6 @@ import {
 	Button,
 	Dropdown,
 	Field,
-	Input,
 	makeStyles,
 	mergeClasses,
 	MessageBar,
@@ -13,11 +12,11 @@ import {
 	Title3,
 	tokens,
 } from "@fluentui/react-components";
-import { Delete20Regular, Search20Regular } from "@fluentui/react-icons";
+import { Delete20Regular } from "@fluentui/react-icons";
 import { useMemo, useState } from "react";
 
 import { pageKeys, usePageMutation, usePageQuery } from "@/messaging/client";
-import { DataTable, InfoTip, useAppToast, useConfirm } from "@/shared/components";
+import { DataTable, FailureBanner, InfoTip, SearchField, useAppToast, useConfirm } from "@/shared/components";
 import { useSessionStore } from "@/shared/stores";
 import {
 	DEFAULT_TRACE_QUERY,
@@ -179,6 +178,7 @@ export const TraceViewer = ({ launch }: TraceViewerProps) => {
 					</Dropdown>
 				</Field>
 			</div>
+			<FailureBanner />
 			<TraceFilters
 				draft={draft}
 				loading={traces.isFetching}
@@ -189,15 +189,12 @@ export const TraceViewer = ({ launch }: TraceViewerProps) => {
 				onAutoRefreshChange={setAutoRefresh}
 			/>
 			<div className={styles.toolbar}>
-				<Input
-					contentBefore={<Search20Regular />}
-					contentAfter={<InfoTip content={QUICK_FILTER_HELP} />}
-					placeholder="Quick filter loaded traces..."
-					aria-label="Quick filter loaded traces"
-					title={QUICK_FILTER_HELP}
+				<SearchField
 					value={quickFilter}
-					onChange={(_, data) => setQuickFilter(data.value)}
-					style={{ minWidth: "300px" }}
+					onChange={setQuickFilter}
+					placeholder="Search loaded traces"
+					aria-label="Search loaded traces"
+					hint={<InfoTip content={QUICK_FILTER_HELP} />}
 				/>
 				<Text size={200} className={styles.subtitle}>
 					{traces.isFetching ? "Loading..." : `${rows.length} loaded`}

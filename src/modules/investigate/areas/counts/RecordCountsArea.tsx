@@ -1,5 +1,5 @@
-import { Button, Input, makeStyles, Text, tokens } from "@fluentui/react-components";
-import { NumberSymbol20Regular, Search20Regular } from "@fluentui/react-icons";
+import { Button, makeStyles, Text, tokens } from "@fluentui/react-components";
+import { NumberSymbol20Regular } from "@fluentui/react-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
@@ -10,10 +10,10 @@ import {
 	type DataTableColumn,
 	EmptyState,
 	FormStack,
-	Grow,
 	InfoTip,
 	PageRequirementGate,
-	useAppToast,
+	SearchField,
+	useBanner,
 } from "@/shared/components";
 import { type EntitySummary } from "@/shared/types";
 
@@ -37,7 +37,7 @@ const useStyles = makeStyles({
 
 export const RecordCountsArea = () => {
 	const styles = useStyles();
-	const toast = useAppToast();
+	const banner = useBanner();
 	const connection = useInvestigateStore((state) => state.connection);
 	const gateway = useInvestigateGateway(connection);
 	const [filter, setFilter] = useState("");
@@ -52,7 +52,8 @@ export const RecordCountsArea = () => {
 
 	const counts = useMutation({
 		mutationFn: (rows: EntitySummary[]) => gateway.ops.getRecordCounts({ entityLogicalNames: rows.map((row) => row.logicalName) }),
-		onError: (error) => toast.error("Could not read row counts", error),
+		meta: { silent: true },
+		onError: (error) => banner.show("Could not read row counts", error),
 	});
 
 	const model = useMemo(() => recordCountsViewModel(tables.data ?? [], counts.data ?? null, filter), [tables.data, counts.data, filter]);
@@ -87,15 +88,7 @@ export const RecordCountsArea = () => {
 	const body = (
 		<FormStack fill>
 			<AreaToolbar>
-				<Grow>
-					<Input
-						contentBefore={<Search20Regular />}
-						placeholder="Filter tables..."
-						value={filter}
-						onChange={(_, data) => setFilter(data.value)}
-						disabled={model.rows.length === 0}
-					/>
-				</Grow>
+				<SearchField value={filter} onChange={setFilter} placeholder="Search tables" aria-label="Search tables" disabled={model.rows.length === 0} />
 				<Button
 					appearance="primary"
 					icon={<NumberSymbol20Regular />}

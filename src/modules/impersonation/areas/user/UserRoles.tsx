@@ -1,6 +1,7 @@
-import { Badge, makeStyles, Spinner, Text, tokens } from "@fluentui/react-components";
+import { makeStyles, Spinner, Text, tokens } from "@fluentui/react-components";
 
 import { usePageQuery } from "@/messaging/client";
+import { TextBadge } from "@/shared/components";
 import { type SecurityRoleAssignment } from "@/shared/types";
 
 const useStyles = makeStyles({
@@ -51,9 +52,9 @@ export const RoleList = ({ fullName, roles, loading = false, error = null }: Rol
 			{roles && roles.length > 0 ? (
 				<div className={styles.list}>
 					{roles.map((role) => (
-						<Badge key={`${role.id}:${role.viaTeam ?? "direct"}`} appearance="tint" color="informative">
+						<TextBadge key={`${role.id}:${role.viaTeam ?? "direct"}`} appearance="tint" color="informative">
 							{role.viaTeam ? `${role.name} · via ${role.viaTeam}` : role.name}
-						</Badge>
+						</TextBadge>
 					))}
 				</div>
 			) : null}

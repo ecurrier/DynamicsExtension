@@ -1,8 +1,6 @@
 import {
-	Badge,
 	Button,
 	Dropdown,
-	Input,
 	makeStyles,
 	MessageBar,
 	MessageBarActions,
@@ -17,12 +15,25 @@ import {
 	TreeItem,
 	TreeItemLayout,
 } from "@fluentui/react-components";
-import { ArrowClockwise20Regular, Pause20Regular, Play20Regular, Search20Regular } from "@fluentui/react-icons";
+import { ArrowClockwise20Regular, Pause20Regular, Play20Regular } from "@fluentui/react-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 
 import { useExtensionSettings } from "@/modules/settings";
-import { AreaContainer, AreaToolbar, ConnectionPicker, FormRow, FormStack, Grow, PageRequirementGate, useAppToast, useConfirm } from "@/shared/components";
+import {
+	AreaContainer,
+	AreaToolbar,
+	ConnectionPicker,
+	FormRow,
+	FormStack,
+	Grow,
+	PageRequirementGate,
+	SearchField,
+	TextBadge,
+	useAppToast,
+	useBanner,
+	useConfirm,
+} from "@/shared/components";
 import { type PluginStep, type PluginStepStateChange } from "@/shared/types";
 
 import { usePluginsConnection, usePluginStepsGateway } from "../../hooks";
@@ -89,6 +100,7 @@ const useStyles = makeStyles({
 export const PluginStepsArea = () => {
 	const styles = useStyles();
 	const toast = useAppToast();
+	const banner = useBanner();
 	const confirm = useConfirm();
 	const queryClient = useQueryClient();
 	const { settings } = useExtensionSettings();
@@ -120,9 +132,9 @@ export const PluginStepsArea = () => {
 			clearChecked();
 			const verb = change.enabled ? "enabled" : "disabled";
 			if (result.failed.length > 0) {
-				toast.error(
+				banner.show(
 					`${result.updated} step${result.updated === 1 ? "" : "s"} ${verb}, ${result.failed.length} failed`,
-					result.failed.map((failure) => failure.message).join("; ")
+					new Error(result.failed.map((failure) => failure.message).join("; "))
 				);
 			} else {
 				toast.success(`${result.updated} step${result.updated === 1 ? "" : "s"} ${verb}`);
@@ -168,13 +180,13 @@ export const PluginStepsArea = () => {
 			<TreeItemLayout
 				aside={
 					<span className={styles.aside}>
-						<Badge appearance="tint" size="small" color={step.enabled ? "success" : "danger"}>
+						<TextBadge appearance="tint" size="small" color={step.enabled ? "success" : "danger"}>
 							{step.enabled ? "Enabled" : "Disabled"}
-						</Badge>
+						</TextBadge>
 						{step.isManaged ? (
-							<Badge appearance="outline" size="small">
+							<TextBadge appearance="outline" size="small">
 								Managed
-							</Badge>
+							</TextBadge>
 						) : null}
 						<Switch
 							checked={step.enabled}
@@ -201,14 +213,12 @@ export const PluginStepsArea = () => {
 	const body = (
 		<FormStack fill>
 			<AreaToolbar>
-				<Grow>
-					<Input
-						contentBefore={<Search20Regular />}
-						placeholder="Filter by step, type, message, entity, or assembly..."
-						value={filter}
-						onChange={(_, data) => setFilter(data.value)}
-					/>
-				</Grow>
+				<SearchField
+					value={filter}
+					onChange={setFilter}
+					placeholder="Search steps"
+					aria-label="Search steps by step, type, message, entity or assembly"
+				/>
 				<Dropdown
 					style={{ minWidth: "120px" }}
 					value={STATE_LABELS[stateFilter]}

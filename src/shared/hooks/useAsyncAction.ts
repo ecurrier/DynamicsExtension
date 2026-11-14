@@ -1,9 +1,9 @@
 import { useCallback, useState } from "react";
 
-import { useAppToast } from "@/shared/components";
+import { useBanner } from "@/shared/components";
 
 export const useAsyncAction = (failureTitle = "Action failed") => {
-	const toast = useAppToast();
+	const banner = useBanner();
 	const [running, setRunning] = useState(false);
 	const run = useCallback(
 		async (action: () => Promise<void>) => {
@@ -11,12 +11,12 @@ export const useAsyncAction = (failureTitle = "Action failed") => {
 			try {
 				await action();
 			} catch (error) {
-				toast.error(failureTitle, error);
+				banner.show(failureTitle, error);
 			} finally {
 				setRunning(false);
 			}
 		},
-		[failureTitle, toast]
+		[failureTitle, banner]
 	);
 	return { running, run };
 };

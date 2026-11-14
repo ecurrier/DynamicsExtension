@@ -99,7 +99,8 @@ export const PrivilegeEditor = ({ gateway }: PrivilegeEditorProps) => {
 							onChange={roleFilter.setQuery}
 							shown={roleFilter.shown}
 							total={roleFilter.total}
-							placeholder="Filter roles by name or prefix"
+							placeholder="Search roles"
+							label="Search roles by name or prefix"
 						/>
 					</Grow>
 				</FormRow>
@@ -122,7 +123,8 @@ export const PrivilegeEditor = ({ gateway }: PrivilegeEditorProps) => {
 						onChange={cellFilter.setQuery}
 						shown={cellFilter.shown}
 						total={cellFilter.total}
-						placeholder="Filter by role, table or privilege"
+						placeholder="Search privileges"
+						label="Search privileges by role, table or privilege"
 					/>
 				</Grow>
 				<Grow>

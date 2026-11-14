@@ -1,10 +1,11 @@
-import { Badge, type BadgeProps, makeStyles, Text, tokens } from "@fluentui/react-components";
+import { type BadgeProps, makeStyles, Text, tokens } from "@fluentui/react-components";
 
 import { bulkRunSummary } from "@/shared/lib";
 import { type BulkRunOutcomeKind, type BulkRunResult } from "@/shared/types";
 
 import { DataTable, type DataTableColumn } from "../DataTable";
 import { FormStack } from "../Layout";
+import { TextBadge } from "../TextBadge";
 
 const OUTCOME_COLORS: Record<BulkRunOutcomeKind, BadgeProps["color"]> = {
 	succeeded: "success",
@@ -51,9 +52,9 @@ export const BulkRunResultView = <TArgs,>({ result }: BulkRunResultViewProps<TAr
 			label: "Result",
 			width: 110,
 			render: (row) => (
-				<Badge appearance="tint" size="small" color={OUTCOME_COLORS[row.kind]}>
+				<TextBadge appearance="tint" size="small" color={OUTCOME_COLORS[row.kind]}>
 					{OUTCOME_LABELS[row.kind]}
-				</Badge>
+				</TextBadge>
 			),
 			sortValue: (row) => row.kind,
 		},

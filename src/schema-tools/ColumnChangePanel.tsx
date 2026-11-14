@@ -1,5 +1,4 @@
 import {
-	Badge,
 	Button,
 	Dropdown,
 	Input,
@@ -26,6 +25,7 @@ import {
 	PROPERTY_LABELS,
 	TYPE_PROPERTIES,
 } from "@/modules/schema/lib";
+import { TextBadge } from "@/shared/components";
 import { type AttributeEdit, type AttributeMatch, REQUIRED_LEVELS } from "@/shared/types";
 
 import { type DetailsStatus } from "./useAttributeDetails";
@@ -174,9 +174,9 @@ const ChangeCount = ({ changes }: { changes: number | null }) => {
 		);
 	}
 	return (
-		<Badge appearance="tint" color="brand">
+		<TextBadge appearance="tint" color="brand">
 			{changes === 1 ? "Changes 1 table" : `Changes ${changes} tables`}
-		</Badge>
+		</TextBadge>
 	);
 };
 

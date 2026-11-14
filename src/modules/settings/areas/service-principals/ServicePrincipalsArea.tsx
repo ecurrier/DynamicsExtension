@@ -1,5 +1,6 @@
 import {
 	Dropdown,
+	Field,
 	Menu,
 	MenuButton,
 	MenuDivider,
@@ -16,7 +17,8 @@ import {
 import { Add20Regular, Delete20Regular, Save20Regular } from "@fluentui/react-icons";
 import { useState } from "react";
 
-import { AreaContainer, AreaToolbar, Grow, useAppToast, useConfirm } from "@/shared/components";
+import { AreaContainer, AreaToolbar, Grow, useAppToast, useBanner, useConfirm } from "@/shared/components";
+import { useFieldProblem } from "@/shared/hooks";
 import { generateGuid } from "@/shared/lib";
 
 import { ServicePrincipalForm } from "./ServicePrincipalForm";
@@ -35,6 +37,8 @@ const NEW_PRINCIPAL = "__new__";
 
 export const ServicePrincipalsArea = () => {
 	const toast = useAppToast();
+	const banner = useBanner();
+	const problems = useFieldProblem<"principal">();
 	const confirm = useConfirm();
 	const { principals, byId, upsert, remove, isSaving } = useServicePrincipals();
 	const { environments } = useEnvironments();
@@ -57,9 +61,10 @@ export const ServicePrincipalsArea = () => {
 
 	const save = async () => {
 		if (!draft) {
-			toast.error("Select a service principal or add a new one first");
+			problems.raise("principal", "Select a service principal or add a new one first");
 			return;
 		}
+		problems.clear();
 		const problem = validatePrincipalDraft(draft);
 		setValidation(problem);
 		if (problem) {
@@ -71,21 +76,22 @@ export const ServicePrincipalsArea = () => {
 			setSelectedId(id);
 			toast.success("Service principal saved");
 		} catch (error) {
-			toast.error("Could not save the service principal", error);
+			banner.show("Could not save the service principal", error);
 		}
 	};
 
 	const removeSelected = async () => {
 		const principal = selectedId ? byId[selectedId] : undefined;
 		if (!principal) {
-			toast.error("Select a saved service principal to remove");
+			problems.raise("principal", "Select a saved service principal to remove");
 			return;
 		}
 		const usedBy = environmentsUsingPrincipal(principal.id, environments);
 		if (usedBy.length > 0) {
-			toast.error("The service principal is still assigned", `Unassign it from ${usedBy.map((environment) => environment.name).join(", ")} first`);
+			problems.raise("principal", `Still assigned. Unassign it from ${usedBy.map((environment) => environment.name).join(", ")} first.`);
 			return;
 		}
+		problems.clear();
 		const confirmed = await confirm({
 			content: `Remove the service principal "${principal.name}"?`,
 			confirmLabel: "Remove",
@@ -99,7 +105,7 @@ export const ServicePrincipalsArea = () => {
 			setDraft(null);
 			toast.success("Service principal removed");
 		} catch (error) {
-			toast.error("Could not remove the service principal", error);
+			banner.show("Could not remove the service principal", error);
 		}
 	};
 
@@ -117,22 +123,24 @@ export const ServicePrincipalsArea = () => {
 			</MessageBar>
 			<AreaToolbar>
 				<Grow>
-					<Dropdown
-						placeholder="Select a service principal..."
-						value={selectedLabel}
-						selectedOptions={selectedId ? [selectedId] : []}
-						onOptionSelect={(_, data) => data.optionValue && select(data.optionValue)}>
-						{selectedId === NEW_PRINCIPAL ? (
-							<Option value={NEW_PRINCIPAL} text="New service principal">
-								New service principal
-							</Option>
-						) : null}
-						{principals.map((principal) => (
-							<Option key={principal.id} value={principal.id} text={principal.name}>
-								{principal.name}
-							</Option>
-						))}
-					</Dropdown>
+					<Field validationMessage={problems.messageFor("principal")}>
+						<Dropdown
+							placeholder="Select a service principal..."
+							value={selectedLabel}
+							selectedOptions={selectedId ? [selectedId] : []}
+							onOptionSelect={(_, data) => data.optionValue && select(data.optionValue)}>
+							{selectedId === NEW_PRINCIPAL ? (
+								<Option value={NEW_PRINCIPAL} text="New service principal">
+									New service principal
+								</Option>
+							) : null}
+							{principals.map((principal) => (
+								<Option key={principal.id} value={principal.id} text={principal.name}>
+									{principal.name}
+								</Option>
+							))}
+						</Dropdown>
+					</Field>
 				</Grow>
 				<Menu>
 					<MenuTrigger disableButtonEnhancement>

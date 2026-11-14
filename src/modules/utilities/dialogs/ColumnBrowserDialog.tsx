@@ -6,7 +6,6 @@ import {
 	DialogContent,
 	DialogSurface,
 	DialogTitle,
-	Input,
 	makeStyles,
 	Menu,
 	MenuButton,
@@ -18,10 +17,10 @@ import {
 	Text,
 	tokens,
 } from "@fluentui/react-components";
-import { Copy20Regular, Eye20Regular, MoreHorizontal20Regular, Search20Regular } from "@fluentui/react-icons";
+import { Copy20Regular, Eye20Regular, MoreHorizontal20Regular } from "@fluentui/react-icons";
 import { useCallback, useMemo, useState } from "react";
 
-import { DataTable, type DataTableColumn, FormStack, useAppToast } from "@/shared/components";
+import { DataTable, type DataTableColumn, FormStack, SearchField, useAppToast } from "@/shared/components";
 import { copyToClipboard } from "@/shared/lib";
 import { type CodegenColumn, type CodegenTable } from "@/shared/types";
 
@@ -156,11 +155,11 @@ export const ColumnBrowserDialog = ({ open, table, formAttributes, onClose, onFi
 					<DialogTitle>{table ? `${table.displayName} columns (${table.logicalName})` : "Column Browser"}</DialogTitle>
 					<DialogContent>
 						<FormStack>
-							<Input
-								contentBefore={<Search20Regular />}
-								placeholder="Search by display, logical, or schema name..."
+							<SearchField
 								value={filter}
-								onChange={(_, data) => setFilter(data.value)}
+								onChange={setFilter}
+								placeholder="Search columns"
+								aria-label="Search columns by display, logical or schema name"
 							/>
 							<Text size={200} className={styles.caption}>
 								{rows.length} of {table?.columns.length ?? 0} columns

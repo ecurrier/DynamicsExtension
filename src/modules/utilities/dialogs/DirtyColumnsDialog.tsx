@@ -1,5 +1,4 @@
 import {
-	Badge,
 	type BadgeProps,
 	Button,
 	Dialog,
@@ -14,7 +13,7 @@ import {
 } from "@fluentui/react-components";
 
 import { usePageMutation } from "@/messaging/client";
-import { ControlStateBadges, CopyButton, DataTable, type DataTableColumn, EmptyState, FormStack } from "@/shared/components";
+import { ControlStateBadges, CopyButton, DataTable, type DataTableColumn, EmptyState, FormStack, TextBadge } from "@/shared/components";
 import { type DirtyColumnsResult } from "@/shared/types";
 
 import { type DirtyColumnFinding, dirtyColumnFindings, dirtyColumnsSummary, dirtyColumnsToText, SUBMIT_OUTCOME_LABELS, type SubmitOutcome } from "../lib";
@@ -86,15 +85,15 @@ export const DirtyColumnsDialog = ({ result, onClose }: DirtyColumnsDialogProps)
 			width: 160,
 			render: (finding) => (
 				<span className={styles.badges}>
-					<Badge appearance="tint" size="small" color={OUTCOME_COLORS[finding.outcome]}>
+					<TextBadge appearance="tint" size="small" color={OUTCOME_COLORS[finding.outcome]}>
 						{SUBMIT_OUTCOME_LABELS[finding.outcome]}
-					</Badge>
+					</TextBadge>
 					{finding.onForm ? (
 						<ControlStateBadges tags={finding.tags} />
 					) : (
-						<Badge appearance="tint" size="small" color="subtle">
+						<TextBadge appearance="tint" size="small" color="subtle">
 							Not on form
-						</Badge>
+						</TextBadge>
 					)}
 				</span>
 			),

@@ -1,4 +1,4 @@
-import { AccordionHeader, Badge, Button, Combobox, Field, makeStyles, Option, Switch, Text, tokens } from "@fluentui/react-components";
+import { AccordionHeader, Button, Combobox, Field, makeStyles, Option, Switch, Text, tokens } from "@fluentui/react-components";
 import { Search20Regular } from "@fluentui/react-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -16,8 +16,8 @@ import {
 	Grow,
 	InfoTip,
 	PageRequirementGate,
-	useAppToast,
 } from "@/shared/components";
+import { TextBadge, useBanner } from "@/shared/components";
 import { type DependentComponent, type FlowReference, type StepReference, type TransportAttribute } from "@/shared/types";
 
 import { InvestigateConnection, TablePicker } from "../../components";
@@ -38,7 +38,7 @@ const useStyles = makeStyles({
 
 export const ColumnUsageArea = () => {
 	const styles = useStyles();
-	const toast = useAppToast();
+	const banner = useBanner();
 	const connection = useInvestigateStore((state) => state.connection);
 	const table = useInvestigateStore((state) => state.table);
 	const column = useInvestigateStore((state) => state.column);
@@ -58,7 +58,8 @@ export const ColumnUsageArea = () => {
 
 	const usage = useMutation({
 		mutationFn: () => gateway.ops.getColumnUsage({ entityLogicalName: table, attributeLogicalName: column, scanFlows }),
-		onError: (error) => toast.error("Could not read column usage", error),
+		meta: { silent: true },
+		onError: (error) => banner.show("Could not read column usage", error),
 	});
 
 	const options = useMemo<TransportAttribute[]>(() => {
@@ -77,9 +78,9 @@ export const ColumnUsageArea = () => {
 				label: "Component",
 				width: 150,
 				render: (row) => (
-					<Badge appearance="tint" size="small">
+					<TextBadge appearance="tint" size="small">
 						{row.componentTypeLabel}
-					</Badge>
+					</TextBadge>
 				),
 				sortValue: (row) => row.componentTypeLabel,
 			},
@@ -102,9 +103,9 @@ export const ColumnUsageArea = () => {
 				label: "State",
 				width: 100,
 				render: (row) => (
-					<Badge appearance="tint" size="small" color={row.enabled ? "success" : "danger"}>
+					<TextBadge appearance="tint" size="small" color={row.enabled ? "success" : "danger"}>
 						{row.enabled ? "On" : "Off"}
-					</Badge>
+					</TextBadge>
 				),
 				sortValue: (row) => (row.enabled ? 1 : 0),
 			},

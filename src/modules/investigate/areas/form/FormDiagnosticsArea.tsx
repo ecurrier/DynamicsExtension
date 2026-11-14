@@ -1,5 +1,5 @@
-import { AccordionHeader, Badge, Button, Input, makeStyles, Text, tokens, Tooltip } from "@fluentui/react-components";
-import { ArrowClockwise20Regular, Open20Regular, Search20Regular } from "@fluentui/react-icons";
+import { AccordionHeader, Button, makeStyles, Text, tokens, Tooltip } from "@fluentui/react-components";
+import { ArrowClockwise20Regular, Open20Regular } from "@fluentui/react-icons";
 import { useCallback, useMemo, useState } from "react";
 
 import { usePageFetcher, usePageQuery } from "@/messaging/client";
@@ -16,8 +16,9 @@ import {
 	FillAccordionItem,
 	FillAccordionPanel,
 	FormStack,
-	Grow,
 	PageRequirementGate,
+	SearchField,
+	TextBadge,
 } from "@/shared/components";
 import { openUrl } from "@/shared/extension";
 import { useAsyncAction, useSolutionPicker } from "@/shared/hooks";
@@ -98,9 +99,9 @@ export const FormDiagnosticsArea = () => {
 				label: "Event",
 				width: 120,
 				render: (handler) => (
-					<Badge appearance="tint" size="small">
+					<TextBadge appearance="tint" size="small">
 						{handler.event}
-					</Badge>
+					</TextBadge>
 				),
 				sortValue: (handler) => handler.event,
 			},
@@ -137,9 +138,9 @@ export const FormDiagnosticsArea = () => {
 				label: "Enabled",
 				width: 90,
 				render: (handler) => (
-					<Badge appearance="tint" size="small" color={handler.enabled ? "success" : "danger"}>
+					<TextBadge appearance="tint" size="small" color={handler.enabled ? "success" : "danger"}>
 						{handler.enabled ? "Yes" : "No"}
-					</Badge>
+					</TextBadge>
 				),
 				sortValue: (handler) => (handler.enabled ? 1 : 0),
 			},
@@ -214,9 +215,9 @@ export const FormDiagnosticsArea = () => {
 				label: "State",
 				width: 100,
 				render: (rule) => (
-					<Badge appearance="tint" size="small" color={rule.enabled ? "success" : "danger"}>
+					<TextBadge appearance="tint" size="small" color={rule.enabled ? "success" : "danger"}>
 						{rule.enabled ? "On" : "Off"}
-					</Badge>
+					</TextBadge>
 				),
 				sortValue: (rule) => (rule.enabled ? 1 : 0),
 			},
@@ -236,14 +237,7 @@ export const FormDiagnosticsArea = () => {
 			<PageRequirementGate requires="model-driven-app">
 				<FormStack fill>
 					<AreaToolbar>
-						<Grow>
-							<Input
-								contentBefore={<Search20Regular />}
-								placeholder="Filter controls and handlers..."
-								value={filter}
-								onChange={(_, input) => setFilter(input.value)}
-							/>
-						</Grow>
+						<SearchField value={filter} onChange={setFilter} placeholder="Search controls and handlers" aria-label="Search controls and handlers" />
 						<Tooltip content="Re-read the form" relationship="label">
 							<Button
 								icon={<ArrowClockwise20Regular />}

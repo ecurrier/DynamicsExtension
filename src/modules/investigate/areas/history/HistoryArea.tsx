@@ -1,9 +1,9 @@
-import { Badge, Button, Field, Input, makeStyles, Text, tokens, Tooltip } from "@fluentui/react-components";
+import { Button, Field, Input, makeStyles, Text, tokens, Tooltip } from "@fluentui/react-components";
 import { History20Regular, TargetArrow20Regular } from "@fluentui/react-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
-import { AreaContainer, DataTable, type DataTableColumn, EmptyState, FormRow, FormStack, Grow, PageRequirementGate } from "@/shared/components";
+import { AreaContainer, DataTable, type DataTableColumn, EmptyState, FormRow, FormStack, Grow, PageRequirementGate, TextBadge } from "@/shared/components";
 import { isGuid } from "@/shared/lib";
 import { type AuditChange, type AuditConfiguration, type AuditEntry } from "@/shared/types";
 
@@ -102,9 +102,9 @@ export const HistoryArea = () => {
 				label: "Event",
 				width: 110,
 				render: (entry) => (
-					<Badge appearance="tint" size="small">
+					<TextBadge appearance="tint" size="small">
 						{entry.actionLabel}
-					</Badge>
+					</TextBadge>
 				),
 				sortValue: (entry) => entry.actionLabel,
 			},

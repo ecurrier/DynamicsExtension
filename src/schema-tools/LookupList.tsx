@@ -1,6 +1,7 @@
-import { Badge, Button, Label, makeStyles, mergeClasses, MessageBar, MessageBarBody, Spinner, Text, tokens, useId } from "@fluentui/react-components";
+import { Button, Label, makeStyles, mergeClasses, MessageBar, MessageBarBody, Spinner, Text, tokens, useId } from "@fluentui/react-components";
 import { Add20Regular } from "@fluentui/react-icons";
 
+import { TextBadge } from "@/shared/components";
 import { describeError } from "@/shared/lib";
 import { type EntitySummary, type PolymorphicLookup } from "@/shared/types";
 
@@ -162,9 +163,9 @@ export const LookupList = ({
 										Not created yet
 									</Text>
 								</span>
-								<Badge appearance="outline" color="brand">
+								<TextBadge appearance="outline" color="brand">
 									Draft
-								</Badge>
+								</TextBadge>
 							</li>
 						) : null}
 						{lookups.map((lookup) => {

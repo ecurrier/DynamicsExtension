@@ -1,4 +1,4 @@
-import { Badge, Button, Input, makeStyles, useId } from "@fluentui/react-components";
+import { Button, Input, makeStyles, useId } from "@fluentui/react-components";
 import { Dismiss16Regular, Search20Regular } from "@fluentui/react-icons";
 import { useEffect, useRef, useState } from "react";
 
@@ -7,6 +7,7 @@ import { type LookupSelection, type LookupTarget } from "@/shared/types";
 import { RecordLookupPanel } from "./RecordLookupPanel";
 import { useAnchoredPanel } from "./useAnchoredPanel";
 import { type RecordLookupServices, useRecordSearch } from "./useRecordSearch";
+import { TextBadge } from "../TextBadge";
 
 const useStyles = makeStyles({
 	root: {
@@ -86,9 +87,9 @@ export const RecordLookup = ({
 				contentAfter={
 					<span className={styles.after}>
 						{selectedEntity ? (
-							<Badge appearance="tint" size="small">
+							<TextBadge appearance="tint" size="small">
 								{selectedEntity}
-							</Badge>
+							</TextBadge>
 						) : null}
 						{showClear ? (
 							<Button

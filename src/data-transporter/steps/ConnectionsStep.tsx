@@ -1,8 +1,8 @@
-import { Badge, Button, Dropdown, Field, makeStyles, MessageBar, MessageBarBody, MessageBarTitle, Option, Text, tokens } from "@fluentui/react-components";
+import { Button, Dropdown, Field, makeStyles, MessageBar, MessageBarBody, MessageBarTitle, Option, Text, tokens } from "@fluentui/react-components";
 import { ArrowRight20Regular, PlugConnected20Regular } from "@fluentui/react-icons";
 import { useState } from "react";
 
-import { FormRow, FormStack, Grow, useAppToast } from "@/shared/components";
+import { FormRow, FormStack, Grow, TextBadge, useAppToast } from "@/shared/components";
 import { getEnvironmentHttp, PAGE_CONNECTION, requestEnvironmentAccess } from "@/shared/connections";
 import { useAsyncAction } from "@/shared/hooks";
 import { findEnvironmentByOrigin, whoAmI } from "@/shared/lib";
@@ -135,9 +135,9 @@ export const ConnectionsStep = ({ launch, pageAvailable, environments }: Connect
 				{Object.entries(tested).map(([id, userId]) => {
 					const environment = environments.find((candidate) => candidate.id === id);
 					return environment ? (
-						<Badge key={id} appearance="tint" color="success" size="small" title={`Application user ${userId}`}>
+						<TextBadge key={id} appearance="tint" color="success" size="small" title={`Application user ${userId}`}>
 							{environment.name} connected
-						</Badge>
+						</TextBadge>
 					) : null;
 				})}
 			</div>

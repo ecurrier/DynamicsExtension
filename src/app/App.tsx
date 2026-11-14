@@ -5,11 +5,11 @@ import { useCallback, useEffect, useState } from "react";
 import { pageKeys, usePageQuery } from "@/messaging/client";
 import { moduleForArea, modules, resolveArea } from "@/modules";
 import { ImpersonationIndicator } from "@/modules/impersonation";
-import { AppNavDrawer, AppShell, HostAccessBanner, TabRecoveryBanner } from "@/shared/components";
+import { AppNavDrawer, AppShell, FailureBanner, HostAccessBanner, TabRecoveryBanner } from "@/shared/components";
 import { describeTab, focusTab, openPinnedWindow, openSidePanel, sidePanelSupported, type TabSummary } from "@/shared/extension";
 import { useAsyncAction, usePopupLaunch } from "@/shared/hooks";
 import { resolveOrgOrigin, tabTooltip } from "@/shared/lib";
-import { useNavigationStore, useSessionStore } from "@/shared/stores";
+import { useBannerStore, useNavigationStore, useSessionStore } from "@/shared/stores";
 import { WorkspaceOutlet } from "@/workspaces";
 
 import { AreaOutlet } from "./AreaOutlet";
@@ -26,6 +26,7 @@ export const App = () => {
 	const bridgeStatus = useSessionStore((state) => state.bridgeStatus);
 	const tabUrl = useSessionStore((state) => state.tabUrl);
 	const currentAreaId = useNavigationStore((state) => state.currentAreaId);
+	const failure = useBannerStore((state) => state.banner);
 	const drawerOpen = useNavigationStore((state) => state.drawerOpen);
 	const recentAreaIds = useNavigationStore((state) => state.recentAreaIds);
 	const workspace = useNavigationStore((state) => state.workspace);
@@ -153,6 +154,8 @@ export const App = () => {
 							onPick={(pickedTabId) => void rebind.run(() => rebindTab(pickedTabId))}
 							onRefresh={() => void refreshRecovery()}
 						/>
+					) : failure ? (
+						<FailureBanner />
 					) : launch.mode !== "popup" ? (
 						<HostAccessBanner origin={orgOrigin} reason={launch.mode === "sidepanel" ? PANEL_ACCESS_REASON : WINDOW_ACCESS_REASON} />
 					) : null

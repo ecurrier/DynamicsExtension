@@ -111,7 +111,8 @@ export const BulkUsersArea = () => {
 							onChange={userFilter.setQuery}
 							shown={userFilter.shown}
 							total={userFilter.total}
-							placeholder="Filter by name or sign-in name"
+							placeholder="Search users"
+							label="Search users by name or sign-in name"
 						/>
 					</Grow>
 					<Button
@@ -170,7 +171,7 @@ export const BulkUsersArea = () => {
 							onChange={roleFilter.setQuery}
 							shown={roleFilter.shown}
 							total={roleFilter.total}
-							placeholder="Filter roles"
+							placeholder="Search roles"
 						/>
 					</Grow>
 				</FormRow>

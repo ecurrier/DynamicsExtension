@@ -1,5 +1,6 @@
-import { Badge, makeStyles, Spinner, Text, tokens } from "@fluentui/react-components";
+import { makeStyles, Spinner, Text, tokens } from "@fluentui/react-components";
 
+import { TextBadge } from "@/shared/components";
 import { type PluginPackage } from "@/shared/types";
 
 import { type PluginPackagesGateway, usePackageLayers } from "../../hooks";
@@ -22,9 +23,9 @@ export const PackageLayerBadge = ({ gateway, package: pkg, enabled }: PackageLay
 		return null;
 	}
 	return (
-		<Badge appearance="tint" size="small" color="warning">
+		<TextBadge appearance="tint" size="small" color="warning">
 			Active layer
-		</Badge>
+		</TextBadge>
 	);
 };
 

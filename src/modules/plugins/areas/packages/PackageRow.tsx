@@ -1,8 +1,8 @@
-import { AccordionHeader, Badge, Button, makeStyles, mergeClasses, Text, tokens } from "@fluentui/react-components";
+import { AccordionHeader, Button, makeStyles, mergeClasses, Text, tokens } from "@fluentui/react-components";
 import { ArrowUpload20Regular } from "@fluentui/react-icons";
 import { type DragEvent, type ReactNode, useMemo, useState } from "react";
 
-import { DataTable, type DataTableColumn, FillAccordionItem, FillAccordionPanel } from "@/shared/components";
+import { DataTable, type DataTableColumn, FillAccordionItem, FillAccordionPanel, TextBadge } from "@/shared/components";
 import { type PluginPackage } from "@/shared/types";
 
 import { describeCounts, formatTimestamp, packageCounts, type PackageTypeRow, packageTypeRows } from "../../lib";
@@ -158,9 +158,9 @@ export const PackageRow = ({ package: pkg, updateDisabled, badges, details, onUp
 									{pkg.name}
 								</span>
 								{pkg.isManaged ? (
-									<Badge appearance="outline" size="small">
+									<TextBadge appearance="outline" size="small">
 										Managed
-									</Badge>
+									</TextBadge>
 								) : null}
 								{badges}
 							</span>

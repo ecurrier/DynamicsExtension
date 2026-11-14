@@ -1,6 +1,6 @@
 import { Accordion, AccordionHeader, AccordionItem, AccordionPanel, makeStyles, Radio, RadioGroup, Switch, Text, tokens } from "@fluentui/react-components";
 
-import { InfoTip, useAppToast } from "@/shared/components";
+import { InfoTip, useBanner } from "@/shared/components";
 import { type ThemePreference } from "@/shared/storage";
 
 import { useExtensionSettings } from "../../hooks";
@@ -24,10 +24,10 @@ const useStyles = makeStyles({
 
 export const ExtensionSettingsArea = () => {
 	const styles = useStyles();
-	const toast = useAppToast();
+	const banner = useBanner();
 	const { settings, setSetting } = useExtensionSettings();
 
-	const save = (action: Promise<unknown>) => action.catch((error: unknown) => toast.error("Could not save the setting", error));
+	const save = (action: Promise<unknown>) => action.catch((error: unknown) => banner.show("Could not save the setting", error));
 
 	const renderSetting = (definition: SettingDefinition) => {
 		if (definition.kind === "choice") {

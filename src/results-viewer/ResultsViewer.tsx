@@ -1,9 +1,8 @@
-import { Input, makeStyles, Text, Title3, tokens } from "@fluentui/react-components";
-import { Search20Regular } from "@fluentui/react-icons";
+import { makeStyles, Text, Title3, tokens } from "@fluentui/react-components";
 import { useMemo, useState } from "react";
 
 import { cellText, rowMatches } from "@/modules/webapi/lib";
-import { DataTable, type DataTableColumn } from "@/shared/components";
+import { DataTable, type DataTableColumn, FailureBanner, SearchField } from "@/shared/components";
 import { type ResultsShare } from "@/shared/types";
 
 const useStyles = makeStyles({
@@ -59,14 +58,9 @@ export const ResultsViewer = ({ share }: ResultsViewerProps) => {
 					{share.truncated ? " (truncated)" : ""}
 				</Text>
 				<div className={styles.grow} />
-				<Input
-					contentBefore={<Search20Regular />}
-					placeholder="Filter results..."
-					value={filter}
-					onChange={(_, data) => setFilter(data.value)}
-					style={{ minWidth: "280px" }}
-				/>
+				<SearchField value={filter} onChange={setFilter} placeholder="Search results" aria-label="Search results" />
 			</div>
+			<FailureBanner />
 			<DataTable items={filtered} columns={tableColumns} pageSize={100} fill emptyMessage="No records match the filter" />
 		</div>
 	);

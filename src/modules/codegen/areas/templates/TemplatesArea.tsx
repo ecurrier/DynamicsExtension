@@ -1,4 +1,5 @@
 import {
+	Field,
 	Dropdown,
 	Menu,
 	MenuButton,
@@ -25,7 +26,8 @@ import {
 } from "@fluentui/react-icons";
 import { useMemo, useRef, useState } from "react";
 
-import { AreaContainer, AreaToolbar, Grow, useAppToast, useConfirm } from "@/shared/components";
+import { AreaContainer, AreaToolbar, Grow, useAppToast, useBanner, useConfirm } from "@/shared/components";
+import { useFieldProblem } from "@/shared/hooks";
 import { downloadTextFile, generateGuid } from "@/shared/lib";
 import { type Template, TEMPLATE_KIND_LABELS, TEMPLATE_KINDS } from "@/shared/types";
 
@@ -52,6 +54,8 @@ const blankTemplate = (): Template => ({
 
 export const TemplatesArea = () => {
 	const toast = useAppToast();
+	const banner = useBanner();
+	const problems = useFieldProblem<"template" | "name">();
 	const confirm = useConfirm();
 	const { templates, byId, defaults, upsert, remove, setDefault, isSaving } = useCodeTemplates();
 	const editingId = useCodegenStore((state) => state.editingTemplateId);
@@ -90,13 +94,14 @@ export const TemplatesArea = () => {
 
 	const save = async () => {
 		if (!draft) {
-			toast.error("Select a template or add a new one first");
+			problems.raise("template", "Select a template or add a new one first");
 			return;
 		}
 		if (!draft.name.trim()) {
-			toast.error("Enter a template name");
+			problems.raise("name", "Enter a template name");
 			return;
 		}
+		problems.clear();
 		const saved = { ...draft, name: draft.name.trim(), updatedAt: now() };
 		try {
 			await upsert(saved);
@@ -105,15 +110,16 @@ export const TemplatesArea = () => {
 			setEditing(saved.id);
 			toast.success(`Saved template ${saved.name}`);
 		} catch (error) {
-			toast.error("Could not save the template", error);
+			banner.show("Could not save the template", error);
 		}
 	};
 
 	const onDelete = async () => {
 		if (!draft || isNew || draft.builtIn) {
-			toast.error("Select a saved template to delete");
+			problems.raise("template", "Select a saved template to delete");
 			return;
 		}
+		problems.clear();
 		if (!(await confirm({ content: `Delete the template "${draft.name}"?`, confirmLabel: "Delete" }))) {
 			return;
 		}
@@ -123,28 +129,30 @@ export const TemplatesArea = () => {
 			setEditing(null);
 			toast.success("Template deleted");
 		} catch (error) {
-			toast.error("Could not delete the template", error);
+			banner.show("Could not delete the template", error);
 		}
 	};
 
 	const star = async () => {
 		if (!draft || isNew) {
-			toast.error("Save the template before making it the default");
+			problems.raise("template", "Save the template before making it the default");
 			return;
 		}
+		problems.clear();
 		try {
 			await setDefault(draft.kind, draft.id);
 			toast.success(`${draft.name} is now the default ${TEMPLATE_KIND_LABELS[draft.kind].toLowerCase()} template`);
 		} catch (error) {
-			toast.error("Could not set the default template", error);
+			banner.show("Could not set the default template", error);
 		}
 	};
 
 	const onExport = () => {
 		if (!draft) {
-			toast.error("No template to export");
+			problems.raise("template", "Select a template to export");
 			return;
 		}
+		problems.clear();
 		downloadTextFile(templateExportFileName(draft.name), serializeTemplateFile(draft), "application/json");
 	};
 
@@ -155,7 +163,7 @@ export const TemplatesArea = () => {
 		try {
 			startDraft(parseTemplateFile(await file.text(), { newId: generateGuid, now }));
 		} catch (error) {
-			toast.error("Could not import the template", error);
+			banner.show("Could not import the template", error);
 		}
 	};
 
@@ -180,28 +188,30 @@ export const TemplatesArea = () => {
 			</MessageBar>
 			<AreaToolbar>
 				<Grow>
-					<Dropdown
-						placeholder="Select a template..."
-						value={selectedLabel}
-						selectedOptions={selectedId ? [selectedId] : []}
-						onOptionSelect={(_, data) => data.optionValue && data.optionValue !== NEW_TEMPLATE && select(data.optionValue)}>
-						{isNew ? (
-							<Option value={NEW_TEMPLATE} text="New template">
-								New template
-							</Option>
-						) : null}
-						{TEMPLATE_KINDS.map((kind) => (
-							<OptionGroup key={kind} label={TEMPLATE_KIND_LABELS[kind]}>
-								{templates
-									.filter((template) => template.kind === kind)
-									.map((template) => (
-										<Option key={template.id} value={template.id} text={optionLabel(template)}>
-											{optionLabel(template)}
-										</Option>
-									))}
-							</OptionGroup>
-						))}
-					</Dropdown>
+					<Field validationMessage={problems.messageFor("template")}>
+						<Dropdown
+							placeholder="Select a template..."
+							value={selectedLabel}
+							selectedOptions={selectedId ? [selectedId] : []}
+							onOptionSelect={(_, data) => data.optionValue && data.optionValue !== NEW_TEMPLATE && select(data.optionValue)}>
+							{isNew ? (
+								<Option value={NEW_TEMPLATE} text="New template">
+									New template
+								</Option>
+							) : null}
+							{TEMPLATE_KINDS.map((kind) => (
+								<OptionGroup key={kind} label={TEMPLATE_KIND_LABELS[kind]}>
+									{templates
+										.filter((template) => template.kind === kind)
+										.map((template) => (
+											<Option key={template.id} value={template.id} text={optionLabel(template)}>
+												{optionLabel(template)}
+											</Option>
+										))}
+								</OptionGroup>
+							))}
+						</Dropdown>
+					</Field>
 				</Grow>
 				<Menu>
 					<MenuTrigger disableButtonEnhancement>
@@ -247,7 +257,14 @@ export const TemplatesArea = () => {
 				/>
 			</AreaToolbar>
 			{draft && generation ? (
-				<TemplateEditor draft={draft} readOnly={draft.builtIn} isSample={preview.isSample} generation={generation} onChange={setEdits} />
+				<TemplateEditor
+					draft={draft}
+					nameProblem={problems.messageFor("name")}
+					readOnly={draft.builtIn}
+					isSample={preview.isSample}
+					generation={generation}
+					onChange={setEdits}
+				/>
 			) : (
 				<Text size={200}>Select a template to view or edit it, or use Actions to start a new one.</Text>
 			)}

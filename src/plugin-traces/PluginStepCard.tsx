@@ -1,9 +1,9 @@
-import { Badge, Button, makeStyles, Spinner, Text, tokens } from "@fluentui/react-components";
+import { Button, makeStyles, Spinner, Text, tokens } from "@fluentui/react-components";
 import { Pause20Regular, Play20Regular } from "@fluentui/react-icons";
 
 import { pageKeys, usePageMutation, usePageQuery } from "@/messaging/client";
 import { useExtensionSettings } from "@/modules/settings";
-import { useAppToast, useConfirm } from "@/shared/components";
+import { TextBadge, useAppToast, useBanner, useConfirm } from "@/shared/components";
 import { useSessionStore } from "@/shared/stores";
 import { PLUGIN_STEP_MODE_LABELS, PLUGIN_STEP_STAGE_LABELS } from "@/shared/types";
 
@@ -52,6 +52,7 @@ interface PluginStepCardProps {
 export const PluginStepCard = ({ stepId }: PluginStepCardProps) => {
 	const styles = useStyles();
 	const toast = useAppToast();
+	const banner = useBanner();
 	const confirm = useConfirm();
 	const tabId = useSessionStore((state) => state.tabId);
 	const { settings } = useExtensionSettings();
@@ -60,7 +61,7 @@ export const PluginStepCard = ({ stepId }: PluginStepCardProps) => {
 		invalidates: () => (tabId === null ? [] : [pageKeys.command(tabId, "pluginSteps.get", { id: stepId })]),
 		onSuccess: (result, args) => {
 			if (result.failed.length > 0) {
-				toast.error("The step could not be changed", result.failed[0]?.message);
+				banner.show("The step could not be changed", result.failed[0]?.message);
 			} else {
 				toast.success(args.enabled ? "Step enabled" : "Step disabled");
 			}
@@ -112,13 +113,13 @@ export const PluginStepCard = ({ stepId }: PluginStepCardProps) => {
 				<Text weight="semibold" className={styles.name} title={detail.name}>
 					{detail.name}
 				</Text>
-				<Badge appearance="tint" size="small" color={detail.enabled ? "success" : "danger"}>
+				<TextBadge appearance="tint" size="small" color={detail.enabled ? "success" : "danger"}>
 					{detail.enabled ? "Enabled" : "Disabled"}
-				</Badge>
+				</TextBadge>
 				{detail.isManaged ? (
-					<Badge appearance="outline" size="small">
+					<TextBadge appearance="outline" size="small">
 						Managed
-					</Badge>
+					</TextBadge>
 				) : null}
 			</div>
 			<div className={styles.grid}>

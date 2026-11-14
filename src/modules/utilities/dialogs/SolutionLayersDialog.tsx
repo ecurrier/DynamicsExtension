@@ -1,18 +1,6 @@
-import {
-	Badge,
-	Button,
-	Dialog,
-	DialogActions,
-	DialogBody,
-	DialogContent,
-	DialogSurface,
-	DialogTitle,
-	makeStyles,
-	Text,
-	tokens,
-} from "@fluentui/react-components";
+import { Button, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle, makeStyles, Text, tokens } from "@fluentui/react-components";
 
-import { CopyButton, DataTable, type DataTableColumn, EmptyState, FormStack } from "@/shared/components";
+import { CopyButton, DataTable, type DataTableColumn, EmptyState, FormStack, TextBadge } from "@/shared/components";
 import { type SolutionLayer, type SolutionLayers } from "@/shared/types";
 
 const useStyles = makeStyles({
@@ -38,9 +26,9 @@ const columns: DataTableColumn<SolutionLayer>[] = [
 		label: "Layer",
 		width: 120,
 		render: (layer) => (
-			<Badge appearance="tint" size="small" color={layer.isManaged ? "informative" : "warning"}>
+			<TextBadge appearance="tint" size="small" color={layer.isManaged ? "informative" : "warning"}>
 				{layer.isManaged ? "Managed" : "Unmanaged"}
-			</Badge>
+			</TextBadge>
 		),
 		sortValue: (layer) => (layer.isManaged ? 1 : 0),
 	},
