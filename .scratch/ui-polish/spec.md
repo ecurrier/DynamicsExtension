@@ -75,12 +75,12 @@ Decisions that change ADR 0002 are recorded in `docs/adr/0003-area-width-and-wor
 
 After decisions 9 to 12 the four surfaces have clear jobs:
 
-| Surface | Carries | Lifetime |
-| --- | --- | --- |
-| Field validation message | "this control is wrong" | until the control is fixed |
-| `AppShell` banner | a failure the user must act on | until dismissed or the Area is left |
-| Result view | a partial failure, with the rows that failed | until the user closes it |
-| Toast, bottom right | a success, or a plain notice | 3 seconds, or the close button |
+| Surface                  | Carries                                      | Lifetime                            |
+| ------------------------ | -------------------------------------------- | ----------------------------------- |
+| Field validation message | "this control is wrong"                      | until the control is fixed          |
+| `AppShell` banner        | a failure the user must act on               | until dismissed or the Area is left |
+| Result view              | a partial failure, with the rows that failed | until the user closes it            |
+| Toast, bottom right      | a success, or a plain notice                 | 3 seconds, or the close button      |
 
 ## Order of work
 
