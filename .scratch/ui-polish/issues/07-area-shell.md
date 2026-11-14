@@ -1,6 +1,6 @@
 # AreaShell owns the toolbar row
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 
 See `../spec.md`, decisions 1 and 2, and "The Area shell".
@@ -17,3 +17,13 @@ Eleven Areas use `AreaToolbar`, six wrote their own toolbar, four use a tab bar 
 - A tab bar is not a toolbar. An Area with tabs passes them in `children`, below the row.
 
 Blocked by: 02
+
+## Answer
+
+- `src/shared/components/AreaShell` holds `AreaShell` and `FilterPanel`. The slots are `search`, `filters`, `actions`, `primaryAction` and `children`, and there is no slot for a toolbar anywhere else.
+- The row renders through a React portal into an element `AppShell` puts in the breadcrumb row (`AreaShellSlotContext`). A portal keeps the slots in the Area's own React tree, so its state and handlers work as usual, while the row belongs to the shell. An `AreaShell` with no slot renders nothing at all, and the slot element is `:empty`, so it disappears and the breadcrumb keeps the whole row.
+- Order in the row: breadcrumb, search filling the rest, the Filters button with its count, secondary icon buttons, one primary action. It costs no extra height.
+- Below 560px of container width the whole slot block takes a line of its own (`flex-basis: 100%` and `order: 1` on the slot element, with the header row wrapping). The environment name is dropped at the same breakpoint, which is before the search moves. Both are container queries on `AppShell`'s `.bar`, never media queries.
+- The breadcrumb is `flex: 0 1 auto` and truncates; a spacer after the slots holds the shell buttons against the edge, above all when the Area fills no slot.
+- `FormRow` keeps its 55 usages and gains `flexWrap: "wrap"`, which is why controls no longer push past their container.
+- A fallback inline row renders when there is no shell to portal into, so a row is never lost.

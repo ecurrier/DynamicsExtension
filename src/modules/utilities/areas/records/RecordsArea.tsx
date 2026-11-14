@@ -1,9 +1,9 @@
-import { Button, Field, makeStyles, MessageBar, MessageBarBody, MessageBarTitle, Text, tokens } from "@fluentui/react-components";
+import { Button, Field, makeStyles, MessageBar, MessageBarBody, MessageBarTitle, Text, tokens, Tooltip } from "@fluentui/react-components";
 import { ChevronLeft20Regular, ChevronRight20Regular } from "@fluentui/react-icons";
 import { useState } from "react";
 
 import { pageKeys, usePageFetcher, usePageMutation, usePageQuery } from "@/messaging/client";
-import { AreaContainer, AreaShell, DataTable, type DataTableColumn, TableFilter, useAppToast, useSelectDialog, useTableFilter } from "@/shared/components";
+import { AreaContainer, AreaShell, DataTable, type DataTableColumn, FormRow, Grow, TableFilter, useAppToast, useSelectDialog, useTableFilter } from "@/shared/components";
 import { useAsyncAction } from "@/shared/hooks";
 import { useSessionStore } from "@/shared/stores";
 
@@ -117,23 +117,22 @@ export const RecordsArea = () => {
 			}
 			actions={
 				<>
-					<Button
-						icon={<ChevronLeft20Regular />}
-						disabled={!position.hasPrevious || step.running}
-						onClick={() => open(recordSetStep(rows, currentId, -1))}>
-						Previous
-					</Button>
-					<Button
-						icon={<ChevronRight20Regular />}
-						disabled={rows.length === 0 || step.running}
-						onClick={() => open(recordSetStep(rows, currentId, 1))}>
-						Next
-					</Button>
-					{truncated ? (
-						<Button appearance="subtle" disabled={pick.running} onClick={() => load(limit + PAGE_SIZE, undefined)}>
-							Load more
-						</Button>
-					) : null}
+					<Tooltip content="Go to the previous record" relationship="label">
+						<Button
+							icon={<ChevronLeft20Regular />}
+							disabled={!position.hasPrevious || step.running}
+							onClick={() => open(recordSetStep(rows, currentId, -1))}
+							aria-label="Go to the previous record"
+						/>
+					</Tooltip>
+					<Tooltip content="Go to the next record" relationship="label">
+						<Button
+							icon={<ChevronRight20Regular />}
+							disabled={rows.length === 0 || step.running}
+							onClick={() => open(recordSetStep(rows, currentId, 1))}
+							aria-label="Go to the next record"
+						/>
+					</Tooltip>
 				</>
 			}
 			primaryAction={
@@ -151,10 +150,19 @@ export const RecordsArea = () => {
 						</span>
 					</MessageBarBody>
 				</MessageBar>
-				<Text size={200} className={styles.caption}>
-					{viewName ? `${viewName} · ${position.caption}` : position.caption}
-					{truncated ? ` · first ${limit} shown` : ""}
-				</Text>
+				<FormRow>
+					<Grow>
+						<Text size={200} className={styles.caption}>
+							{viewName ? `${viewName} · ${position.caption}` : position.caption}
+							{truncated ? ` · first ${limit} shown` : ""}
+						</Text>
+					</Grow>
+					{truncated ? (
+						<Button appearance="subtle" size="small" disabled={pick.running} onClick={() => load(limit + PAGE_SIZE, undefined)}>
+							Load more
+						</Button>
+					) : null}
+				</FormRow>
 				<Field label="Records">
 					<DataTable
 						items={filter.filtered}
