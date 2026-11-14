@@ -321,7 +321,7 @@ export const PluginStepsArea = () => {
 					value={filter}
 					onChange={setFilter}
 					placeholder="Search steps"
-					aria-label="Search steps by step, type, message, entity or assembly"
+					aria-label="Search steps by step, type, message, table or assembly"
 				/>
 			}
 			filters={

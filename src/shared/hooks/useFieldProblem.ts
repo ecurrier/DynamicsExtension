@@ -19,11 +19,7 @@ export const useFieldProblem = <F extends string>() => {
 		() => ({
 			problem,
 			messageFor: (field: F) => fieldMessage(problem, field),
-			/** Raises the message and returns false, so a guard reads `if (!x) { return raise(...); }`. */
-			raise: (field: F, message: string) => {
-				setProblem({ field, message });
-				return false;
-			},
+			raise: (field: F, message: string) => setProblem({ field, message }),
 			clear: () => setProblem(null),
 		}),
 		[problem]

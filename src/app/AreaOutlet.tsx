@@ -2,7 +2,9 @@ import { Spinner } from "@fluentui/react-components";
 import { Suspense } from "react";
 
 import { type AreaDefinition } from "@/modules";
-import { PageRequirementGate, SurfaceFitGate } from "@/shared/components";
+import { AreaShell, PageRequirementGate } from "@/shared/components";
+
+import { SurfaceFitGate } from "./SurfaceFitGate";
 
 interface AreaOutletProps {
 	area: AreaDefinition;
@@ -16,5 +18,12 @@ export const AreaOutlet = ({ area }: AreaOutletProps) => {
 		</Suspense>
 	) : null;
 	const gated = area.requires ? <PageRequirementGate requires={area.requires}>{content}</PageRequirementGate> : content;
-	return <SurfaceFitGate area={area}>{gated}</SurfaceFitGate>;
+	// Every Area renders inside an AreaShell, including the ones with nothing to put in the row.
+	// This one fills no slot, so it renders nothing of its own; an Area that has a row renders its
+	// own AreaShell inside this one and fills the slots from there.
+	return (
+		<SurfaceFitGate area={area}>
+			<AreaShell>{gated}</AreaShell>
+		</SurfaceFitGate>
+	);
 };

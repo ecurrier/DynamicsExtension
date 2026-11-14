@@ -2,6 +2,7 @@ import { Button, Checkbox, makeStyles, Popover, PopoverSurface, PopoverTrigger, 
 import { Column20Regular } from "@fluentui/react-icons";
 
 import { DEFAULT_TRACE_COLUMNS, TRACE_COLUMN_ORDER, toggledTraceColumns } from "./lib";
+import { TRACE_COLUMN_LABELS } from "./traceColumns";
 
 const useStyles = makeStyles({
 	trigger: {
@@ -25,19 +26,6 @@ const useStyles = makeStyles({
 		fontWeight: tokens.fontWeightSemibold,
 	},
 });
-
-const LABELS: Record<string, string> = {
-	createdOn: "Created On",
-	typeName: "Type Name",
-	messageName: "Message",
-	primaryEntity: "Entity",
-	mode: "Mode",
-	depth: "Depth",
-	duration: "Duration",
-	exception: "Exception",
-	correlation: "Correlation",
-	pluginStep: "Step",
-};
 
 interface TraceColumnPickerProps {
 	shown: string[];
@@ -64,7 +52,7 @@ export const TraceColumnPicker = ({ shown, onChange }: TraceColumnPickerProps) =
 				{TRACE_COLUMN_ORDER.map((column) => (
 					<Checkbox
 						key={column}
-						label={LABELS[column] ?? column}
+						label={TRACE_COLUMN_LABELS[column] ?? column}
 						checked={shown.includes(column)}
 						onChange={() => onChange(toggledTraceColumns(shown, column))}
 					/>

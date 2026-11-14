@@ -34,7 +34,8 @@ import {
 	type ExplainerStep,
 	StepExplainer,
 	TextBadge,
-	useBanner,
+	AreaShell,
+	StepExplainerButton,
 } from "@/shared/components";
 import { isGuid } from "@/shared/lib";
 import { type AccessPrivilege, type AccessRole, type AccessShare, type AccessTeam, type SystemUser } from "@/shared/types";
@@ -51,9 +52,6 @@ const ACCESS_STEPS: ExplainerStep[] = [
 ];
 
 const useStyles = makeStyles({
-	caption: {
-		color: tokens.colorNeutralForeground3,
-	},
 	mono: {
 		fontFamily: tokens.fontFamilyMonospace,
 		fontSize: tokens.fontSizeBase200,
@@ -63,7 +61,6 @@ const useStyles = makeStyles({
 export const AccessArea = () => {
 	const styles = useStyles();
 	const toast = useAppToast();
-	const banner = useBanner();
 	const connection = useInvestigateStore((state) => state.connection);
 	const table = useInvestigateStore((state) => state.table);
 	const recordId = useInvestigateStore((state) => state.recordId);
@@ -82,8 +79,7 @@ export const AccessArea = () => {
 				toast.info("No users matched that search");
 			}
 		},
-		meta: { silent: true },
-		onError: (error) => banner.show("User search failed", error),
+		meta: { failureTitle: "User search failed" },
 	});
 
 	const check = useMutation({
@@ -93,8 +89,7 @@ export const AccessArea = () => {
 				recordId,
 				systemUserId: selectedUser?.id ?? "",
 			}),
-		meta: { silent: true },
-		onError: (error) => banner.show("Could not check access", error),
+		meta: { failureTitle: "Could not check access" },
 	});
 
 	const report = check.data ?? null;
@@ -303,9 +298,11 @@ export const AccessArea = () => {
 	);
 
 	return (
-		<AreaContainer fill>
-			<InvestigateConnection />
-			{gateway.mode === "page" ? <PageRequirementGate requires="model-driven-app">{body}</PageRequirementGate> : body}
-		</AreaContainer>
+		<AreaShell actions={report ? <StepExplainerButton steps={ACCESS_STEPS} label="How Record Access works" /> : undefined}>
+			<AreaContainer fill>
+				<InvestigateConnection />
+				{gateway.mode === "page" ? <PageRequirementGate requires="model-driven-app">{body}</PageRequirementGate> : body}
+			</AreaContainer>
+		</AreaShell>
 	);
 };

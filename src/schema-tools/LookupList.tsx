@@ -1,5 +1,6 @@
 import { Button, Label, makeStyles, mergeClasses, MessageBar, MessageBarBody, Spinner, Text, tokens, useId } from "@fluentui/react-components";
 import { Add20Regular } from "@fluentui/react-icons";
+import { type ReactNode } from "react";
 
 import { TextBadge } from "@/shared/components";
 import { describeError } from "@/shared/lib";
@@ -96,6 +97,8 @@ const useStyles = makeStyles({
 
 interface LookupListProps {
 	className?: string;
+	/** The collapsed step explainer, shown once a table is chosen. */
+	help?: ReactNode;
 	tables: EntitySummary[];
 	tablesLoading: boolean;
 	table: string;
@@ -111,6 +114,7 @@ interface LookupListProps {
 
 export const LookupList = ({
 	className,
+	help,
 	tables,
 	tablesLoading,
 	table,
@@ -146,6 +150,7 @@ export const LookupList = ({
 						<Text size={200} weight="semibold">
 							Polymorphic lookups
 						</Text>
+						{help}
 						{loading ? (
 							<Spinner size="extra-tiny" aria-label="Loading lookups" />
 						) : (

@@ -19,7 +19,8 @@ import {
 	type ExplainerStep,
 	StepExplainer,
 	TextBadge,
-	useBanner,
+	AreaShell,
+	StepExplainerButton,
 } from "@/shared/components";
 import { type DependentComponent, type FlowReference, type StepReference, type TransportAttribute } from "@/shared/types";
 
@@ -47,7 +48,6 @@ const useStyles = makeStyles({
 
 export const ColumnUsageArea = () => {
 	const styles = useStyles();
-	const banner = useBanner();
 	const connection = useInvestigateStore((state) => state.connection);
 	const table = useInvestigateStore((state) => state.table);
 	const column = useInvestigateStore((state) => state.column);
@@ -67,8 +67,7 @@ export const ColumnUsageArea = () => {
 
 	const usage = useMutation({
 		mutationFn: () => gateway.ops.getColumnUsage({ entityLogicalName: table, attributeLogicalName: column, scanFlows }),
-		meta: { silent: true },
-		onError: (error) => banner.show("Could not read column usage", error),
+		meta: { failureTitle: "Could not read column usage" },
 	});
 
 	const options = useMemo<TransportAttribute[]>(() => {
@@ -261,9 +260,11 @@ export const ColumnUsageArea = () => {
 	);
 
 	return (
-		<AreaContainer fill>
-			<InvestigateConnection />
-			{gateway.mode === "page" ? <PageRequirementGate requires="model-driven-app">{body}</PageRequirementGate> : body}
-		</AreaContainer>
+		<AreaShell actions={result ? <StepExplainerButton steps={COLUMN_USAGE_STEPS} label="How Column Usage works" /> : undefined}>
+			<AreaContainer fill>
+				<InvestigateConnection />
+				{gateway.mode === "page" ? <PageRequirementGate requires="model-driven-app">{body}</PageRequirementGate> : body}
+			</AreaContainer>
+		</AreaShell>
 	);
 };

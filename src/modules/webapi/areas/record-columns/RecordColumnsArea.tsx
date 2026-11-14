@@ -1,6 +1,5 @@
 import {
 	Button,
-	Field,
 	makeStyles,
 	MessageBar,
 	MessageBarActions,
@@ -24,7 +23,6 @@ import {
 	type RecordLookupServices,
 	TableFilter,
 	useAppToast,
-	useBanner,
 	useConfirm,
 	useTableFilter,
 } from "@/shared/components";
@@ -101,7 +99,6 @@ const focusRow = (element: HTMLElement) => {
 export const RecordColumnsArea = () => {
 	const styles = useStyles();
 	const toast = useAppToast();
-	const banner = useBanner();
 	const confirm = useConfirm();
 	const fetchPage = usePageFetcher();
 	const snapshot = usePageQuery("webapi.getRecordValues", undefined);
@@ -263,7 +260,7 @@ export const RecordColumnsArea = () => {
 			return next;
 		});
 
-	const refreshForm = usePageMutation("webapi.refreshForm", { silent: true, onError: (error) => banner.show("Could not refresh the form", error) });
+	const refreshForm = usePageMutation("webapi.refreshForm", { failureTitle: "Could not refresh the form" });
 	const save = usePageMutation("webapi.saveRecord", { silent: true });
 
 	const refreshAfterSave = async () => {
@@ -366,18 +363,19 @@ export const RecordColumnsArea = () => {
 							</ToggleButton>
 						))}
 					</div>
-					<Field label="Sort by">
-						<Select aria-label="Sort by" value={sort} onChange={(_, data) => setSort(data.value as RecordColumnSort)}>
-							<option value="displayName">Display name</option>
-							<option value="logicalName">Logical name</option>
-						</Select>
-					</Field>
 				</FilterPanel>
 			}
 			actions={
-				<Tooltip content="Reload the record" relationship="label">
-					<Button appearance="subtle" icon={<ArrowClockwise20Regular />} disabled={fetching} onClick={reload} aria-label="Reload the record" />
-				</Tooltip>
+				<>
+					{/* Sort is not a filter, so it does not sit behind the Filters button or add to its count. */}
+					<Select aria-label="Sort columns by" value={sort} onChange={(_, data) => setSort(data.value as RecordColumnSort)}>
+						<option value="displayName">Display name</option>
+						<option value="logicalName">Logical name</option>
+					</Select>
+					<Tooltip content="Reload the record" relationship="label">
+						<Button appearance="subtle" icon={<ArrowClockwise20Regular />} disabled={fetching} onClick={reload} aria-label="Reload the record" />
+					</Tooltip>
+				</>
 			}>
 			<AreaContainer fill>
 				{droppedCount > 0 ? (

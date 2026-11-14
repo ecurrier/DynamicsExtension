@@ -17,6 +17,7 @@ import {
 	ValueChip,
 	type ExplainerStep,
 	StepExplainer,
+	StepExplainerButton,
 } from "@/shared/components";
 import { dedupeLogicalRoles } from "@/shared/lib";
 import { type BulkRunPlan, type LogicalRole, type PrivilegeDepth, PRIVILEGE_DEPTHS } from "@/shared/types";
@@ -102,6 +103,7 @@ export const PrivilegeEditor = ({ gateway }: PrivilegeEditorProps) => {
 			{selectedRoleIds.length === 0 ? <StepExplainer steps={PRIVILEGE_EDITOR_STEPS} /> : null}
 			<Field label="Security roles" hint="Changes apply to the root business unit copy and follow its inherited copies.">
 				<FormRow>
+					{selectedRoleIds.length === 0 ? null : <StepExplainerButton steps={PRIVILEGE_EDITOR_STEPS} label="How the Privilege Editor works" />}
 					<Grow>
 						<TableFilter
 							query={roleFilter.query}

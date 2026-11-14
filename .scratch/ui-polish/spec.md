@@ -123,3 +123,24 @@ Found while scoping this work, accepted as out of scope, written down so nobody 
 - A toast can be dismissed with the mouse, sits at the bottom right, and never stacks more than three deep.
 - The Trace Viewer opens showing rows, with its filters behind a counted button and no detail pane until a row is selected; it shows six columns and the Columns button restores the rest.
 - Tab reaches every control on every Area with a visible focus ring, Escape closes every panel and dialog, and Enter submits every form.
+
+## Review notes
+
+Two-axis review after the work landed, on `f207d2c...HEAD`. What the reviewers found and what came of it.
+
+**Fixed**
+
+- The step explainer only half worked: six of the eight Areas rendered it full size and then deleted it, instead of collapsing to the "How it works" button that decision 8 asks for. Record Access, Column Usage, Row Counts, the Privilege Editor, the Data Transporter and Polymorphic Lookups now collapse to the button.
+- The environment name and the search field left at the same 560px, so there was no width where decision 2's "the environment name is dropped before the search field is" was true. The name now goes at 760px.
+- Only the Areas with a toolbar rendered inside an `AreaShell`, which made decision 1 opt-in. `AreaOutlet` now wraps every Area in one; an Area with a row renders its own inside it and fills the slots from there.
+- `SurfaceFitGate` sat in `shared/components` and imported `@/workspaces`, which imports `shared/components` back: a barrel cycle. It moved to `src/app`, beside the other gate composition.
+- Eight mutations each carried `meta: { silent: true }` with an `onError` that raised a banner, only to give the failure a better title. A mutation now states `meta: { failureTitle }` and the bridge reads it; the eight handlers are gone.
+- The Columns picker restated all ten column labels that `traceColumns.tsx` already held. There is one `TRACE_COLUMN_LABELS` map, and the table reads it too.
+- The sort control sat behind the Filters button, although sort is not a filter and is not in its count. It moved to the toolbar row.
+- Smaller: an empty `if` block in the Data Transporter run, a dead `caption` style in Record Access, an unused `TraceColumnId`, a `raise` that returned a value no call site used, and "entity" in a new accessible name where `CONTEXT.md` says to say table.
+
+**Checked and left alone**
+
+- `InfoTip` is now a button, and ten of them sit inside a Fluent `Field` label. Measured in the harness: clicking the tip does not activate the labelled control, and the control's accessible name is unchanged, because the icon button contributes no text. The old bare svg carried the same `aria-label`, so nothing regressed; the tip simply became reachable, which is what issue 12 asked for.
+- Four of the six toolbars issue 08 named belong to Workspaces (`TraceViewer`, `ResultsViewer`, `SchemaTools` `.bar`, `ColumnSearchBar`), not Areas. The spec says `AppShell` is not the home for this contract because the Workspaces need a different top bar, and ADR 0003 keeps the Workspace tab bars. An `AreaShell` has nothing to render into on a Workspace page, so those stay.
+- The `ConnectionPicker` + `PageRequirementGate` block repeated in five Areas is older than this work and is left for its own change.

@@ -118,11 +118,11 @@ export const RunStep = ({ target }: RunStepProps) => {
 				{ concurrency: CONCURRENCY, signal: controller.signal, onResult: recordResult }
 			);
 			const summary = summarize(outcome);
-			if (summary.failed > 0) {
-				// The results table below is the result view, and it names every failure.
-			} else if (summary.cancelled > 0) {
+			// A partial failure says nothing here: the results table below is the result view, and it
+			// names every failure with the message the target gave.
+			if (summary.failed === 0 && summary.cancelled > 0) {
 				toast.info("Run cancelled", `${summary.succeeded} done, ${summary.cancelled} not started`);
-			} else {
+			} else if (summary.failed === 0) {
 				toast.success("Run complete", `${summary.succeeded} record${summary.succeeded === 1 ? "" : "s"} written to ${target.name}`);
 			}
 		} catch (error) {

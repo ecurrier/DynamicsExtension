@@ -7,6 +7,8 @@ import { useSessionStore } from "@/shared/stores";
 export interface PageMutationOptions<N extends CommandName> {
 	timeoutMs?: number;
 	silent?: boolean;
+	/** The banner title for a failure. Without one the bridge says "Action failed". */
+	failureTitle?: string;
 	invalidates?: (args: CommandArgs<N>, result: CommandResult<N>) => QueryKey[];
 	onSuccess?: (result: CommandResult<N>, args: CommandArgs<N>) => void | Promise<void>;
 	onError?: (error: PageCommandError, args: CommandArgs<N>) => void;
@@ -16,7 +18,7 @@ export const usePageMutation = <N extends CommandName>(name: N, options: PageMut
 	const tabId = useSessionStore((state) => state.tabId);
 	const queryClient = useQueryClient();
 	return useMutation<CommandResult<N>, PageCommandError, CommandArgs<N>>({
-		meta: { silent: options.silent ?? false },
+		meta: { silent: options.silent ?? false, failureTitle: options.failureTitle },
 		mutationFn: (args) => {
 			if (tabId === null) {
 				throw new PageCommandError(name, "NoActiveTab", "No active browser tab was found");

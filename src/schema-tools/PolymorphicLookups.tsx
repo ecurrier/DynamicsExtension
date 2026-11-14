@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
 import { usePageQuery } from "@/messaging/client";
-import { type ExplainerStep, StepExplainer, useAppToast, useBanner, useConfirm } from "@/shared/components";
+import { type ExplainerStep, StepExplainer, StepExplainerButton, useAppToast, useConfirm } from "@/shared/components";
 import { type PolymorphicLookup, type PolymorphicTarget } from "@/shared/types";
 
 import { LookupDetail } from "./LookupDetail";
@@ -66,7 +66,6 @@ export const PolymorphicLookups = ({ gateway, solution }: PolymorphicLookupsProp
 	const styles = useStyles();
 	const panel = usePanelStyles();
 	const toast = useAppToast();
-	const banner = useBanner();
 	const confirm = useConfirm();
 	const [table, setTable] = useState("");
 	const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -103,8 +102,7 @@ export const PolymorphicLookups = ({ gateway, solution }: PolymorphicLookupsProp
 			setCreating(false);
 			void lookups.refetch();
 		},
-		meta: { silent: true },
-		onError: (error) => banner.show("Could not create the polymorphic lookup", error),
+		meta: { failureTitle: "Could not create the polymorphic lookup" },
 	});
 
 	const addTarget = useMutation({
@@ -122,8 +120,7 @@ export const PolymorphicLookups = ({ gateway, solution }: PolymorphicLookupsProp
 			toast.success("Target added");
 			void lookups.refetch();
 		},
-		meta: { silent: true },
-		onError: (error) => banner.show("Could not add that target", error),
+		meta: { failureTitle: "Could not add that target" },
 	});
 
 	const removeTarget = useMutation({
@@ -132,8 +129,7 @@ export const PolymorphicLookups = ({ gateway, solution }: PolymorphicLookupsProp
 			toast.success("Target removed");
 			void lookups.refetch();
 		},
-		meta: { silent: true },
-		onError: (error) => banner.show("Could not remove that target", error),
+		meta: { failureTitle: "Could not remove that target" },
 	});
 
 	const chooseTable = (next: string) => {
@@ -235,6 +231,7 @@ export const PolymorphicLookups = ({ gateway, solution }: PolymorphicLookupsProp
 		<div className={styles.container}>
 			<div className={styles.layout}>
 				<LookupList
+					help={<StepExplainerButton steps={POLYMORPHIC_STEPS} label="How Polymorphic Lookups works" />}
 					tables={tables}
 					tablesLoading={tablesQuery.isLoading}
 					table={table}

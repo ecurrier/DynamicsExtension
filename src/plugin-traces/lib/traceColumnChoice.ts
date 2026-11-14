@@ -12,8 +12,6 @@ export const TRACE_COLUMN_ORDER = [
 	"pluginStep",
 ] as const;
 
-export type TraceColumnId = (typeof TRACE_COLUMN_ORDER)[number];
-
 /**
  * Six by default. Mode, Depth, Correlation and Step come off, because the Summary tab already shows
  * all four for the selected row.

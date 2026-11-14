@@ -4,8 +4,9 @@ import { useEffect } from "react";
 import { useBanner } from "./useBanner";
 
 /**
- * Every mutation failure that the call site does not report itself (`meta: { silent: true }`)
- * becomes one banner. It used to raise a toast, which vanished before the user could read it.
+ * Every mutation failure becomes one banner. A mutation names its own banner with
+ * `meta: { failureTitle }`, and opts out altogether with `meta: { silent: true }` when it reports
+ * the failure some other way. It used to raise a toast, which vanished before the user could read it.
  */
 export const FailureBridge = () => {
 	const queryClient = useQueryClient();
@@ -14,7 +15,8 @@ export const FailureBridge = () => {
 		() =>
 			queryClient.getMutationCache().subscribe((event) => {
 				if (event.type === "updated" && event.action.type === "error" && !event.mutation.meta?.silent) {
-					banner.show("Action failed", event.action.error);
+					const title = event.mutation.meta?.failureTitle;
+					banner.show(typeof title === "string" ? title : "Action failed", event.action.error);
 				}
 			}),
 		[queryClient, banner]

@@ -23,20 +23,34 @@ const useStyles = makeStyles({
 	},
 });
 
+/** The label of every column the table can show, so the Columns picker and the table agree. */
+export const TRACE_COLUMN_LABELS = {
+	createdOn: "Created On",
+	typeName: "Type Name",
+	messageName: "Message",
+	primaryEntity: "Entity",
+	mode: "Mode",
+	depth: "Depth",
+	duration: "Duration",
+	exception: "Exception",
+	correlation: "Correlation",
+	pluginStep: "Step",
+};
+
 export const useTraceColumns = (highlightedGuid: string | null, shown: string[]): DataTableColumn<PluginTraceLog>[] => {
 	const styles = useStyles();
 	return useMemo(() => {
 		const all: DataTableColumn<PluginTraceLog>[] = [
 			{
 				id: "createdOn",
-				label: "Created On",
+				label: TRACE_COLUMN_LABELS.createdOn,
 				width: 150,
 				render: (trace) => formatTraceTime(trace.createdOn),
 				sortValue: (trace) => trace.createdOn,
 			},
 			{
 				id: "typeName",
-				label: "Type Name",
+				label: TRACE_COLUMN_LABELS.typeName,
 				width: 260,
 				render: (trace) => (
 					<span style={{ paddingLeft: `${Math.max(0, trace.depth - 1) * 12}px` }} title={trace.typeName}>
@@ -47,36 +61,36 @@ export const useTraceColumns = (highlightedGuid: string | null, shown: string[])
 			},
 			{
 				id: "messageName",
-				label: "Message",
+				label: TRACE_COLUMN_LABELS.messageName,
 				width: 100,
 				render: (trace) => trace.messageName,
 				sortValue: (trace) => trace.messageName,
 			},
 			{
 				id: "primaryEntity",
-				label: "Entity",
+				label: TRACE_COLUMN_LABELS.primaryEntity,
 				width: 110,
 				render: (trace) => trace.primaryEntity,
 				sortValue: (trace) => trace.primaryEntity,
 			},
 			{
 				id: "mode",
-				label: "Mode",
+				label: TRACE_COLUMN_LABELS.mode,
 				width: 70,
 				render: (trace) => modeLabel(trace.mode),
 				sortValue: (trace) => trace.mode,
 			},
-			{ id: "depth", label: "Depth", width: 60, render: (trace) => trace.depth, sortValue: (trace) => trace.depth },
+			{ id: "depth", label: TRACE_COLUMN_LABELS.depth, width: 60, render: (trace) => trace.depth, sortValue: (trace) => trace.depth },
 			{
 				id: "duration",
-				label: "Duration",
+				label: TRACE_COLUMN_LABELS.duration,
 				width: 90,
 				render: (trace) => formatDuration(trace.executionDurationMs),
 				sortValue: (trace) => trace.executionDurationMs,
 			},
 			{
 				id: "exception",
-				label: "Exception",
+				label: TRACE_COLUMN_LABELS.exception,
 				width: 100,
 				render: (trace) =>
 					trace.exceptionDetails ? (
@@ -88,7 +102,7 @@ export const useTraceColumns = (highlightedGuid: string | null, shown: string[])
 			},
 			{
 				id: "correlation",
-				label: "Correlation",
+				label: TRACE_COLUMN_LABELS.correlation,
 				width: 110,
 				render: (trace) =>
 					trace.correlationId ? (
@@ -102,7 +116,7 @@ export const useTraceColumns = (highlightedGuid: string | null, shown: string[])
 			},
 			{
 				id: "pluginStep",
-				label: "Step",
+				label: TRACE_COLUMN_LABELS.pluginStep,
 				width: 90,
 				render: (trace) =>
 					trace.pluginStepId ? (

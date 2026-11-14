@@ -2,7 +2,7 @@ import { Button, Dropdown, Field, makeStyles, MessageBar, MessageBarBody, Option
 import { ArrowRight20Regular, PlugConnected20Regular } from "@fluentui/react-icons";
 import { useState } from "react";
 
-import { type ExplainerStep, FormRow, FormStack, Grow, StepExplainer, TextBadge, useAppToast } from "@/shared/components";
+import { type ExplainerStep, FormRow, FormStack, Grow, StepExplainer, StepExplainerButton, TextBadge, useAppToast } from "@/shared/components";
 import { getEnvironmentHttp, PAGE_CONNECTION, requestEnvironmentAccess } from "@/shared/connections";
 import { useAsyncAction } from "@/shared/hooks";
 import { findEnvironmentByOrigin, whoAmI } from "@/shared/lib";
@@ -68,7 +68,7 @@ export const ConnectionsStep = ({ launch, pageAvailable, environments }: Connect
 
 	return (
 		<FormStack>
-			<StepExplainer steps={TRANSPORTER_STEPS} />
+			{source === null || target === null ? <StepExplainer steps={TRANSPORTER_STEPS} /> : null}
 			{launch.tabId !== null && !pageAvailable ? (
 				<MessageBar intent="warning">
 					<MessageBarBody>
@@ -150,6 +150,7 @@ export const ConnectionsStep = ({ launch, pageAvailable, environments }: Connect
 							: "The target must differ from the source. Writes run as the target environment’s application user."}
 					</Text>
 				</Grow>
+				{source === null || target === null ? null : <StepExplainerButton steps={TRANSPORTER_STEPS} label="How the Data Transporter works" />}
 				<Button appearance="primary" icon={<ArrowRight20Regular />} disabled={source === null || target === null} onClick={() => setStep("query")}>
 					Continue to query
 				</Button>

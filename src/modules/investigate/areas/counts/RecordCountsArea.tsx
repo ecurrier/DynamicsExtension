@@ -13,9 +13,9 @@ import {
 	InfoTip,
 	PageRequirementGate,
 	SearchField,
-	useBanner,
 	type ExplainerStep,
 	StepExplainer,
+	StepExplainerButton,
 } from "@/shared/components";
 import { type EntitySummary } from "@/shared/types";
 
@@ -45,7 +45,6 @@ const useStyles = makeStyles({
 
 export const RecordCountsArea = () => {
 	const styles = useStyles();
-	const banner = useBanner();
 	const connection = useInvestigateStore((state) => state.connection);
 	const gateway = useInvestigateGateway(connection);
 	const [filter, setFilter] = useState("");
@@ -60,8 +59,7 @@ export const RecordCountsArea = () => {
 
 	const counts = useMutation({
 		mutationFn: (rows: EntitySummary[]) => gateway.ops.getRecordCounts({ entityLogicalNames: rows.map((row) => row.logicalName) }),
-		meta: { silent: true },
-		onError: (error) => banner.show("Could not read row counts", error),
+		meta: { failureTitle: "Could not read row counts" },
 	});
 
 	const model = useMemo(() => recordCountsViewModel(tables.data ?? [], counts.data ?? null, filter), [tables.data, counts.data, filter]);
@@ -123,6 +121,7 @@ export const RecordCountsArea = () => {
 
 	return (
 		<AreaShell
+			actions={model.rows.length === 0 ? undefined : <StepExplainerButton steps={ROW_COUNT_STEPS} label="How Row Counts works" />}
 			search={
 				<SearchField value={filter} onChange={setFilter} placeholder="Search tables" aria-label="Search tables" disabled={model.rows.length === 0} />
 			}

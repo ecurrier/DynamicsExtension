@@ -81,8 +81,9 @@ const useStyles = makeStyles({
 		flex: "0 1 auto",
 		minWidth: 0,
 		maxWidth: "35%",
-		// Dropped before the search field wraps to its own line.
-		"@container (max-width: 560px)": {
+		// Dropped first, while the search field is still inline, and it leaves at 760px so there is
+		// a width where the name is gone and the row is still one line.
+		"@container (max-width: 760px)": {
 			display: "none",
 		},
 		overflow: "hidden",

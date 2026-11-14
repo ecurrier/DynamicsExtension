@@ -28,7 +28,9 @@ interface SurfaceFitGateProps {
 }
 
 /**
- * Keeps an Area off a Surface that is too narrow for it, and offers the Surface that fits. A
+ * Keeps an Area off a Surface that is too narrow for it, and offers the Surface that fits. It sits
+ * here rather than in shared/components, because it needs the Workspace launcher, and a gate inside
+ * shared/components that imports @/workspaces would close a barrel cycle. A
  * `fit: "workspace"` Area has no component of its own: this card is what the user lands on when
  * the Workspace was opened in a tab, or when the Area is restored from a remembered session.
  */
