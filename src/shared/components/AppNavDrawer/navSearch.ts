@@ -11,6 +11,8 @@ export interface NavSearchHit {
 	key: string;
 	index: number;
 	areaId: string;
+	/** The Area opens a full page, so the hit carries a mark and a browser tab is never a surprise. */
+	fullPage: boolean;
 	utilityId: string | null;
 	moduleId: string;
 	label: HighlightSegment[];
@@ -35,6 +37,7 @@ export interface NavSearchResults {
 interface SearchEntry {
 	key: string;
 	areaId: string;
+	fullPage: boolean;
 	utilityId: string | null;
 	module: ModuleDefinition;
 	label: string;
@@ -111,9 +114,11 @@ const entriesFor = (modules: ModuleDefinition[]): SearchEntry[] =>
 	modules.flatMap((module, moduleIndex) =>
 		module.areas.flatMap((area, areaIndex) => {
 			const order = moduleIndex * 1000 + areaIndex * 100;
+			const fullPage = area.fit === "workspace";
 			const areaEntry: SearchEntry = {
 				key: area.id,
 				areaId: area.id,
+				fullPage,
 				utilityId: null,
 				module,
 				label: area.label,
@@ -126,6 +131,7 @@ const entriesFor = (modules: ModuleDefinition[]): SearchEntry[] =>
 			const utilityEntries = (area.utilities ?? []).map((utility, utilityIndex): SearchEntry => ({
 				key: `${area.id}/${utility.id}`,
 				areaId: area.id,
+				fullPage,
 				utilityId: utility.id,
 				module,
 				label: utility.title,
@@ -225,6 +231,7 @@ const toHit = ({ entry, keyword }: ScoredEntry, tokens: string[], index: number)
 		key: entry.key,
 		index,
 		areaId: entry.areaId,
+		fullPage: entry.fullPage,
 		utilityId: entry.utilityId,
 		moduleId: entry.module.id,
 		label: toSegments(entry.label, inLabel),

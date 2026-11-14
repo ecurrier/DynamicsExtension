@@ -19,6 +19,7 @@ import { useAsyncAction } from "@/shared/hooks";
 import { useNavigationStore } from "@/shared/stores";
 import { type CodegenTable, type FormAttributeInfo, type NamedFetchXml, type TableMetadata, type TemplateKind } from "@/shared/types";
 
+import { TraceLoggingCard } from "./TraceLoggingCard";
 import { ColumnBrowserDialog, FetchXmlDialog, FindColumnDialog, RecordPayloadDialog, type RecordPayloadDialogSource, TableMetadataDialog } from "../../dialogs";
 import { DEVELOPER_UTILITIES } from "../../lib";
 
@@ -163,6 +164,7 @@ export const DeveloperArea = () => {
 					loading={generator.running}
 					onAction={() => void openGenerator("table")}
 				/>
+				<TraceLoggingCard />
 			</TaskGrid>
 			<FetchXmlDialog queries={queries} onClose={() => setQueries(null)} onRetrieveRecords={retrieveRecords} />
 			<TableMetadataDialog metadata={metadata} onClose={() => setMetadata(null)} />

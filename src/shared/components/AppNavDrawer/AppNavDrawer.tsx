@@ -14,9 +14,11 @@ import {
 	SearchBox,
 	Text,
 	tokens,
+	Tooltip,
 	useFocusFinders,
 	useId,
 } from "@fluentui/react-components";
+import { Open16Regular } from "@fluentui/react-icons";
 import { type KeyboardEvent, type RefObject, useEffect, useMemo, useRef, useState } from "react";
 
 import { type AreaDefinition, type ModuleDefinition } from "@/modules/types";
@@ -48,6 +50,11 @@ const useStyles = makeStyles({
 		overflow: "hidden",
 		textOverflow: "ellipsis",
 		whiteSpace: "nowrap",
+	},
+	fullPage: {
+		marginInlineStart: "6px",
+		verticalAlign: "text-bottom",
+		color: tokens.colorNeutralForeground3,
 	},
 	recentModule: {
 		marginInlineStart: "auto",
@@ -100,6 +107,15 @@ const findArea = (modules: ModuleDefinition[], areaId: string): FoundArea | null
 	return null;
 };
 
+const FullPageMark = () => {
+	const styles = useStyles();
+	return (
+		<Tooltip content="Opens as a full page" relationship="label">
+			<Open16Regular className={styles.fullPage} />
+		</Tooltip>
+	);
+};
+
 interface NavTreeProps {
 	modules: ModuleDefinition[];
 	recent: FoundArea[];
@@ -117,6 +133,7 @@ const NavTree = ({ modules, recent }: NavTreeProps) => {
 						return (
 							<NavItem key={area.id} value={`${RECENT_PREFIX}${area.id}`} icon={<Icon />}>
 								<span className={styles.recentLabel}>{area.label}</span>
+								{area.fit === "workspace" ? <FullPageMark /> : null}
 								{area.label === module.label ? null : <span className={styles.recentModule}>{module.label}</span>}
 							</NavItem>
 						);
@@ -131,6 +148,7 @@ const NavTree = ({ modules, recent }: NavTreeProps) => {
 					return (
 						<NavItem key={module.id} value={module.areas[0].id} icon={<Icon />}>
 							{module.label}
+							{module.areas[0].fit === "workspace" ? <FullPageMark /> : null}
 						</NavItem>
 					);
 				}
@@ -141,6 +159,7 @@ const NavTree = ({ modules, recent }: NavTreeProps) => {
 							{module.areas.map((area) => (
 								<NavSubItem key={area.id} value={area.id}>
 									{area.label}
+									{area.fit === "workspace" ? <FullPageMark /> : null}
 								</NavSubItem>
 							))}
 						</NavSubItemGroup>

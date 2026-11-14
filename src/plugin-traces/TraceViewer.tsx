@@ -16,7 +16,7 @@ import { Delete20Regular } from "@fluentui/react-icons";
 import { useMemo, useState } from "react";
 
 import { pageKeys, usePageMutation, usePageQuery } from "@/messaging/client";
-import { DataTable, FailureBanner, InfoTip, SearchField, useAppToast, useConfirm } from "@/shared/components";
+import { DataTable, FailureBanner, HostAccessBanner, InfoTip, SearchField, useAppToast, useConfirm } from "@/shared/components";
 import { useSessionStore } from "@/shared/stores";
 import {
 	DEFAULT_TRACE_QUERY,
@@ -31,6 +31,8 @@ import { traceMatches } from "./lib";
 import { useTraceColumns } from "./traceColumns";
 import { TraceDetails } from "./TraceDetails";
 import { TraceFilters } from "./TraceFilters";
+
+const ACCESS_REASON = "The viewer reads traces through this tab, and can only reconnect after the page navigates with access to the site.";
 
 const AUTO_REFRESH_MS = 10_000;
 
@@ -178,6 +180,9 @@ export const TraceViewer = ({ launch }: TraceViewerProps) => {
 					</Dropdown>
 				</Field>
 			</div>
+			{/* The launcher Area used to ask for site access before opening the viewer. The viewer now
+			    asks for itself, so a direct launch from the navigation drawer cannot skip it. */}
+			<HostAccessBanner origin={launch.orgOrigin} reason={ACCESS_REASON} />
 			<FailureBanner />
 			<TraceFilters
 				draft={draft}

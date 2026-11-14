@@ -1,7 +1,7 @@
 import { type FluentIcon } from "@fluentui/react-icons";
 import { type ComponentType } from "react";
 
-import { type PageRequirement } from "@/shared/types";
+import { type PageRequirement, type SchemaTool, type SecurityTool, type WorkspaceId } from "@/shared/types";
 
 export type AreaId = string;
 
@@ -12,6 +12,19 @@ export interface UtilityDefinition {
 	keywords?: string[];
 }
 
+/**
+ * The width an Area needs. `"panel"` is the default and means the Area works from about 400px up,
+ * which is what ADR 0002 asked of every Area. An Area earns `"window"` only by failing in the
+ * harness. `"workspace"` means the Area is a Workspace, and selecting it opens that Workspace.
+ */
+export type AreaFit = "panel" | "window" | "workspace";
+
+/** The Workspace a `fit: "workspace"` Area opens, and the tool within it. */
+export interface AreaWorkspace {
+	id: WorkspaceId;
+	tool?: SchemaTool | SecurityTool;
+}
+
 export interface AreaDefinition {
 	id: AreaId;
 	label: string;
@@ -20,7 +33,11 @@ export interface AreaDefinition {
 	keywords?: string[];
 	utilities?: UtilityDefinition[];
 	requires?: PageRequirement;
-	component: ComponentType;
+	fit?: AreaFit;
+	/** Required when `fit` is `"workspace"`, and meaningless otherwise. */
+	workspace?: AreaWorkspace;
+	/** A `fit: "workspace"` Area has none: the gate opens the Workspace instead. */
+	component?: ComponentType;
 }
 
 export interface ModuleDefinition {

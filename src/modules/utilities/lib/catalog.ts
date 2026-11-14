@@ -112,4 +112,10 @@ export const DEVELOPER_UTILITIES = {
 		description: "A class or interface for the current table's columns, from your default table Template.",
 		keywords: ["early bound", "typescript", "c#"],
 	},
+	traceLogging: {
+		id: "trace-logging",
+		title: "Plug-in Trace Logging",
+		description: "Set how much plug-ins write to the trace log in this environment: nothing, exceptions only, or every execution.",
+		keywords: ["trace", "logging", "plugin", "logs", "exceptions"],
+	},
 } satisfies Record<string, UtilityDefinition>;

@@ -4,7 +4,6 @@ import { type ModuleDefinition } from "@/modules/types";
 
 import { PackagesArea } from "./areas/packages";
 import { PluginStepsArea } from "./areas/steps";
-import { PluginTracesArea } from "./areas/traces";
 
 export const pluginsModule: ModuleDefinition = {
 	id: "plugins",
@@ -32,10 +31,11 @@ export const pluginsModule: ModuleDefinition = {
 			id: "plugins.traces",
 			label: "Traces",
 			breadcrumb: ["Plug-ins", "Traces"],
-			tooltip: "Control plug-in trace logging and open the full-page trace log viewer",
+			tooltip: "Read plug-in trace logs in a full-page viewer. The logging level is a Utilities card.",
 			keywords: ["plugin", "trace log", "logs", "logging", "exceptions"],
 			requires: "model-driven-app",
-			component: PluginTracesArea,
+			fit: "workspace",
+			workspace: { id: "plugin-traces" },
 		},
 	],
 };

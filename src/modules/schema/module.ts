@@ -2,8 +2,6 @@ import { Table20Regular } from "@fluentui/react-icons";
 
 import { type ModuleDefinition } from "@/modules/types";
 
-import { CrossTableColumnsArea, PolymorphicLookupsArea } from "./areas";
-
 export const schemaModule: ModuleDefinition = {
 	id: "schema",
 	label: "Schema",
@@ -16,7 +14,8 @@ export const schemaModule: ModuleDefinition = {
 			breadcrumb: ["Schema", "Cross-Table Columns"],
 			tooltip: "Change a column's label, description, or requirement level across every table that has it",
 			keywords: ["attribute", "field", "rename", "required", "metadata"],
-			component: CrossTableColumnsArea,
+			fit: "workspace",
+			workspace: { id: "schema-tools", tool: "columns" },
 		},
 		{
 			id: "schema.polymorphic",
@@ -24,7 +23,8 @@ export const schemaModule: ModuleDefinition = {
 			breadcrumb: ["Schema", "Polymorphic Lookups"],
 			tooltip: "List and create lookups that can reference more than one table",
 			keywords: ["multi-table lookup", "customer", "relationship", "regarding"],
-			component: PolymorphicLookupsArea,
+			fit: "workspace",
+			workspace: { id: "schema-tools", tool: "polymorphic" },
 		},
 	],
 };

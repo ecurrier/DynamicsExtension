@@ -2,8 +2,6 @@ import { ArrowSwap20Regular } from "@fluentui/react-icons";
 
 import { type ModuleDefinition } from "@/modules/types";
 
-import { TransporterArea } from "./areas/launch";
-
 export const transporterModule: ModuleDefinition = {
 	id: "transporter",
 	label: "Data Transporter",
@@ -16,7 +14,8 @@ export const transporterModule: ModuleDefinition = {
 			breadcrumb: ["Data Transporter"],
 			tooltip: "Copy or sync records between environments by primary key in a full-page tool",
 			keywords: ["migrate", "migration", "sync", "copy records", "export", "import", "move data"],
-			component: TransporterArea,
+			fit: "workspace",
+			workspace: { id: "data-transporter" },
 		},
 	],
 };

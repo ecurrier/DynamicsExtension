@@ -4,7 +4,6 @@ import { type ModuleDefinition } from "@/modules/types";
 
 import { BulkUsersArea } from "./areas/bulk-users";
 import { RolesArea } from "./areas/roles";
-import { PrivilegeEditorArea, RoleCompareArea } from "./areas/tools";
 
 export const securityModule: ModuleDefinition = {
 	id: "security",
@@ -34,7 +33,8 @@ export const securityModule: ModuleDefinition = {
 			breadcrumb: ["Security", "Role Compare"],
 			tooltip: "See how two or more security roles differ",
 			keywords: ["diff", "difference"],
-			component: RoleCompareArea,
+			fit: "workspace",
+			workspace: { id: "security-tools", tool: "compare" },
 		},
 		{
 			id: "security.privileges",
@@ -42,7 +42,8 @@ export const securityModule: ModuleDefinition = {
 			breadcrumb: ["Security", "Privilege Editor"],
 			tooltip: "Bulk change privilege depth across roles and tables",
 			keywords: ["privileges", "permissions", "access level"],
-			component: PrivilegeEditorArea,
+			fit: "workspace",
+			workspace: { id: "security-tools", tool: "privileges" },
 		},
 	],
 };

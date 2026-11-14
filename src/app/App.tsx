@@ -3,14 +3,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 
 import { pageKeys, usePageQuery } from "@/messaging/client";
-import { moduleForArea, modules, resolveArea } from "@/modules";
+import { areasById, moduleForArea, modules, resolveArea } from "@/modules";
 import { ImpersonationIndicator } from "@/modules/impersonation";
 import { AppNavDrawer, AppShell, FailureBanner, HostAccessBanner, TabRecoveryBanner } from "@/shared/components";
 import { describeTab, focusTab, openPinnedWindow, openSidePanel, sidePanelSupported, type TabSummary } from "@/shared/extension";
 import { useAsyncAction, usePopupLaunch } from "@/shared/hooks";
 import { resolveOrgOrigin, tabTooltip } from "@/shared/lib";
 import { useBannerStore, useNavigationStore, useSessionStore } from "@/shared/stores";
-import { WorkspaceOutlet } from "@/workspaces";
+import { openWorkspaceInTab, useAreaLauncher, WorkspaceOutlet } from "@/workspaces";
 
 import { AreaOutlet } from "./AreaOutlet";
 import { useSessionBootstrap, useTabRecovery } from "./useSessionBootstrap";
@@ -31,8 +31,11 @@ export const App = () => {
 	const recentAreaIds = useNavigationStore((state) => state.recentAreaIds);
 	const workspace = useNavigationStore((state) => state.workspace);
 	const navigate = useNavigationStore((state) => state.navigate);
+	const rememberArea = useNavigationStore((state) => state.rememberArea);
 	const setDrawerOpen = useNavigationStore((state) => state.setDrawerOpen);
 	const closeWorkspace = useNavigationStore((state) => state.closeWorkspace);
+	const areaLauncher = useAreaLauncher();
+	const openTool = useAsyncAction("Could not open that tool");
 	const environment = usePageQuery("settings.getEnvironmentDetails", undefined);
 	const pin = useAsyncAction("Could not open Power Tools in a window");
 	const goToTab = useAsyncAction("Could not switch to the tab Power Tools is reading");
@@ -42,6 +45,21 @@ export const App = () => {
 	const { choices: recoveryChoices, refresh: refreshRecovery, rebind: rebindTab } = useTabRecovery();
 	const rebind = useAsyncAction("Could not connect to that tab");
 	const dock = useAsyncAction("Could not open the side panel");
+
+	/** Selecting a `fit: "workspace"` Area opens that Workspace, with no launcher screen in between. */
+	const goToArea = useCallback(
+		(areaId: string, utilityId?: string) => {
+			const target = areasById[areaId];
+			if (target?.fit === "workspace" && target.workspace) {
+				const workspaceTarget = target.workspace;
+				rememberArea(areaId);
+				void openTool.run(() => areaLauncher.open(workspaceTarget));
+				return;
+			}
+			navigate(areaId, utilityId);
+		},
+		[areaLauncher, navigate, openTool, rememberArea]
+	);
 
 	const readConnectedTab = useCallback(async () => {
 		if (launch.mode === "popup" || tabId === null) {
@@ -101,16 +119,17 @@ export const App = () => {
 				selectedAreaId={area.id}
 				recentAreaIds={recentAreaIds}
 				onOpenChange={setDrawerOpen}
-				onNavigate={navigate}
+				onNavigate={goToArea}
 			/>
 			<AppShell
 				breadcrumb={area.breadcrumb}
 				tooltip={workspace ? undefined : area.tooltip}
 				moduleAreas={moduleAreas}
 				currentAreaId={area.id}
-				onNavigateArea={navigate}
+				onNavigateArea={goToArea}
 				onOpenNav={() => setDrawerOpen(true)}
 				onBack={workspace ? closeWorkspace : undefined}
+				onOpenInTab={workspace ? () => void openTool.run(() => openWorkspaceInTab(workspace)) : undefined}
 				backLabel={`Back to ${area.label}`}
 				onRefresh={() => {
 					if (tabId !== null) {

@@ -19,6 +19,7 @@ export * from "./MultiSelectPicker";
 export * from "./PageRequirementGate";
 export * from "./RecordLookup";
 export * from "./SearchField";
+export * from "./SurfaceFitGate";
 export * from "./TabRecoveryBanner";
 export * from "./TaskCard";
 export * from "./TextBadge";

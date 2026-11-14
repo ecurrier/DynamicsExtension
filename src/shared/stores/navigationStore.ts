@@ -14,6 +14,8 @@ export interface NavigationState {
 	drawerOpen: boolean;
 	workspace: WorkspaceLaunch | null;
 	navigate: (areaId: string, utilityId?: string) => void;
+	/** Records an Area in the recent list without going to it, for an Area that opens a Workspace. */
+	rememberArea: (areaId: string) => void;
 	clearHighlightedUtility: () => void;
 	setDrawerOpen: (open: boolean) => void;
 	openWorkspace: (workspace: WorkspaceLaunch) => void;
@@ -32,6 +34,12 @@ export const useNavigationStore = create<NavigationState>()((set, get) => ({
 		// A banner that follows the user to another screen is only a slower toast.
 		useBannerStore.getState().clearBanner();
 		void lastVisitedAreaItem.setValue(areaId);
+		void recentAreasItem.setValue(recentAreaIds);
+	},
+	rememberArea: (areaId) => {
+		const recentAreaIds = [areaId, ...get().recentAreaIds.filter((id) => id !== areaId)].slice(0, RECENT_AREA_LIMIT);
+		set({ recentAreaIds, drawerOpen: false });
+		// Deliberately not the last visited Area: a Workspace Area has no component to come back to.
 		void recentAreasItem.setValue(recentAreaIds);
 	},
 	clearHighlightedUtility: () => set({ highlightedUtilityId: null }),

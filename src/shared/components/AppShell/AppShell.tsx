@@ -1,5 +1,12 @@
 import { Hamburger, makeStyles, Text, tokens, Toolbar, ToolbarButton, Tooltip } from "@fluentui/react-components";
-import { ArrowClockwise20Regular, ArrowLeft20Regular, PanelRightExpand20Regular, Pin20Regular, TabDesktop20Regular } from "@fluentui/react-icons";
+import {
+	ArrowClockwise20Regular,
+	ArrowLeft20Regular,
+	Open20Regular,
+	PanelRightExpand20Regular,
+	Pin20Regular,
+	TabDesktop20Regular,
+} from "@fluentui/react-icons";
 import { type ReactNode } from "react";
 
 import { NAV_SEARCH_KEYSHORTCUTS, NAV_SEARCH_SHORTCUT } from "../AppNavDrawer";
@@ -70,6 +77,8 @@ interface AppShellProps {
 	onOpenNav: () => void;
 	onBack?: () => void;
 	backLabel?: string;
+	/** Beside the back control, for a Workspace open in this window. */
+	onOpenInTab?: () => void;
 	onRefresh: () => void;
 	onPin?: () => void;
 	onOpenSidePanel?: () => void;
@@ -91,6 +100,7 @@ export const AppShell = ({
 	onOpenNav,
 	onBack,
 	backLabel = "Back",
+	onOpenInTab,
 	onRefresh,
 	onPin,
 	onOpenSidePanel,
@@ -114,6 +124,11 @@ export const AppShell = ({
 						{onBack ? (
 							<Tooltip content={backLabel} relationship="label">
 								<ToolbarButton icon={<ArrowLeft20Regular />} onClick={onBack} aria-label={backLabel} />
+							</Tooltip>
+						) : null}
+						{onOpenInTab ? (
+							<Tooltip content="Open this tool in a browser tab" relationship="label">
+								<ToolbarButton icon={<Open20Regular />} onClick={onOpenInTab} aria-label="Open this tool in a browser tab" />
 							</Tooltip>
 						) : null}
 					</Toolbar>

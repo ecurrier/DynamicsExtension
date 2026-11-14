@@ -1,4 +1,5 @@
-import { makeStyles, mergeClasses, Text, tokens } from "@fluentui/react-components";
+import { makeStyles, mergeClasses, Text, tokens, Tooltip } from "@fluentui/react-components";
+import { Open16Regular } from "@fluentui/react-icons";
 import { Fragment, type ReactNode } from "react";
 
 import { Keycap } from "./Keycap";
@@ -90,6 +91,11 @@ const useStyles = makeStyles({
 		alignSelf: "center",
 		flexShrink: 0,
 	},
+	fullPage: {
+		alignSelf: "center",
+		flexShrink: 0,
+		color: tokens.colorNeutralForeground3,
+	},
 	empty: {
 		display: "flex",
 		flexDirection: "column",
@@ -176,6 +182,11 @@ export const NavSearchResults = ({ listboxId, query, results, activeIndex, optio
 												{highlight(hit.description, styles.match)}
 											</span>
 										</span>
+										{hit.fullPage ? (
+											<Tooltip content="Opens as a full page" relationship="label">
+												<Open16Regular className={styles.fullPage} />
+											</Tooltip>
+										) : null}
 										{active ? (
 											<Keycap className={styles.enter} aria-hidden>
 												Enter

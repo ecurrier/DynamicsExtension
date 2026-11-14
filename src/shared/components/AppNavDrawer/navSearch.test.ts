@@ -223,3 +223,20 @@ describe("searchNav over the registry", () => {
 		);
 	});
 });
+
+describe("the full-page mark", () => {
+	it("marks a hit on an Area that opens a Workspace", () => {
+		const hit = searchNav(registryModules, "Cross-Table Columns", 100).hits.find((candidate) => candidate.areaId === "schema.columns");
+		expect(hit?.fullPage).toBe(true);
+	});
+
+	it("leaves an ordinary Area unmarked", () => {
+		const hit = searchNav(registryModules, "Developer", 100).hits.find((candidate) => candidate.key === "utilities.developer");
+		expect(hit?.fullPage).toBe(false);
+	});
+
+	it("marks a Utility of a Workspace Area the same way, because selecting it opens the same page", () => {
+		const hits = searchNav(registryModules, "trace", 100).hits;
+		expect(hits.find((candidate) => candidate.key === "plugins.traces")?.fullPage).toBe(true);
+	});
+});

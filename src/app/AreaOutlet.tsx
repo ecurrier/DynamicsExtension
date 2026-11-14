@@ -2,7 +2,7 @@ import { Spinner } from "@fluentui/react-components";
 import { Suspense } from "react";
 
 import { type AreaDefinition } from "@/modules";
-import { PageRequirementGate } from "@/shared/components";
+import { PageRequirementGate, SurfaceFitGate } from "@/shared/components";
 
 interface AreaOutletProps {
 	area: AreaDefinition;
@@ -10,10 +10,11 @@ interface AreaOutletProps {
 
 export const AreaOutlet = ({ area }: AreaOutletProps) => {
 	const Component = area.component;
-	const content = (
+	const content = Component ? (
 		<Suspense fallback={<Spinner style={{ padding: "24px" }} />}>
 			<Component />
 		</Suspense>
-	);
-	return area.requires ? <PageRequirementGate requires={area.requires}>{content}</PageRequirementGate> : content;
+	) : null;
+	const gated = area.requires ? <PageRequirementGate requires={area.requires}>{content}</PageRequirementGate> : content;
+	return <SurfaceFitGate area={area}>{gated}</SurfaceFitGate>;
 };

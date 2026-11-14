@@ -40,7 +40,8 @@ export interface TaskCardProps {
 	tooltip?: string;
 	disabled?: boolean;
 	loading?: boolean;
-	onAction: () => void;
+	/** Leave it out for a card whose own control, in `extra`, is the action. */
+	onAction?: () => void;
 	extra?: ReactNode;
 }
 
@@ -59,11 +60,11 @@ export const TaskCard = ({ utility, icon: Icon, actionLabel = "Run", actionIcon,
 		return () => window.clearTimeout(timer);
 	}, [highlighted, clearHighlightedUtility]);
 
-	const button = (
+	const button = onAction ? (
 		<Button appearance="primary" size="small" icon={actionIcon} disabled={disabled || loading} onClick={onAction}>
 			{loading ? "Working..." : actionLabel}
 		</Button>
-	);
+	) : null;
 	return (
 		<Card ref={cardRef} className={mergeClasses(styles.card, highlighted && styles.highlighted)} size="small">
 			<CardHeader image={Icon ? <Icon fontSize={24} /> : undefined} header={<Text weight="semibold">{utility.title}</Text>} />
@@ -72,7 +73,7 @@ export const TaskCard = ({ utility, icon: Icon, actionLabel = "Run", actionIcon,
 			</Text>
 			<div className={styles.footer}>
 				{extra}
-				{tooltip ? (
+				{tooltip && button ? (
 					<Tooltip content={tooltip} relationship="description">
 						{button}
 					</Tooltip>
