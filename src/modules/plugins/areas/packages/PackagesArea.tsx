@@ -160,24 +160,24 @@ export const PackagesArea = () => {
 					/>
 				</Tooltip>
 			}>
-		<AreaContainer fill>
-			<FormRow>
-				<Grow>
-					<ConnectionPicker
-						value={connection}
-						environments={environments}
-						disabled={switching}
-						onChange={(picked) => void onConnectionChange(picked)}
-					/>
-				</Grow>
-			</FormRow>
-			{gateway.environment ? (
-				<Text size={200} className={styles.caption}>
-					Packages are read and updated in {gateway.environment.name} as the configured application user.
-				</Text>
-			) : null}
-			{gateway.mode === "page" ? <PageRequirementGate requires="model-driven-app">{body}</PageRequirementGate> : body}
-		</AreaContainer>
+			<AreaContainer fill>
+				<FormRow>
+					<Grow>
+						<ConnectionPicker
+							value={connection}
+							environments={environments}
+							disabled={switching}
+							onChange={(picked) => void onConnectionChange(picked)}
+						/>
+					</Grow>
+				</FormRow>
+				{gateway.environment ? (
+					<Text size={200} className={styles.caption}>
+						Packages are read and updated in {gateway.environment.name} as the configured application user.
+					</Text>
+				) : null}
+				{gateway.mode === "page" ? <PageRequirementGate requires="model-driven-app">{body}</PageRequirementGate> : body}
+			</AreaContainer>
 		</AreaShell>
 	);
 };

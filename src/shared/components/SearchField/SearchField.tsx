@@ -29,7 +29,8 @@ export interface SearchFieldProps extends Omit<InputProps, "value" | "onChange" 
 /** The one search and filter control in the extension. It fills its row and never shrinks its placeholder away. */
 export const SearchField = ({ value, onChange, className, clearLabel = "Clear search", hint, onKeyDown, ...props }: SearchFieldProps) => {
 	const styles = useStyles();
-	const clear = value === "" ? null : <Button appearance="transparent" size="small" icon={<DismissRegular />} aria-label={clearLabel} onClick={() => onChange("")} />;
+	const clear =
+		value === "" ? null : <Button appearance="transparent" size="small" icon={<DismissRegular />} aria-label={clearLabel} onClick={() => onChange("")} />;
 	return (
 		<Input
 			{...props}

@@ -103,22 +103,22 @@ export const ImpersonationArea = () => {
 						{stop.isPending ? "Stopping..." : "Stop impersonation"}
 					</Button>
 				}>
-			<AreaContainer>
-				<FormStack>
-					<MessageBar intent="warning" layout="multiline">
-						<MessageBarBody>
-							<MessageBarTitle>Impersonating {active.user.fullName}</MessageBarTitle>
-							Since {formatStartedAt(active.startedAt)}, every Web API request this tab sends to {active.orgOrigin} carries the {active.header}{" "}
-							header. Reload the page if you have not done so since starting.
-						</MessageBarBody>
-					</MessageBar>
-					<RoleList
-						fullName={active.user.fullName}
-						roles={active.roles}
-						error={active.roles ? null : "Could not load roles when impersonation started."}
-					/>
-				</FormStack>
-			</AreaContainer>
+				<AreaContainer>
+					<FormStack>
+						<MessageBar intent="warning" layout="multiline">
+							<MessageBarBody>
+								<MessageBarTitle>Impersonating {active.user.fullName}</MessageBarTitle>
+								Since {formatStartedAt(active.startedAt)}, every Web API request this tab sends to {active.orgOrigin} carries the{" "}
+								{active.header} header. Reload the page if you have not done so since starting.
+							</MessageBarBody>
+						</MessageBar>
+						<RoleList
+							fullName={active.user.fullName}
+							roles={active.roles}
+							error={active.roles ? null : "Could not load roles when impersonation started."}
+						/>
+					</FormStack>
+				</AreaContainer>
 			</AreaShell>
 		);
 	}
@@ -139,38 +139,38 @@ export const ImpersonationArea = () => {
 					{start.isPending ? "Starting..." : "Start impersonation"}
 				</Button>
 			}>
-		<AreaContainer>
-			<FormStack>
-				<HostAccessBanner origin={orgOrigin} reason={ACCESS_REASON} />
-				<MessageBar intent="info" layout="multiline">
-					<MessageBarBody>
-						<MessageBarTitle>How impersonation works</MessageBarTitle>
-						Power Tools adds the Dataverse impersonation header to every Web API request this tab sends to {orgOrigin ?? "the environment"}, so the
-						app loads data and saves records as the selected user. Your own account needs the Act on Behalf of Another User privilege, which System
-						Administrator includes, from a role assigned to you directly: Dataverse ignores it when it comes through a team. Reload the page after
-						starting or stopping.
-					</MessageBarBody>
-				</MessageBar>
-				<UserPicker
-					users={users}
-					selectedUser={selected}
-					searching={search.isPending}
-					label="Find the user to impersonate"
-					onSearch={(query) => search.mutate({ query })}
-					onSelect={setSelected}
-				/>
-				{selected ? (
-					<>
-						<Text size={200} className={styles.detail}>
-							{selected.azureAdObjectId
-								? `Uses CallerObjectId ${selected.azureAdObjectId}`
-								: `This user has no Entra object id, so the legacy MSCRMCallerID header will carry ${selected.id}`}
-						</Text>
-						<UserRoles systemUserId={selected.id} fullName={selected.fullName} />
-					</>
-				) : null}
-			</FormStack>
-		</AreaContainer>
+			<AreaContainer>
+				<FormStack>
+					<HostAccessBanner origin={orgOrigin} reason={ACCESS_REASON} />
+					<MessageBar intent="info" layout="multiline">
+						<MessageBarBody>
+							<MessageBarTitle>How impersonation works</MessageBarTitle>
+							Power Tools adds the Dataverse impersonation header to every Web API request this tab sends to {orgOrigin ?? "the environment"}, so
+							the app loads data and saves records as the selected user. Your own account needs the Act on Behalf of Another User privilege, which
+							System Administrator includes, from a role assigned to you directly: Dataverse ignores it when it comes through a team. Reload the
+							page after starting or stopping.
+						</MessageBarBody>
+					</MessageBar>
+					<UserPicker
+						users={users}
+						selectedUser={selected}
+						searching={search.isPending}
+						label="Find the user to impersonate"
+						onSearch={(query) => search.mutate({ query })}
+						onSelect={setSelected}
+					/>
+					{selected ? (
+						<>
+							<Text size={200} className={styles.detail}>
+								{selected.azureAdObjectId
+									? `Uses CallerObjectId ${selected.azureAdObjectId}`
+									: `This user has no Entra object id, so the legacy MSCRMCallerID header will carry ${selected.id}`}
+							</Text>
+							<UserRoles systemUserId={selected.id} fullName={selected.fullName} />
+						</>
+					) : null}
+				</FormStack>
+			</AreaContainer>
 		</AreaShell>
 	);
 };

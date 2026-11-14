@@ -246,83 +246,83 @@ export const FormDiagnosticsArea = () => {
 				</Tooltip>
 			}>
 			<AreaContainer fill>
-			<PageRequirementGate requires="model-driven-app">
-				<FormStack fill>
-					{diagnostics.isError ? <EmptyState intent="error" title={diagnostics.error.message} /> : null}
-					{data ? (
-						<>
-							<Text size={200} className={styles.caption}>
-								{`${data.formName} · ${data.entityLogicalName} · ${data.libraries.length} librar${data.libraries.length === 1 ? "y" : "ies"}, ` +
-									`${data.handlers.length} handler${data.handlers.length === 1 ? "" : "s"}, ${flagged.length} control${flagged.length === 1 ? "" : "s"} hidden or read-only`}
-							</Text>
-							{data.formXmlUnavailable ? (
-								<EmptyState
-									intent="warning"
-									title={`Scripts and libraries could not be read from the form definition: ${data.formXmlUnavailable}`}
-								/>
-							) : null}
-							<FillAccordion collapsible multiple defaultOpenItems={["controls"]}>
-								<FillAccordionItem value="controls">
-									<AccordionHeader>{`Controls (${controls.length})`}</AccordionHeader>
-									<FillAccordionPanel>
-										<DataTable
-											items={controls}
-											columns={controlColumns}
-											getRowId={(control) => `${control.tab ?? ""}:${control.section ?? ""}:${control.name}`}
-											fill
-											emptyMessage="No controls match the filter"
-										/>
-									</FillAccordionPanel>
-								</FillAccordionItem>
-								<FillAccordionItem value="handlers">
-									<AccordionHeader>{`Event handlers (${handlers.length})`}</AccordionHeader>
-									<FillAccordionPanel>
-										<DataTable
-											items={handlers}
-											columns={handlerColumns}
-											getRowId={(handler) => `${handler.event}:${handler.target ?? ""}:${handler.order}:${handler.functionName}`}
-											fill
-											emptyMessage="No script handlers are registered on this form"
-										/>
-									</FillAccordionPanel>
-								</FillAccordionItem>
-								<FillAccordionItem value="libraries">
-									<AccordionHeader>{`Script libraries (${data.libraries.length})`}</AccordionHeader>
-									<FillAccordionPanel>
-										<DataTable
-											items={data.libraries}
-											columns={libraryColumns}
-											getRowId={(library) => library.name}
-											fill
-											emptyMessage="No JavaScript libraries are attached to this form"
-										/>
-									</FillAccordionPanel>
-								</FillAccordionItem>
-								<FillAccordionItem value="rules">
-									<AccordionHeader>{`Business rules (${data.businessRules.length})`}</AccordionHeader>
-									<FillAccordionPanel>
-										{data.businessRulesUnavailable ? (
-											<EmptyState intent="warning" title={data.businessRulesUnavailable} />
-										) : (
+				<PageRequirementGate requires="model-driven-app">
+					<FormStack fill>
+						{diagnostics.isError ? <EmptyState intent="error" title={diagnostics.error.message} /> : null}
+						{data ? (
+							<>
+								<Text size={200} className={styles.caption}>
+									{`${data.formName} · ${data.entityLogicalName} · ${data.libraries.length} librar${data.libraries.length === 1 ? "y" : "ies"}, ` +
+										`${data.handlers.length} handler${data.handlers.length === 1 ? "" : "s"}, ${flagged.length} control${flagged.length === 1 ? "" : "s"} hidden or read-only`}
+								</Text>
+								{data.formXmlUnavailable ? (
+									<EmptyState
+										intent="warning"
+										title={`Scripts and libraries could not be read from the form definition: ${data.formXmlUnavailable}`}
+									/>
+								) : null}
+								<FillAccordion collapsible multiple defaultOpenItems={["controls"]}>
+									<FillAccordionItem value="controls">
+										<AccordionHeader>{`Controls (${controls.length})`}</AccordionHeader>
+										<FillAccordionPanel>
 											<DataTable
-												items={data.businessRules}
-												columns={ruleColumns}
-												getRowId={(rule) => rule.id}
+												items={controls}
+												columns={controlColumns}
+												getRowId={(control) => `${control.tab ?? ""}:${control.section ?? ""}:${control.name}`}
 												fill
-												emptyMessage="No business rules target this table"
+												emptyMessage="No controls match the filter"
 											/>
-										)}
-									</FillAccordionPanel>
-								</FillAccordionItem>
-							</FillAccordion>
-						</>
-					) : (
-						<Text size={200} className={styles.caption}>
-							{diagnostics.isFetching ? "Reading the form..." : "Open a record form to inspect it."}
-						</Text>
-					)}
-				</FormStack>
-			</PageRequirementGate>
+										</FillAccordionPanel>
+									</FillAccordionItem>
+									<FillAccordionItem value="handlers">
+										<AccordionHeader>{`Event handlers (${handlers.length})`}</AccordionHeader>
+										<FillAccordionPanel>
+											<DataTable
+												items={handlers}
+												columns={handlerColumns}
+												getRowId={(handler) => `${handler.event}:${handler.target ?? ""}:${handler.order}:${handler.functionName}`}
+												fill
+												emptyMessage="No script handlers are registered on this form"
+											/>
+										</FillAccordionPanel>
+									</FillAccordionItem>
+									<FillAccordionItem value="libraries">
+										<AccordionHeader>{`Script libraries (${data.libraries.length})`}</AccordionHeader>
+										<FillAccordionPanel>
+											<DataTable
+												items={data.libraries}
+												columns={libraryColumns}
+												getRowId={(library) => library.name}
+												fill
+												emptyMessage="No JavaScript libraries are attached to this form"
+											/>
+										</FillAccordionPanel>
+									</FillAccordionItem>
+									<FillAccordionItem value="rules">
+										<AccordionHeader>{`Business rules (${data.businessRules.length})`}</AccordionHeader>
+										<FillAccordionPanel>
+											{data.businessRulesUnavailable ? (
+												<EmptyState intent="warning" title={data.businessRulesUnavailable} />
+											) : (
+												<DataTable
+													items={data.businessRules}
+													columns={ruleColumns}
+													getRowId={(rule) => rule.id}
+													fill
+													emptyMessage="No business rules target this table"
+												/>
+											)}
+										</FillAccordionPanel>
+									</FillAccordionItem>
+								</FillAccordion>
+							</>
+						) : (
+							<Text size={200} className={styles.caption}>
+								{diagnostics.isFetching ? "Reading the form..." : "Open a record form to inspect it."}
+							</Text>
+						)}
+					</FormStack>
+				</PageRequirementGate>
 			</AreaContainer>
 		</AreaShell>
 	);

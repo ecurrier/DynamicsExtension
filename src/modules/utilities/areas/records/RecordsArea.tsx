@@ -3,7 +3,18 @@ import { ChevronLeft20Regular, ChevronRight20Regular } from "@fluentui/react-ico
 import { useState } from "react";
 
 import { pageKeys, usePageFetcher, usePageMutation, usePageQuery } from "@/messaging/client";
-import { AreaContainer, AreaShell, DataTable, type DataTableColumn, FormRow, Grow, TableFilter, useAppToast, useSelectDialog, useTableFilter } from "@/shared/components";
+import {
+	AreaContainer,
+	AreaShell,
+	DataTable,
+	type DataTableColumn,
+	FormRow,
+	Grow,
+	TableFilter,
+	useAppToast,
+	useSelectDialog,
+	useTableFilter,
+} from "@/shared/components";
 import { useAsyncAction } from "@/shared/hooks";
 import { useSessionStore } from "@/shared/stores";
 

@@ -262,7 +262,9 @@ export const EnvironmentVariablesArea = () => {
 							value={typeFilter === null ? "All types" : ENVIRONMENT_VARIABLE_TYPE_LABELS[typeFilter]}
 							selectedOptions={[typeFilter === null ? ALL_TYPES : String(typeFilter)]}
 							onOptionSelect={(_, data) =>
-								setTypeFilter(!data.optionValue || data.optionValue === ALL_TYPES ? null : (Number(data.optionValue) as EnvironmentVariableType))
+								setTypeFilter(
+									!data.optionValue || data.optionValue === ALL_TYPES ? null : (Number(data.optionValue) as EnvironmentVariableType)
+								)
 							}>
 							<Option value={ALL_TYPES} text="All types">
 								All types
@@ -286,24 +288,24 @@ export const EnvironmentVariablesArea = () => {
 					/>
 				</Tooltip>
 			}>
-		<AreaContainer fill>
-			<FormRow>
-				<Grow>
-					<ConnectionPicker
-						value={connection}
-						environments={environments}
-						disabled={connect.running}
-						onChange={(target) => void onConnectionChange(target)}
-					/>
-				</Grow>
-			</FormRow>
-			{gateway.environment ? (
-				<Text size={200} className={styles.caption}>
-					Values are read and written in {gateway.environment.name} as the configured application user.
-				</Text>
-			) : null}
-			{gateway.mode === "page" ? <PageRequirementGate requires="model-driven-app">{body}</PageRequirementGate> : body}
-		</AreaContainer>
+			<AreaContainer fill>
+				<FormRow>
+					<Grow>
+						<ConnectionPicker
+							value={connection}
+							environments={environments}
+							disabled={connect.running}
+							onChange={(target) => void onConnectionChange(target)}
+						/>
+					</Grow>
+				</FormRow>
+				{gateway.environment ? (
+					<Text size={200} className={styles.caption}>
+						Values are read and written in {gateway.environment.name} as the configured application user.
+					</Text>
+				) : null}
+				{gateway.mode === "page" ? <PageRequirementGate requires="model-driven-app">{body}</PageRequirementGate> : body}
+			</AreaContainer>
 		</AreaShell>
 	);
 };

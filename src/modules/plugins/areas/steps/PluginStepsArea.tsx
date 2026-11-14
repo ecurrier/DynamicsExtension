@@ -350,24 +350,24 @@ export const PluginStepsArea = () => {
 					/>
 				</Tooltip>
 			}>
-		<AreaContainer fill>
-			<FormRow>
-				<Grow>
-					<ConnectionPicker
-						value={connection}
-						environments={environments}
-						disabled={switching}
-						onChange={(target) => void onConnectionChange(target)}
-					/>
-				</Grow>
-			</FormRow>
-			{gateway.environment ? (
-				<Text size={200} className={styles.caption}>
-					Steps are read and changed in {gateway.environment.name} as the configured application user.
-				</Text>
-			) : null}
-			{gateway.mode === "page" ? <PageRequirementGate requires="model-driven-app">{body}</PageRequirementGate> : body}
-		</AreaContainer>
+			<AreaContainer fill>
+				<FormRow>
+					<Grow>
+						<ConnectionPicker
+							value={connection}
+							environments={environments}
+							disabled={switching}
+							onChange={(target) => void onConnectionChange(target)}
+						/>
+					</Grow>
+				</FormRow>
+				{gateway.environment ? (
+					<Text size={200} className={styles.caption}>
+						Steps are read and changed in {gateway.environment.name} as the configured application user.
+					</Text>
+				) : null}
+				{gateway.mode === "page" ? <PageRequirementGate requires="model-driven-app">{body}</PageRequirementGate> : body}
+			</AreaContainer>
 		</AreaShell>
 	);
 };
