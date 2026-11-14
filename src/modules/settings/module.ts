@@ -4,6 +4,7 @@ import { type ModuleDefinition } from "@/modules/types";
 
 import { EnvironmentsArea } from "./areas/environments";
 import { ExtensionSettingsArea } from "./areas/extension";
+import { FeedbackArea } from "./areas/feedback";
 import { ServicePrincipalsArea } from "./areas/service-principals";
 
 export const settingsModule: ModuleDefinition = {
@@ -35,6 +36,14 @@ export const settingsModule: ModuleDefinition = {
 			tooltip: "Behaviour preferences for the extension",
 			keywords: ["preferences", "options", "theme", "dark mode", "side panel"],
 			component: ExtensionSettingsArea,
+		},
+		{
+			id: "settings.feedback",
+			label: "Send Feedback",
+			breadcrumb: ["Settings", "Send Feedback"],
+			tooltip: "Report a bug or suggest an idea, and see which version you are running",
+			keywords: ["feedback", "bug", "report", "issue", "problem", "crash", "idea", "suggestion", "request", "support", "about", "version", "github"],
+			component: FeedbackArea,
 		},
 	],
 };

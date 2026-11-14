@@ -1,5 +1,7 @@
 import {
+	Button,
 	makeStyles,
+	mergeClasses,
 	NavCategory,
 	NavCategoryItem,
 	NavDivider,
@@ -18,10 +20,11 @@ import {
 	useFocusFinders,
 	useId,
 } from "@fluentui/react-components";
-import { Open16Regular } from "@fluentui/react-icons";
+import { Open16Regular, PersonFeedback20Regular } from "@fluentui/react-icons";
 import { type KeyboardEvent, type RefObject, useEffect, useMemo, useRef, useState } from "react";
 
 import { type AreaDefinition, type ModuleDefinition } from "@/modules/types";
+import { FEEDBACK_AREA_ID } from "@/shared/lib";
 
 import { Keycap } from "./Keycap";
 import { EMPTY_NAV_SEARCH, searchNav } from "./navSearch";
@@ -73,6 +76,17 @@ const useStyles = makeStyles({
 		fontSize: tokens.fontSizeBase200,
 		lineHeight: tokens.lineHeightBase200,
 		color: tokens.colorNeutralForeground3,
+	},
+	footerAction: {
+		// The subtle button brings its own inline padding, so the footer gives back most of its
+		// own and the label lines up with the nav items above it.
+		paddingInlineStart: tokens.spacingHorizontalXS,
+	},
+	hints: {
+		display: "flex",
+		flexDirection: "row",
+		alignItems: "center",
+		columnGap: tokens.spacingHorizontalM,
 	},
 	hint: {
 		display: "inline-flex",
@@ -279,23 +293,35 @@ const DrawerContents = ({ modules, selectedAreaId, recentAreaIds, searchRef, onN
 					<NavTree modules={modules} recent={recent} />
 				)}
 			</NavDrawerBody>
-			{searching ? (
-				<NavDrawerFooter className={styles.footer} aria-hidden>
-					<span className={styles.hint}>
-						<Keycap>↑</Keycap>
-						<Keycap>↓</Keycap>
-						Move
+			{/*
+			 * The footer is always here now. While searching it carries the key hints, which are
+			 * decorative and hidden from assistive tech; otherwise it carries the way to send
+			 * feedback, which is the one thing a user needs that no Area offers. The aria-hidden
+			 * sits on the hints rather than the footer, because the other branch is focusable.
+			 */}
+			<NavDrawerFooter className={mergeClasses(styles.footer, !searching && styles.footerAction)}>
+				{searching ? (
+					<span className={styles.hints} aria-hidden>
+						<span className={styles.hint}>
+							<Keycap>↑</Keycap>
+							<Keycap>↓</Keycap>
+							Move
+						</span>
+						<span className={styles.hint}>
+							<Keycap>Enter</Keycap>
+							Open
+						</span>
+						<span className={styles.hint}>
+							<Keycap>Esc</Keycap>
+							Clear
+						</span>
 					</span>
-					<span className={styles.hint}>
-						<Keycap>Enter</Keycap>
-						Open
-					</span>
-					<span className={styles.hint}>
-						<Keycap>Esc</Keycap>
-						Clear
-					</span>
-				</NavDrawerFooter>
-			) : null}
+				) : (
+					<Button appearance="subtle" size="small" icon={<PersonFeedback20Regular />} onClick={() => onNavigate(FEEDBACK_AREA_ID)}>
+						Send feedback
+					</Button>
+				)}
+			</NavDrawerFooter>
 		</>
 	);
 };

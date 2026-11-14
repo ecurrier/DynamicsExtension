@@ -10,6 +10,7 @@ export * from "./CopyButton";
 export * from "./DataTable";
 export * from "./Dialogs";
 export * from "./EmptyState";
+export * from "./ErrorBoundary";
 export * from "./ExternalLinkButton";
 export * from "./FailureBanner";
 export * from "./HostAccessBanner";

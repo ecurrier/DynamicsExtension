@@ -1,5 +1,6 @@
 import { storage, type WxtStorageItem } from "wxt/utils/storage";
 
+import { EMPTY_FEEDBACK_DRAFT, type FeedbackDraft } from "@/shared/lib/feedback";
 import {
 	type CodegenPreferences,
 	EMPTY_CODEGEN_PREFERENCES,
@@ -116,3 +117,14 @@ export const codegenPreferencesItem: StorageItem<CodegenPreferences> = storage.d
 	"local:codegenPreferences",
 	{ fallback: EMPTY_CODEGEN_PREFERENCES }
 );
+
+/**
+ * The in-progress feedback report. It lives in storage rather than component state because an
+ * extension popup closes the moment it loses focus, and a bug report is written about something on
+ * the Dynamics page: the user will click back to that page mid-sentence. Being in storage also
+ * means the draft follows them if they reopen in the side panel.
+ */
+export const feedbackDraftItem: StorageItem<FeedbackDraft> = storage.defineItem<FeedbackDraft, Record<string, unknown>>("local:feedbackDraft", {
+	fallback: EMPTY_FEEDBACK_DRAFT,
+	version: 1,
+});

@@ -1,0 +1,4 @@
+# Blank issues stay enabled on purpose. Power Tools opens `/issues/new` with the title and body
+# already filled in, and turning blank issues off would redirect that straight to the template
+# chooser and throw the report away.
+blank_issues_enabled: true

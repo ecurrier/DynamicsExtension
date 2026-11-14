@@ -23,6 +23,9 @@ export default defineConfig({
 		side_panel: { default_path: "sidepanel.html" },
 	},
 	vite: () => ({
+		// Source maps ship. The source is already public on GitHub, so withholding them buys no
+		// secrecy and costs every stack trace in a bug report its readability.
+		build: { sourcemap: true },
 		define: { __APP_VERSION__: JSON.stringify(version) },
 	}),
 });

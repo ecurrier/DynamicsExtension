@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { DEFAULT_AREA, modules, resolveArea } from "./registry";
+import { FEEDBACK_AREA_ID } from "@/shared/lib";
+
+import { areasById, DEFAULT_AREA, modules, resolveArea } from "./registry";
 
 describe("resolveArea", () => {
 	it("sends a remembered Update Fields Area to Record Columns", () => {
@@ -26,6 +28,13 @@ describe("the Area registry", () => {
 				}
 			}
 		}
+	});
+
+	it("has an Area at the id the nav drawer links to", () => {
+		// The drawer footer sits in shared/components and cannot import a module without closing a
+		// barrel cycle, so it navigates by the constant in shared/lib. This is the other end of
+		// that contract: if the Area id in settings/module.ts ever drifts, this fails.
+		expect(areasById[FEEDBACK_AREA_ID], `no Area is registered at ${FEEDBACK_AREA_ID}`).toBeDefined();
 	});
 
 	it("never remembers a Workspace Area as the last visited one, because it has nothing to render", () => {

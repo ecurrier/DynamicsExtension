@@ -8,6 +8,7 @@ export * from "./dataverse";
 export * from "./download";
 export * from "./environmentMatch";
 export * from "./errors";
+export * from "./feedback";
 export * from "./fetchXmlEscape";
 export * from "./fileHandles";
 export * from "./filePicker";
