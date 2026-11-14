@@ -1,6 +1,6 @@
 # Trace Viewer: filters into a panel, detail on select
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 
 See `../spec.md`, decision 14.
@@ -16,3 +16,13 @@ Eleven controls stand between the user and the first row: From, To, Type name, M
 - Verify in `harness-traces` at the pinned-window minimum of 1100px and in a narrow browser tab.
 
 Blocked by: 07
+
+## Answer
+
+- `TraceFilters` is now the content of a shared `FilterPanel`: From, To, Type name, Message, Entity, Correlation id and Exceptions only, with "Apply filters" at the foot of the panel. The server filters are the react-query key, so applying them stays a deliberate act.
+- The button carries the count. `activeTraceFilterCount` (unit tested) counts the seven, and leaves `top` out, because Top is a size and not a filter. "Clear all" resets them and keeps Top as the user set it.
+- Above the table: the quick filter as a `SearchField`, the loaded count, the Filters button, the Top dropdown, auto-refresh, refresh, the Columns button and Delete. One line at 1100px, two at 620px.
+- `QUICK_FILTER_HELP` was a `title` attribute, which a keyboard user cannot reach. It is now an `InfoTip` button at the end of the quick filter.
+- The detail pane renders only once a row is selected. The split grid is one column until then, and the table has the whole width. Checked in `harness-traces` at 1100px: 1052px for the table alone, 622/414 once a row is picked.
+- The root is a flex column instead of four declared grid rows, so a banner or an error no longer creates a fifth row and steals the split's `1fr`.
+- The `AreaShell` filters slot is not used here: the Trace Viewer is a Workspace, not an Area, and has no shell to render into. It uses the same shared `FilterPanel` in its own toolbar.

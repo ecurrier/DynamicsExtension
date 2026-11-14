@@ -17,13 +17,16 @@ const useStyles = makeStyles({
 		color: tokens.colorNeutralForeground1,
 		borderRadius: tokens.borderRadiusSmall,
 		padding: "0 3px",
+		// Not colour alone: the mark must survive a scroll and a colour-blind reader.
+		fontWeight: tokens.fontWeightBold,
+		textDecorationLine: "underline",
 	},
 });
 
-export const useTraceColumns = (highlightedGuid: string | null): DataTableColumn<PluginTraceLog>[] => {
+export const useTraceColumns = (highlightedGuid: string | null, shown: string[]): DataTableColumn<PluginTraceLog>[] => {
 	const styles = useStyles();
-	return useMemo(
-		() => [
+	return useMemo(() => {
+		const all: DataTableColumn<PluginTraceLog>[] = [
 			{
 				id: "createdOn",
 				label: "Created On",
@@ -111,7 +114,7 @@ export const useTraceColumns = (highlightedGuid: string | null): DataTableColumn
 					),
 				sortValue: (trace) => trace.pluginStepId,
 			},
-		],
-		[highlightedGuid, styles]
-	);
+		];
+		return all.filter((column) => shown.includes(column.id));
+	}, [highlightedGuid, shown, styles]);
 };

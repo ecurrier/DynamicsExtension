@@ -62,6 +62,8 @@ export interface ExtensionSettings {
 	formsRequireSaveConfirmation: boolean;
 	environmentVariablesRequireSaveConfirmation: boolean;
 	pluginStepsRequireToggleConfirmation: boolean;
+	/** The trace table columns the user chose to show, in the table's own order. */
+	traceColumns: string[];
 }
 
 export const DEFAULT_SETTINGS: ExtensionSettings = {
@@ -76,6 +78,8 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
 	formsRequireSaveConfirmation: true,
 	environmentVariablesRequireSaveConfirmation: true,
 	pluginStepsRequireToggleConfirmation: true,
+	// The same six as DEFAULT_TRACE_COLUMNS in plugin-traces/lib, which a test holds to this list.
+	traceColumns: ["createdOn", "typeName", "messageName", "primaryEntity", "duration", "exception"],
 };
 
 export const EMPTY_FORM_PRESETS: FormPresetsByContext = {

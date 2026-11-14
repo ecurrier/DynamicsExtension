@@ -7,15 +7,18 @@ import {
 	MessageBar,
 	MessageBarBody,
 	Option,
+	Switch,
 	type TableRowId,
 	Text,
 	Title3,
 	tokens,
+	Tooltip,
 } from "@fluentui/react-components";
-import { Delete20Regular } from "@fluentui/react-icons";
+import { ArrowClockwise20Regular, Delete20Regular } from "@fluentui/react-icons";
 import { useMemo, useState } from "react";
 
 import { pageKeys, usePageMutation, usePageQuery } from "@/messaging/client";
+import { useExtensionSettings } from "@/modules/settings";
 import { DataTable, FailureBanner, HostAccessBanner, InfoTip, SearchField, useAppToast, useConfirm } from "@/shared/components";
 import { useSessionStore } from "@/shared/stores";
 import {
@@ -24,10 +27,13 @@ import {
 	TRACE_LOG_SETTINGS,
 	type TraceLogSetting,
 	type TraceQuery,
+	TRACE_TOPS,
+	type TraceTop,
 	type TraceViewerLaunch,
 } from "@/shared/types";
 
-import { traceMatches } from "./lib";
+import { shownTraceColumns, traceMatches } from "./lib";
+import { TraceColumnPicker } from "./TraceColumnPicker";
 import { useTraceColumns } from "./traceColumns";
 import { TraceDetails } from "./TraceDetails";
 import { TraceFilters } from "./TraceFilters";
@@ -41,8 +47,10 @@ const QUICK_FILTER_HELP =
 
 const useStyles = makeStyles({
 	root: {
-		display: "grid",
-		gridTemplateRows: "auto auto auto 1fr",
+		// A column, not four declared rows: a banner or an error used to add a fifth row and
+		// steal the split's 1fr.
+		display: "flex",
+		flexDirection: "column",
 		gap: "12px",
 		padding: "16px 24px 24px",
 		height: "100%",
@@ -63,13 +71,25 @@ const useStyles = makeStyles({
 	toolbar: {
 		display: "flex",
 		alignItems: "center",
+		flexWrap: "wrap",
 		gap: "12px",
+	},
+	quick: {
+		display: "flex",
+		alignItems: "center",
+		flex: "1 1 240px",
+		minWidth: "200px",
 	},
 	split: {
 		display: "grid",
-		gridTemplateColumns: "minmax(0, 3fr) minmax(360px, 2fr)",
+		// One column until a row is selected: an empty detail pane held two fifths of the width.
+		gridTemplateColumns: "minmax(0, 1fr)",
 		gap: "16px",
+		flex: 1,
 		minHeight: 0,
+	},
+	withDetail: {
+		gridTemplateColumns: "minmax(0, 3fr) minmax(360px, 2fr)",
 	},
 	table: {
 		display: "flex",
@@ -95,6 +115,7 @@ export const TraceViewer = ({ launch }: TraceViewerProps) => {
 	const toast = useAppToast();
 	const confirm = useConfirm();
 	const tabId = useSessionStore((state) => state.tabId);
+	const { settings, setSetting } = useExtensionSettings();
 	const [draft, setDraft] = useState<TraceQuery>(DEFAULT_TRACE_QUERY);
 	const [applied, setApplied] = useState<TraceQuery>(DEFAULT_TRACE_QUERY);
 	const [quickFilter, setQuickFilter] = useState("");
@@ -122,7 +143,8 @@ export const TraceViewer = ({ launch }: TraceViewerProps) => {
 	const filtered = useMemo(() => rows.filter((row) => traceMatches(row, quickFilter)), [rows, quickFilter]);
 	const correlationIds = useMemo(() => new Set(rows.flatMap((row) => (row.correlationId ? [row.correlationId] : []))), [rows]);
 	const detail = rows.find((row) => row.id === detailId) ?? null;
-	const columns = useTraceColumns(highlightedGuid);
+	const shownColumns = useMemo(() => shownTraceColumns(settings.traceColumns), [settings.traceColumns]);
+	const columns = useTraceColumns(highlightedGuid, shownColumns);
 
 	const showCorrelation = (correlationId: string) => {
 		const next = { ...draft, correlationId };
@@ -184,39 +206,59 @@ export const TraceViewer = ({ launch }: TraceViewerProps) => {
 			    asks for itself, so a direct launch from the navigation drawer cannot skip it. */}
 			<HostAccessBanner origin={launch.orgOrigin} reason={ACCESS_REASON} />
 			<FailureBanner />
-			<TraceFilters
-				draft={draft}
-				loading={traces.isFetching}
-				autoRefresh={autoRefresh}
-				onChange={setDraft}
-				onApply={() => setApplied(draft)}
-				onRefresh={() => void traces.refetch()}
-				onAutoRefreshChange={setAutoRefresh}
-			/>
 			<div className={styles.toolbar}>
-				<SearchField
-					value={quickFilter}
-					onChange={setQuickFilter}
-					placeholder="Search loaded traces"
-					aria-label="Search loaded traces"
-					hint={<InfoTip content={QUICK_FILTER_HELP} />}
-				/>
+				<div className={styles.quick}>
+					<SearchField
+						value={quickFilter}
+						onChange={setQuickFilter}
+						placeholder="Search loaded traces"
+						aria-label="Search loaded traces"
+						hint={<InfoTip content={QUICK_FILTER_HELP} />}
+					/>
+				</div>
 				<Text size={200} className={styles.subtitle}>
 					{traces.isFetching ? "Loading..." : `${rows.length} loaded`}
 					{filtered.length !== rows.length ? `, ${filtered.length} shown` : ""}
 					{limitReached ? ` (limit of ${applied.top} reached, narrow the filters or raise Top)` : ""}
 				</Text>
 				<div className={styles.grow} />
-				<Button icon={<Delete20Regular />} disabled={selectedIds.size === 0 || remove.isPending} onClick={() => void onDelete()}>
-					{remove.isPending ? "Deleting..." : `Delete selected (${selectedIds.size})`}
-				</Button>
+				<TraceFilters draft={draft} loading={traces.isFetching} onChange={setDraft} onApply={() => setApplied(draft)} />
+				<Field label="Top" orientation="horizontal">
+					<Dropdown
+						value={String(applied.top)}
+						selectedOptions={[String(applied.top)]}
+						style={{ minWidth: "90px" }}
+						onOptionSelect={(_, data) => {
+							if (data.optionValue) {
+								const top = Number(data.optionValue) as TraceTop;
+								setDraft({ ...draft, top });
+								setApplied({ ...applied, top });
+							}
+						}}>
+						{TRACE_TOPS.map((top) => (
+							<Option key={top} value={String(top)} text={String(top)}>
+								{top}
+							</Option>
+						))}
+					</Dropdown>
+				</Field>
+				<Switch label="Auto-refresh" checked={autoRefresh} onChange={(_, data) => setAutoRefresh(data.checked)} />
+				<Tooltip content="Reload with the current filters" relationship="label">
+					<Button icon={<ArrowClockwise20Regular />} disabled={traces.isFetching} onClick={() => void traces.refetch()} aria-label="Refresh" />
+				</Tooltip>
+				<TraceColumnPicker shown={shownColumns} onChange={(columns) => void setSetting("traceColumns", columns)} />
+				<Tooltip content="Delete the selected trace logs" relationship="label">
+					<Button icon={<Delete20Regular />} disabled={selectedIds.size === 0 || remove.isPending} onClick={() => void onDelete()}>
+						{remove.isPending ? "Deleting..." : `Delete (${selectedIds.size})`}
+					</Button>
+				</Tooltip>
 			</div>
 			{traces.isError ? (
 				<MessageBar intent="error">
 					<MessageBarBody>{traces.error.message}</MessageBarBody>
 				</MessageBar>
 			) : null}
-			<div className={styles.split}>
+			<div className={mergeClasses(styles.split, detail !== null && styles.withDetail)}>
 				<div className={styles.table}>
 					<DataTable
 						items={filtered}
@@ -233,13 +275,15 @@ export const TraceViewer = ({ launch }: TraceViewerProps) => {
 						emptyMessage={traces.isFetching ? "Loading trace logs..." : "No trace logs match the current filters"}
 					/>
 				</div>
-				<TraceDetails
-					trace={detail}
-					highlightedGuid={highlightedGuid}
-					correlationIds={correlationIds}
-					onHighlight={setHighlightedGuid}
-					onShowCorrelation={showCorrelation}
-				/>
+				{detail ? (
+					<TraceDetails
+						trace={detail}
+						highlightedGuid={highlightedGuid}
+						correlationIds={correlationIds}
+						onHighlight={setHighlightedGuid}
+						onShowCorrelation={showCorrelation}
+					/>
+				) : null}
 			</div>
 		</div>
 	);
