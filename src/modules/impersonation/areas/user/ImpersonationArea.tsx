@@ -1,11 +1,11 @@
-import { Button, makeStyles, MessageBar, MessageBarActions, MessageBarBody, MessageBarTitle, Text, tokens, Tooltip } from "@fluentui/react-components";
+import { Button, makeStyles, MessageBar, MessageBarBody, MessageBarTitle, Text, tokens, Tooltip } from "@fluentui/react-components";
 import { ArrowClockwise20Regular, PersonSwap20Regular, Stop20Regular } from "@fluentui/react-icons";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { browser } from "wxt/browser";
 
 import { invokeBackground, usePageFetcher, usePageMutation, usePageQuery } from "@/messaging/client";
-import { AreaContainer, FormStack, HostAccessBanner, useAppToast, useHostAccess, UserPicker } from "@/shared/components";
+import { AreaContainer, AreaShell, FormStack, HostAccessBanner, useAppToast, useHostAccess, UserPicker } from "@/shared/components";
 import { ensureHostAccess } from "@/shared/extension";
 import { resolveOrgOrigin } from "@/shared/lib";
 import { impersonationItem, useStorageItem } from "@/shared/storage";
@@ -18,11 +18,6 @@ import { formatStartedAt } from "../../lib";
 const ACCESS_REASON = "Impersonation rewrites the Web API requests this tab sends, which needs access to the site.";
 
 const useStyles = makeStyles({
-	actions: {
-		display: "flex",
-		justifyContent: "flex-end",
-		gap: "8px",
-	},
 	detail: {
 		color: tokens.colorNeutralForeground3,
 	},
@@ -101,6 +96,13 @@ export const ImpersonationArea = () => {
 
 	if (active) {
 		return (
+			<AreaShell
+				actions={reloadButton}
+				primaryAction={
+					<Button appearance="primary" icon={<Stop20Regular />} disabled={stop.isPending} onClick={() => stop.mutate()}>
+						{stop.isPending ? "Stopping..." : "Stop impersonation"}
+					</Button>
+				}>
 			<AreaContainer>
 				<FormStack>
 					<MessageBar intent="warning" layout="multiline">
@@ -109,12 +111,6 @@ export const ImpersonationArea = () => {
 							Since {formatStartedAt(active.startedAt)}, every Web API request this tab sends to {active.orgOrigin} carries the {active.header}{" "}
 							header. Reload the page if you have not done so since starting.
 						</MessageBarBody>
-						<MessageBarActions>
-							{reloadButton}
-							<Button appearance="primary" icon={<Stop20Regular />} disabled={stop.isPending} onClick={() => stop.mutate()}>
-								{stop.isPending ? "Stopping..." : "Stop impersonation"}
-							</Button>
-						</MessageBarActions>
 					</MessageBar>
 					<RoleList
 						fullName={active.user.fullName}
@@ -123,10 +119,26 @@ export const ImpersonationArea = () => {
 					/>
 				</FormStack>
 			</AreaContainer>
+			</AreaShell>
 		);
 	}
 
 	return (
+		<AreaShell
+			actions={reloadButton}
+			primaryAction={
+				<Button
+					appearance="primary"
+					icon={<PersonSwap20Regular />}
+					disabled={!selected || !orgOrigin || start.isPending || access.granted !== true}
+					onClick={() => {
+						if (selected) {
+							start.mutate(selected);
+						}
+					}}>
+					{start.isPending ? "Starting..." : "Start impersonation"}
+				</Button>
+			}>
 		<AreaContainer>
 			<FormStack>
 				<HostAccessBanner origin={orgOrigin} reason={ACCESS_REASON} />
@@ -157,21 +169,8 @@ export const ImpersonationArea = () => {
 						<UserRoles systemUserId={selected.id} fullName={selected.fullName} />
 					</>
 				) : null}
-				<div className={styles.actions}>
-					{reloadButton}
-					<Button
-						appearance="primary"
-						icon={<PersonSwap20Regular />}
-						disabled={!selected || !orgOrigin || start.isPending || access.granted !== true}
-						onClick={() => {
-							if (selected) {
-								start.mutate(selected);
-							}
-						}}>
-						{start.isPending ? "Starting..." : "Start impersonation"}
-					</Button>
-				</div>
 			</FormStack>
 		</AreaContainer>
+		</AreaShell>
 	);
 };

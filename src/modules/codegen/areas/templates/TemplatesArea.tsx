@@ -26,7 +26,7 @@ import {
 } from "@fluentui/react-icons";
 import { useMemo, useRef, useState } from "react";
 
-import { AreaContainer, AreaToolbar, Grow, useAppToast, useBanner, useConfirm } from "@/shared/components";
+import { AreaContainer, AreaShell, FormRow, Grow, useAppToast, useBanner, useConfirm } from "@/shared/components";
 import { useFieldProblem } from "@/shared/hooks";
 import { downloadTextFile, generateGuid } from "@/shared/lib";
 import { type Template, TEMPLATE_KIND_LABELS, TEMPLATE_KINDS } from "@/shared/types";
@@ -178,41 +178,8 @@ export const TemplatesArea = () => {
 	const selectedLabel = isNew ? "New template" : draft ? optionLabel(draft) : "";
 
 	return (
-		<AreaContainer>
-			<MessageBar intent="info" layout="multiline">
-				<MessageBarBody>
-					<MessageBarTitle>Templates</MessageBarTitle>A Template is the pattern Generate fills in with a table, its columns, or a choice, so the
-					output matches how your codebase is written. Clone a built-in one to start, star the one your team uses as the default, and export it to
-					share.
-				</MessageBarBody>
-			</MessageBar>
-			<AreaToolbar>
-				<Grow>
-					<Field validationMessage={problems.messageFor("template")}>
-						<Dropdown
-							placeholder="Select a template..."
-							value={selectedLabel}
-							selectedOptions={selectedId ? [selectedId] : []}
-							onOptionSelect={(_, data) => data.optionValue && data.optionValue !== NEW_TEMPLATE && select(data.optionValue)}>
-							{isNew ? (
-								<Option value={NEW_TEMPLATE} text="New template">
-									New template
-								</Option>
-							) : null}
-							{TEMPLATE_KINDS.map((kind) => (
-								<OptionGroup key={kind} label={TEMPLATE_KIND_LABELS[kind]}>
-									{templates
-										.filter((template) => template.kind === kind)
-										.map((template) => (
-											<Option key={template.id} value={template.id} text={optionLabel(template)}>
-												{optionLabel(template)}
-											</Option>
-										))}
-								</OptionGroup>
-							))}
-						</Dropdown>
-					</Field>
-				</Grow>
+		<AreaShell
+			primaryAction={
 				<Menu>
 					<MenuTrigger disableButtonEnhancement>
 						<MenuButton appearance="primary">Actions</MenuButton>
@@ -245,6 +212,43 @@ export const TemplatesArea = () => {
 						</MenuList>
 					</MenuPopover>
 				</Menu>
+			}>
+			<AreaContainer>
+				<MessageBar intent="info" layout="multiline">
+					<MessageBarBody>
+						<MessageBarTitle>Templates</MessageBarTitle>A Template is the pattern Generate fills in with a table, its columns, or a choice, so the
+						output matches how your codebase is written. Clone a built-in one to start, star the one your team uses as the default, and export it to
+						share.
+					</MessageBarBody>
+				</MessageBar>
+				<FormRow>
+					<Grow>
+						<Field validationMessage={problems.messageFor("template")}>
+							<Dropdown
+								placeholder="Select a template..."
+								value={selectedLabel}
+								selectedOptions={selectedId ? [selectedId] : []}
+								onOptionSelect={(_, data) => data.optionValue && data.optionValue !== NEW_TEMPLATE && select(data.optionValue)}>
+								{isNew ? (
+									<Option value={NEW_TEMPLATE} text="New template">
+										New template
+									</Option>
+								) : null}
+								{TEMPLATE_KINDS.map((kind) => (
+									<OptionGroup key={kind} label={TEMPLATE_KIND_LABELS[kind]}>
+										{templates
+											.filter((template) => template.kind === kind)
+											.map((template) => (
+												<Option key={template.id} value={template.id} text={optionLabel(template)}>
+													{optionLabel(template)}
+												</Option>
+											))}
+									</OptionGroup>
+								))}
+							</Dropdown>
+						</Field>
+					</Grow>
+				</FormRow>
 				<input
 					ref={fileInput}
 					type="file"
@@ -255,19 +259,19 @@ export const TemplatesArea = () => {
 						event.target.value = "";
 					}}
 				/>
-			</AreaToolbar>
-			{draft && generation ? (
-				<TemplateEditor
-					draft={draft}
-					nameProblem={problems.messageFor("name")}
-					readOnly={draft.builtIn}
-					isSample={preview.isSample}
-					generation={generation}
-					onChange={setEdits}
-				/>
-			) : (
-				<Text size={200}>Select a template to view or edit it, or use Actions to start a new one.</Text>
-			)}
-		</AreaContainer>
+				{draft && generation ? (
+					<TemplateEditor
+						draft={draft}
+						nameProblem={problems.messageFor("name")}
+						readOnly={draft.builtIn}
+						isSample={preview.isSample}
+						generation={generation}
+						onChange={setEdits}
+					/>
+				) : (
+					<Text size={200}>Select a template to view or edit it, or use Actions to start a new one.</Text>
+				)}
+			</AreaContainer>
+		</AreaShell>
 	);
 };

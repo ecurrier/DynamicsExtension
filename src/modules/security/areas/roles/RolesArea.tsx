@@ -3,7 +3,7 @@ import { Checkmark20Regular, Person20Regular } from "@fluentui/react-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useConnectableEnvironments, useExtensionSettings } from "@/modules/settings";
-import { AreaContainer, AreaToolbar, ConnectionPicker, FormRow, Grow, PageRequirementGate, useAppToast, useConfirm, UserPicker } from "@/shared/components";
+import { AreaContainer, AreaShell, ConnectionPicker, FormRow, Grow, PageRequirementGate, useAppToast, useConfirm, UserPicker } from "@/shared/components";
 import { type ConnectionTarget, requestEnvironmentAccess } from "@/shared/connections";
 import { useAsyncAction } from "@/shared/hooks";
 import { type RoleChangeSet, type SystemUser } from "@/shared/types";
@@ -174,7 +174,7 @@ export const RolesArea = () => {
 
 	const body = (
 		<>
-			<AreaToolbar>
+			<FormRow>
 				<Grow>
 					<Field label="Business Unit">
 						<Dropdown
@@ -191,24 +191,7 @@ export const RolesArea = () => {
 						</Dropdown>
 					</Field>
 				</Grow>
-				<Menu>
-					<MenuTrigger disableButtonEnhancement>
-						<MenuButton appearance="primary">Actions</MenuButton>
-					</MenuTrigger>
-					<MenuPopover>
-						<MenuList>
-							{gateway.mode === "page" ? (
-								<MenuItem icon={<Person20Regular />} disabled={loadMyUser.running} onClick={() => void onLoadMyUser()}>
-									Load My User
-								</MenuItem>
-							) : null}
-							<MenuItem icon={<Checkmark20Regular />} disabled={apply.isPending || !model.canApply} onClick={() => void onApply()}>
-								Apply Changes
-							</MenuItem>
-						</MenuList>
-					</MenuPopover>
-				</Menu>
-			</AreaToolbar>
+			</FormRow>
 			<UserPicker
 				users={searchResults}
 				selectedUser={selectedUser}
@@ -231,23 +214,45 @@ export const RolesArea = () => {
 	);
 
 	return (
-		<AreaContainer fill>
-			<FormRow>
-				<Grow>
-					<ConnectionPicker
-						value={connection}
-						environments={environments}
-						disabled={connect.running}
-						onChange={(target) => void onConnectionChange(target)}
-					/>
-				</Grow>
-			</FormRow>
-			{gateway.environment ? (
-				<Text size={200} className={styles.caption}>
-					Changes run against {gateway.environment.name} as the configured application user, so your own roles on the current page are not required.
-				</Text>
-			) : null}
-			{gateway.mode === "page" ? <PageRequirementGate requires="model-driven-app">{body}</PageRequirementGate> : body}
-		</AreaContainer>
+		<AreaShell
+			primaryAction={
+				<Menu>
+					<MenuTrigger disableButtonEnhancement>
+						<MenuButton appearance="primary">Actions</MenuButton>
+					</MenuTrigger>
+					<MenuPopover>
+						<MenuList>
+							{gateway.mode === "page" ? (
+								<MenuItem icon={<Person20Regular />} disabled={loadMyUser.running} onClick={() => void onLoadMyUser()}>
+									Load My User
+								</MenuItem>
+							) : null}
+							<MenuItem icon={<Checkmark20Regular />} disabled={apply.isPending || !model.canApply} onClick={() => void onApply()}>
+								Apply Changes
+							</MenuItem>
+						</MenuList>
+					</MenuPopover>
+				</Menu>
+			}>
+			<AreaContainer fill>
+				<FormRow>
+					<Grow>
+						<ConnectionPicker
+							value={connection}
+							environments={environments}
+							disabled={connect.running}
+							onChange={(target) => void onConnectionChange(target)}
+						/>
+					</Grow>
+				</FormRow>
+				{gateway.environment ? (
+					<Text size={200} className={styles.caption}>
+						Changes run against {gateway.environment.name} as the configured application user, so your own roles on the current page are not
+						required.
+					</Text>
+				) : null}
+				{gateway.mode === "page" ? <PageRequirementGate requires="model-driven-app">{body}</PageRequirementGate> : body}
+			</AreaContainer>
+		</AreaShell>
 	);
 };

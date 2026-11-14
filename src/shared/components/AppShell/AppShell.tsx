@@ -7,10 +7,11 @@ import {
 	Pin20Regular,
 	TabDesktop20Regular,
 } from "@fluentui/react-icons";
-import { type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
 import { NAV_SEARCH_KEYSHORTCUTS, NAV_SEARCH_SHORTCUT } from "../AppNavDrawer";
 import { AreaBreadcrumb, type BreadcrumbArea } from "../AreaBreadcrumb";
+import { AreaShellSlotContext } from "../AreaShell";
 import { LoadingBar } from "../Loading";
 
 const useStyles = makeStyles({
@@ -31,6 +32,10 @@ const useStyles = makeStyles({
 		alignItems: "center",
 		gap: "8px",
 		paddingRight: "8px",
+		// Below the breakpoint the Area slots take a line of their own, after the shell buttons.
+		"@container (max-width: 560px)": {
+			flexWrap: "wrap",
+		},
 		"@container (max-width: 480px)": {
 			gap: "4px",
 			paddingRight: "4px",
@@ -44,15 +49,41 @@ const useStyles = makeStyles({
 		},
 	},
 	breadcrumb: {
-		flex: 1,
+		// Sized by its content and truncated when the row is tight: the slots come first.
+		flex: "0 1 auto",
 		minWidth: 0,
+	},
+	// Holds the right-hand buttons against the edge, above all when the Area fills no slot.
+	spacer: {
+		flex: "1 1 0",
+	},
+	// The row an AreaShell renders into. It disappears when the Area puts nothing in it, so an
+	// Area with no toolbar costs no height and leaves the breadcrumb the whole row.
+	areaSlots: {
+		display: "flex",
+		alignItems: "center",
+		flexWrap: "nowrap",
+		"@container (max-width: 560px)": {
+			flexBasis: "100%",
+			order: 1,
+			paddingBottom: "8px",
+		},
+		flex: "100 1 240px",
+		minWidth: 0,
+		gap: "8px",
+		rowGap: "4px",
+		paddingBlock: "4px",
+		":empty": {
+			display: "none",
+		},
 	},
 	title: {
 		flex: "0 1 auto",
 		minWidth: 0,
 		maxWidth: "35%",
-		"@container (max-width: 480px)": {
-			maxWidth: "25%",
+		// Dropped before the search field wraps to its own line.
+		"@container (max-width: 560px)": {
+			display: "none",
 		},
 		overflow: "hidden",
 		textOverflow: "ellipsis",
@@ -113,6 +144,7 @@ export const AppShell = ({
 	children,
 }: AppShellProps) => {
 	const styles = useStyles();
+	const [areaSlot, setAreaSlot] = useState<HTMLElement | null>(null);
 	return (
 		<div className={styles.root}>
 			<div className={styles.bar}>
@@ -135,6 +167,8 @@ export const AppShell = ({
 					<div className={styles.breadcrumb}>
 						<AreaBreadcrumb path={breadcrumb} tooltip={tooltip} areas={moduleAreas} currentAreaId={currentAreaId} onNavigate={onNavigateArea} />
 					</div>
+					<div className={styles.areaSlots} ref={setAreaSlot} />
+					<div className={styles.spacer} />
 					{actions}
 					{environmentName ? (
 						<Text size={200} className={styles.title} title={environmentName}>
@@ -163,7 +197,9 @@ export const AppShell = ({
 			</div>
 			<LoadingBar />
 			<div>{banner ? <div className={styles.banner}>{banner}</div> : null}</div>
-			<div className={styles.content}>{children}</div>
+			<div className={styles.content}>
+				<AreaShellSlotContext.Provider value={areaSlot}>{children}</AreaShellSlotContext.Provider>
+			</div>
 		</div>
 	);
 };

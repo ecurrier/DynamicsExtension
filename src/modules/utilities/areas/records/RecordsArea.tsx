@@ -3,7 +3,7 @@ import { ChevronLeft20Regular, ChevronRight20Regular } from "@fluentui/react-ico
 import { useState } from "react";
 
 import { pageKeys, usePageFetcher, usePageMutation, usePageQuery } from "@/messaging/client";
-import { AreaContainer, DataTable, type DataTableColumn, FormRow, Grow, TableFilter, useAppToast, useSelectDialog, useTableFilter } from "@/shared/components";
+import { AreaContainer, AreaShell, DataTable, type DataTableColumn, TableFilter, useAppToast, useSelectDialog, useTableFilter } from "@/shared/components";
 import { useAsyncAction } from "@/shared/hooks";
 import { useSessionStore } from "@/shared/stores";
 
@@ -109,60 +109,65 @@ export const RecordsArea = () => {
 	}));
 
 	return (
-		<AreaContainer fill>
-			<MessageBar intent="info" layout="multiline">
-				<MessageBarBody>
-					<MessageBarTitle>Step through a view without going back to the list</MessageBarTitle>
-					<span className={styles.steps}>
-						<span>1. Choose a view or subgrid from the page you have open.</span>
-						<span>2. Click a record here, or use Previous and Next, and the tab moves to it.</span>
-					</span>
-				</MessageBarBody>
-			</MessageBar>
-			<FormRow>
+		<AreaShell
+			search={
+				rows.length > 0 ? (
+					<TableFilter query={filter.query} onChange={filter.setQuery} shown={filter.shown} total={filter.total} placeholder="Search records" />
+				) : undefined
+			}
+			actions={
+				<>
+					<Button
+						icon={<ChevronLeft20Regular />}
+						disabled={!position.hasPrevious || step.running}
+						onClick={() => open(recordSetStep(rows, currentId, -1))}>
+						Previous
+					</Button>
+					<Button
+						icon={<ChevronRight20Regular />}
+						disabled={rows.length === 0 || step.running}
+						onClick={() => open(recordSetStep(rows, currentId, 1))}>
+						Next
+					</Button>
+					{truncated ? (
+						<Button appearance="subtle" disabled={pick.running} onClick={() => load(limit + PAGE_SIZE, undefined)}>
+							Load more
+						</Button>
+					) : null}
+				</>
+			}
+			primaryAction={
 				<Button appearance="primary" disabled={pick.running} onClick={() => load(PAGE_SIZE)}>
 					{viewName ? "Choose another view" : "Choose a view"}
 				</Button>
-				<Button
-					icon={<ChevronLeft20Regular />}
-					disabled={!position.hasPrevious || step.running}
-					onClick={() => open(recordSetStep(rows, currentId, -1))}>
-					Previous
-				</Button>
-				<Button icon={<ChevronRight20Regular />} disabled={rows.length === 0 || step.running} onClick={() => open(recordSetStep(rows, currentId, 1))}>
-					Next
-				</Button>
-				<Grow>
-					<Text size={200} className={styles.caption}>
-						{viewName ? `${viewName} · ${position.caption}` : position.caption}
-						{truncated ? ` · first ${limit} shown` : ""}
-					</Text>
-				</Grow>
-				{truncated ? (
-					<Button appearance="subtle" disabled={pick.running} onClick={() => load(limit + PAGE_SIZE, undefined)}>
-						Load more
-					</Button>
-				) : null}
-			</FormRow>
-			{rows.length > 0 ? (
-				<FormRow>
-					<Grow>
-						<TableFilter query={filter.query} onChange={filter.setQuery} shown={filter.shown} total={filter.total} placeholder="Search records" />
-					</Grow>
-				</FormRow>
-			) : null}
-			<Field label="Records">
-				<DataTable
-					items={filter.filtered}
-					columns={tableColumns}
-					getRowId={(row) => row.id}
-					maxHeight="520px"
-					autoFitColumns={false}
-					onRowClick={(row) => open(row)}
-					rowClassName={(row) => (currentId && row.id.toLowerCase() === currentId.toLowerCase() ? styles.current : undefined)}
-					emptyMessage={viewName ? "No records matched." : "Choose a view to load its records."}
-				/>
-			</Field>
-		</AreaContainer>
+			}>
+			<AreaContainer fill>
+				<MessageBar intent="info" layout="multiline">
+					<MessageBarBody>
+						<MessageBarTitle>Step through a view without going back to the list</MessageBarTitle>
+						<span className={styles.steps}>
+							<span>1. Choose a view or subgrid from the page you have open.</span>
+							<span>2. Click a record here, or use Previous and Next, and the tab moves to it.</span>
+						</span>
+					</MessageBarBody>
+				</MessageBar>
+				<Text size={200} className={styles.caption}>
+					{viewName ? `${viewName} · ${position.caption}` : position.caption}
+					{truncated ? ` · first ${limit} shown` : ""}
+				</Text>
+				<Field label="Records">
+					<DataTable
+						items={filter.filtered}
+						columns={tableColumns}
+						getRowId={(row) => row.id}
+						maxHeight="520px"
+						autoFitColumns={false}
+						onRowClick={(row) => open(row)}
+						rowClassName={(row) => (currentId && row.id.toLowerCase() === currentId.toLowerCase() ? styles.current : undefined)}
+						emptyMessage={viewName ? "No records matched." : "Choose a view to load its records."}
+					/>
+				</Field>
+			</AreaContainer>
+		</AreaShell>
 	);
 };

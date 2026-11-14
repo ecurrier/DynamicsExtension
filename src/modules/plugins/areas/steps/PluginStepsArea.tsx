@@ -1,6 +1,7 @@
 import {
 	Button,
 	Dropdown,
+	Field,
 	makeStyles,
 	MessageBar,
 	MessageBarActions,
@@ -22,7 +23,8 @@ import { useMemo } from "react";
 import { useExtensionSettings } from "@/modules/settings";
 import {
 	AreaContainer,
-	AreaToolbar,
+	AreaShell,
+	FilterPanel,
 	ConnectionPicker,
 	FormRow,
 	FormStack,
@@ -212,33 +214,6 @@ export const PluginStepsArea = () => {
 
 	const body = (
 		<FormStack fill>
-			<AreaToolbar>
-				<SearchField
-					value={filter}
-					onChange={setFilter}
-					placeholder="Search steps"
-					aria-label="Search steps by step, type, message, entity or assembly"
-				/>
-				<Dropdown
-					style={{ minWidth: "120px" }}
-					value={STATE_LABELS[stateFilter]}
-					selectedOptions={[stateFilter]}
-					onOptionSelect={(_, data) => data.optionValue && setStateFilter(data.optionValue as StepStateFilter)}>
-					{(Object.keys(STATE_LABELS) as StepStateFilter[]).map((value) => (
-						<Option key={value} value={value} text={STATE_LABELS[value]}>
-							{STATE_LABELS[value]}
-						</Option>
-					))}
-				</Dropdown>
-				<Tooltip content="Reload plug-in steps" relationship="label">
-					<Button
-						icon={<ArrowClockwise20Regular />}
-						disabled={!gateway.ready || steps.isFetching}
-						onClick={() => void steps.refetch()}
-						aria-label="Reload plug-in steps"
-					/>
-				</Tooltip>
-			</AreaToolbar>
 			{focusStepId ? (
 				<MessageBar intent="info">
 					<MessageBarBody>Auto-selected the step you opened from Table Automation.</MessageBarBody>
@@ -340,6 +315,41 @@ export const PluginStepsArea = () => {
 	);
 
 	return (
+		<AreaShell
+			search={
+				<SearchField
+					value={filter}
+					onChange={setFilter}
+					placeholder="Search steps"
+					aria-label="Search steps by step, type, message, entity or assembly"
+				/>
+			}
+			filters={
+				<FilterPanel count={stateFilter === "all" ? 0 : 1} onClear={() => setStateFilter("all")}>
+					<Field label="State">
+						<Dropdown
+							value={STATE_LABELS[stateFilter]}
+							selectedOptions={[stateFilter]}
+							onOptionSelect={(_, data) => data.optionValue && setStateFilter(data.optionValue as StepStateFilter)}>
+							{(Object.keys(STATE_LABELS) as StepStateFilter[]).map((value) => (
+								<Option key={value} value={value} text={STATE_LABELS[value]}>
+									{STATE_LABELS[value]}
+								</Option>
+							))}
+						</Dropdown>
+					</Field>
+				</FilterPanel>
+			}
+			actions={
+				<Tooltip content="Reload plug-in steps" relationship="label">
+					<Button
+						icon={<ArrowClockwise20Regular />}
+						disabled={!gateway.ready || steps.isFetching}
+						onClick={() => void steps.refetch()}
+						aria-label="Reload plug-in steps"
+					/>
+				</Tooltip>
+			}>
 		<AreaContainer fill>
 			<FormRow>
 				<Grow>
@@ -358,5 +368,6 @@ export const PluginStepsArea = () => {
 			) : null}
 			{gateway.mode === "page" ? <PageRequirementGate requires="model-driven-app">{body}</PageRequirementGate> : body}
 		</AreaContainer>
+		</AreaShell>
 	);
 };

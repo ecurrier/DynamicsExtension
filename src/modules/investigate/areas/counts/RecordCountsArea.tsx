@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 
 import {
 	AreaContainer,
-	AreaToolbar,
+	AreaShell,
 	DataTable,
 	type DataTableColumn,
 	EmptyState,
@@ -87,16 +87,6 @@ export const RecordCountsArea = () => {
 
 	const body = (
 		<FormStack fill>
-			<AreaToolbar>
-				<SearchField value={filter} onChange={setFilter} placeholder="Search tables" aria-label="Search tables" disabled={model.rows.length === 0} />
-				<Button
-					appearance="primary"
-					icon={<NumberSymbol20Regular />}
-					disabled={!gateway.ready || tables.isLoading || counts.isPending}
-					onClick={() => counts.mutate(tables.data ?? [])}>
-					{counts.isPending ? "Counting..." : "Load row counts"}
-				</Button>
-			</AreaToolbar>
 			{tables.isError ? <EmptyState intent="error" title={tables.error.message} /> : null}
 			{model.rows.length === 0 ? (
 				<EmptyState intent="info" title="Load row counts to see what is actually big in this environment.">
@@ -126,9 +116,21 @@ export const RecordCountsArea = () => {
 	);
 
 	return (
-		<AreaContainer fill>
-			<InvestigateConnection />
-			{gateway.mode === "page" ? <PageRequirementGate requires="model-driven-app">{body}</PageRequirementGate> : body}
-		</AreaContainer>
+		<AreaShell
+			search={<SearchField value={filter} onChange={setFilter} placeholder="Search tables" aria-label="Search tables" disabled={model.rows.length === 0} />}
+			primaryAction={
+				<Button
+					appearance="primary"
+					icon={<NumberSymbol20Regular />}
+					disabled={!gateway.ready || tables.isLoading || counts.isPending}
+					onClick={() => counts.mutate(tables.data ?? [])}>
+					{counts.isPending ? "Counting..." : "Load row counts"}
+				</Button>
+			}>
+			<AreaContainer fill>
+				<InvestigateConnection />
+				{gateway.mode === "page" ? <PageRequirementGate requires="model-driven-app">{body}</PageRequirementGate> : body}
+			</AreaContainer>
+		</AreaShell>
 	);
 };

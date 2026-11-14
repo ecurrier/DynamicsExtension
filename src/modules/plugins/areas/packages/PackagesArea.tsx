@@ -3,7 +3,7 @@ import { ArrowClockwise20Regular } from "@fluentui/react-icons";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
-import { AreaContainer, AreaToolbar, ConnectionPicker, FillAccordion, FormRow, FormStack, Grow, PageRequirementGate, SearchField } from "@/shared/components";
+import { AreaContainer, AreaShell, ConnectionPicker, FillAccordion, FormRow, FormStack, Grow, PageRequirementGate, SearchField } from "@/shared/components";
 import { environmentOrigin } from "@/shared/connections";
 import { droppedFile, resolveOrgOrigin } from "@/shared/lib";
 import { useSessionStore } from "@/shared/stores";
@@ -91,22 +91,6 @@ export const PackagesArea = () => {
 
 	const body = (
 		<FormStack fill>
-			<AreaToolbar>
-				<SearchField
-					value={packagesFilter}
-					onChange={setPackagesFilter}
-					placeholder="Search packages"
-					aria-label="Search packages by package, assembly or plug-in type"
-				/>
-				<Tooltip content="Reload packages" relationship="label">
-					<Button
-						icon={<ArrowClockwise20Regular />}
-						disabled={!gateway.ready || packages.isFetching}
-						onClick={() => void packages.refetch()}
-						aria-label="Reload packages"
-					/>
-				</Tooltip>
-			</AreaToolbar>
 			{packages.isError ? <Text size={200}>{packages.error.message}</Text> : null}
 			{packages.isLoading ? <Spinner size="small" label="Loading plug-in packages..." labelPosition="after" /> : null}
 			{packages.isSuccess && filtered.length === 0 ? (
@@ -157,6 +141,25 @@ export const PackagesArea = () => {
 	);
 
 	return (
+		<AreaShell
+			search={
+				<SearchField
+					value={packagesFilter}
+					onChange={setPackagesFilter}
+					placeholder="Search packages"
+					aria-label="Search packages by package, assembly or plug-in type"
+				/>
+			}
+			actions={
+				<Tooltip content="Reload packages" relationship="label">
+					<Button
+						icon={<ArrowClockwise20Regular />}
+						disabled={!gateway.ready || packages.isFetching}
+						onClick={() => void packages.refetch()}
+						aria-label="Reload packages"
+					/>
+				</Tooltip>
+			}>
 		<AreaContainer fill>
 			<FormRow>
 				<Grow>
@@ -175,5 +178,6 @@ export const PackagesArea = () => {
 			) : null}
 			{gateway.mode === "page" ? <PageRequirementGate requires="model-driven-app">{body}</PageRequirementGate> : body}
 		</AreaContainer>
+		</AreaShell>
 	);
 };

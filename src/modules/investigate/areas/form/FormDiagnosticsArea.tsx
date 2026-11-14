@@ -7,7 +7,7 @@ import { useExtensionSettings } from "@/modules/settings";
 import { webResourceUrl } from "@/modules/utilities/lib";
 import {
 	AreaContainer,
-	AreaToolbar,
+	AreaShell,
 	ControlStateBadges,
 	DataTable,
 	type DataTableColumn,
@@ -233,20 +233,21 @@ export const FormDiagnosticsArea = () => {
 	);
 
 	return (
-		<AreaContainer fill>
+		<AreaShell
+			search={<SearchField value={filter} onChange={setFilter} placeholder="Search controls and handlers" aria-label="Search controls and handlers" />}
+			actions={
+				<Tooltip content="Re-read the form" relationship="label">
+					<Button
+						icon={<ArrowClockwise20Regular />}
+						disabled={diagnostics.isFetching}
+						onClick={() => void diagnostics.refetch()}
+						aria-label="Re-read the form"
+					/>
+				</Tooltip>
+			}>
+			<AreaContainer fill>
 			<PageRequirementGate requires="model-driven-app">
 				<FormStack fill>
-					<AreaToolbar>
-						<SearchField value={filter} onChange={setFilter} placeholder="Search controls and handlers" aria-label="Search controls and handlers" />
-						<Tooltip content="Re-read the form" relationship="label">
-							<Button
-								icon={<ArrowClockwise20Regular />}
-								disabled={diagnostics.isFetching}
-								onClick={() => void diagnostics.refetch()}
-								aria-label="Re-read the form"
-							/>
-						</Tooltip>
-					</AreaToolbar>
 					{diagnostics.isError ? <EmptyState intent="error" title={diagnostics.error.message} /> : null}
 					{data ? (
 						<>
@@ -322,6 +323,7 @@ export const FormDiagnosticsArea = () => {
 					)}
 				</FormStack>
 			</PageRequirementGate>
-		</AreaContainer>
+			</AreaContainer>
+		</AreaShell>
 	);
 };

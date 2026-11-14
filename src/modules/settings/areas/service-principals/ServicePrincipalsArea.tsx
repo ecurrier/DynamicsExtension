@@ -17,7 +17,7 @@ import {
 import { Add20Regular, Delete20Regular, Save20Regular } from "@fluentui/react-icons";
 import { useState } from "react";
 
-import { AreaContainer, AreaToolbar, Grow, useAppToast, useBanner, useConfirm } from "@/shared/components";
+import { AreaContainer, AreaShell, FormRow, Grow, useAppToast, useBanner, useConfirm } from "@/shared/components";
 import { useFieldProblem } from "@/shared/hooks";
 import { generateGuid } from "@/shared/lib";
 
@@ -113,35 +113,8 @@ export const ServicePrincipalsArea = () => {
 	const usedBy = selectedId && selectedId !== NEW_PRINCIPAL ? environmentsUsingPrincipal(selectedId, environments) : [];
 
 	return (
-		<AreaContainer>
-			<MessageBar intent="info" layout="multiline">
-				<MessageBarBody>
-					<MessageBarTitle>Service principals</MessageBarTitle>
-					An app registration that Power Tools signs in with instead of you. Register it once, add it as an application user in every environment it
-					should reach, then pick it on those environments under Environments.
-				</MessageBarBody>
-			</MessageBar>
-			<AreaToolbar>
-				<Grow>
-					<Field validationMessage={problems.messageFor("principal")}>
-						<Dropdown
-							placeholder="Select a service principal..."
-							value={selectedLabel}
-							selectedOptions={selectedId ? [selectedId] : []}
-							onOptionSelect={(_, data) => data.optionValue && select(data.optionValue)}>
-							{selectedId === NEW_PRINCIPAL ? (
-								<Option value={NEW_PRINCIPAL} text="New service principal">
-									New service principal
-								</Option>
-							) : null}
-							{principals.map((principal) => (
-								<Option key={principal.id} value={principal.id} text={principal.name}>
-									{principal.name}
-								</Option>
-							))}
-						</Dropdown>
-					</Field>
-				</Grow>
+		<AreaShell
+			primaryAction={
 				<Menu>
 					<MenuTrigger disableButtonEnhancement>
 						<MenuButton appearance="primary">Actions</MenuButton>
@@ -161,16 +134,47 @@ export const ServicePrincipalsArea = () => {
 						</MenuList>
 					</MenuPopover>
 				</Menu>
-			</AreaToolbar>
-			{draft ? (
-				<ServicePrincipalForm draft={draft} validation={validation} usedBy={usedBy} onChange={setDraft} />
-			) : (
-				<Text size={200}>
-					{principals.length === 0
-						? "No service principals saved yet. Use Actions > Add New Service Principal to create one."
-						: "Select a service principal to edit it, or add a new one from the Actions menu."}
-				</Text>
-			)}
-		</AreaContainer>
+			}>
+			<AreaContainer>
+				<MessageBar intent="info" layout="multiline">
+					<MessageBarBody>
+						<MessageBarTitle>Service principals</MessageBarTitle>
+						An app registration that Power Tools signs in with instead of you. Register it once, add it as an application user in every environment
+						it should reach, then pick it on those environments under Environments.
+					</MessageBarBody>
+				</MessageBar>
+				<FormRow>
+					<Grow>
+						<Field validationMessage={problems.messageFor("principal")}>
+							<Dropdown
+								placeholder="Select a service principal..."
+								value={selectedLabel}
+								selectedOptions={selectedId ? [selectedId] : []}
+								onOptionSelect={(_, data) => data.optionValue && select(data.optionValue)}>
+								{selectedId === NEW_PRINCIPAL ? (
+									<Option value={NEW_PRINCIPAL} text="New service principal">
+										New service principal
+									</Option>
+								) : null}
+								{principals.map((principal) => (
+									<Option key={principal.id} value={principal.id} text={principal.name}>
+										{principal.name}
+									</Option>
+								))}
+							</Dropdown>
+						</Field>
+					</Grow>
+				</FormRow>
+				{draft ? (
+					<ServicePrincipalForm draft={draft} validation={validation} usedBy={usedBy} onChange={setDraft} />
+				) : (
+					<Text size={200}>
+						{principals.length === 0
+							? "No service principals saved yet. Use Actions > Add New Service Principal to create one."
+							: "Select a service principal to edit it, or add a new one from the Actions menu."}
+					</Text>
+				)}
+			</AreaContainer>
+		</AreaShell>
 	);
 };

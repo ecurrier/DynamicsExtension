@@ -1,6 +1,7 @@
 export * from "./AppNavDrawer";
 export * from "./AppShell";
 export * from "./AreaBreadcrumb";
+export * from "./AreaShell";
 export * from "./BulkRun";
 export * from "./CodeEditor";
 export * from "./ConnectionPicker";

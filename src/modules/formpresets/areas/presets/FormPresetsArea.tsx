@@ -3,7 +3,7 @@ import { ArrowDownload20Regular, ArrowUpload20Regular, Delete20Regular, Document
 import { useRef, useState } from "react";
 
 import { usePageMutation, usePageQuery } from "@/messaging/client";
-import { AreaContainer, AreaToolbar, CodeEditor, FormStack, Grow, useAppToast, useBanner, useConfirm } from "@/shared/components";
+import { AreaContainer, AreaShell, CodeEditor, FormRow, FormStack, Grow, useAppToast, useBanner, useConfirm } from "@/shared/components";
 import { useFieldProblem } from "@/shared/hooks";
 import { generateGuid } from "@/shared/lib";
 
@@ -152,29 +152,8 @@ export const FormPresetsArea = () => {
 	const selectedLabel = selectedId === NEW_PRESET ? "New preset" : (selectedId && byId[selectedId]?.name) || "";
 
 	return (
-		<AreaContainer>
-			<AreaToolbar>
-				<Grow>
-					<Field validationMessage={problems.messageFor("preset")}>
-						<Dropdown
-							placeholder={context ? "Select a preset..." : "Form presets are available on model-driven apps and Power Pages"}
-							value={selectedLabel}
-							selectedOptions={selectedId ? [selectedId] : []}
-							disabled={!context}
-							onOptionSelect={(_, data) => data.optionValue && select(data.optionValue)}>
-							{selectedId === NEW_PRESET ? (
-								<Option value={NEW_PRESET} text="New preset">
-									New preset
-								</Option>
-							) : null}
-							{presets.map((preset) => (
-								<Option key={preset.id} value={preset.id} text={preset.name}>
-									{preset.name}
-								</Option>
-							))}
-						</Dropdown>
-					</Field>
-				</Grow>
+		<AreaShell
+			primaryAction={
 				<Menu>
 					<MenuTrigger disableButtonEnhancement>
 						<MenuButton appearance="primary">Actions</MenuButton>
@@ -204,6 +183,31 @@ export const FormPresetsArea = () => {
 						</MenuList>
 					</MenuPopover>
 				</Menu>
+			}>
+			<AreaContainer>
+				<FormRow>
+					<Grow>
+						<Field validationMessage={problems.messageFor("preset")}>
+							<Dropdown
+								placeholder={context ? "Select a preset..." : "Form presets are available on model-driven apps and Power Pages"}
+								value={selectedLabel}
+								selectedOptions={selectedId ? [selectedId] : []}
+								disabled={!context}
+								onOptionSelect={(_, data) => data.optionValue && select(data.optionValue)}>
+								{selectedId === NEW_PRESET ? (
+									<Option value={NEW_PRESET} text="New preset">
+										New preset
+									</Option>
+								) : null}
+								{presets.map((preset) => (
+									<Option key={preset.id} value={preset.id} text={preset.name}>
+										{preset.name}
+									</Option>
+								))}
+							</Dropdown>
+						</Field>
+					</Grow>
+				</FormRow>
 				<input
 					ref={fileInput}
 					type="file"
@@ -214,23 +218,23 @@ export const FormPresetsArea = () => {
 						event.target.value = "";
 					}}
 				/>
-			</AreaToolbar>
-			{draft ? (
-				<FormStack>
-					<Field label="Preset Name" required validationMessage={problems.messageFor("name")}>
-						<Input value={draft.name} placeholder="Enter a preset name..." onChange={(_, data) => setDraft({ ...draft, name: data.value })} />
-					</Field>
-					<Field label="Fields" validationMessage={jsonError ?? problems.messageFor("fields")}>
-						<CodeEditor value={draft.json} language="json" height="300px" onChange={(json) => setDraft({ ...draft, json })} />
-					</Field>
-				</FormStack>
-			) : (
-				<Text size={200}>
-					{presets.length === 0
-						? "No presets saved yet. Use Actions > Capture Current Form to start one from the open form."
-						: "Select a preset to edit or apply it, or capture a new one from the open form."}
-				</Text>
-			)}
-		</AreaContainer>
+				{draft ? (
+					<FormStack>
+						<Field label="Preset Name" required validationMessage={problems.messageFor("name")}>
+							<Input value={draft.name} placeholder="Enter a preset name..." onChange={(_, data) => setDraft({ ...draft, name: data.value })} />
+						</Field>
+						<Field label="Fields" validationMessage={jsonError ?? problems.messageFor("fields")}>
+							<CodeEditor value={draft.json} language="json" height="300px" onChange={(json) => setDraft({ ...draft, json })} />
+						</Field>
+					</FormStack>
+				) : (
+					<Text size={200}>
+						{presets.length === 0
+							? "No presets saved yet. Use Actions > Capture Current Form to start one from the open form."
+							: "Select a preset to edit or apply it, or capture a new one from the open form."}
+					</Text>
+				)}
+			</AreaContainer>
+		</AreaShell>
 	);
 };

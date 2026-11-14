@@ -3,7 +3,7 @@ import { Add20Regular, Copy20Regular, Delete20Regular, Save20Regular } from "@fl
 import { useState } from "react";
 
 import { invoke, usePageQuery } from "@/messaging/client";
-import { AreaContainer, AreaToolbar, Grow, useAppToast, useBanner, useConfirm } from "@/shared/components";
+import { AreaContainer, AreaShell, FormRow, Grow, useAppToast, useBanner, useConfirm } from "@/shared/components";
 import { getEnvironmentHttp } from "@/shared/connections";
 import { useAsyncAction, useFieldProblem } from "@/shared/hooks";
 import { generateGuid, originOf, whoAmI } from "@/shared/lib";
@@ -160,28 +160,8 @@ export const EnvironmentsArea = () => {
 	const hasSavedSelection = !!selectedId && selectedId !== NEW_ENVIRONMENT;
 
 	return (
-		<AreaContainer>
-			<AreaToolbar>
-				<Grow>
-					<Field validationMessage={problems.messageFor("environment")}>
-						<Dropdown
-							placeholder="Select an environment..."
-							value={selectedLabel}
-							selectedOptions={selectedId ? [selectedId] : []}
-							onOptionSelect={(_, data) => data.optionValue && select(data.optionValue)}>
-							{selectedId === NEW_ENVIRONMENT ? (
-								<Option value={NEW_ENVIRONMENT} text="New environment">
-									New environment
-								</Option>
-							) : null}
-							{environments.map((environment) => (
-								<Option key={environment.id} value={environment.id} text={environment.name}>
-									{environment.name}
-								</Option>
-							))}
-						</Dropdown>
-					</Field>
-				</Grow>
+		<AreaShell
+			primaryAction={
 				<Menu>
 					<MenuTrigger disableButtonEnhancement>
 						<MenuButton appearance="primary">Actions</MenuButton>
@@ -204,27 +184,51 @@ export const EnvironmentsArea = () => {
 						</MenuList>
 					</MenuPopover>
 				</Menu>
-			</AreaToolbar>
-			{draft ? (
-				<EnvironmentForm
-					draft={draft}
-					validation={validation}
-					principals={principals}
-					testingConnection={connectionTest.running}
-					canPreviewAlert={canPreviewAlert}
-					previewingAlert={alertPreview.running}
-					onChange={setDraft}
-					onTestConnection={() => void testConnection()}
-					onManagePrincipals={() => navigate("settings.service-principals")}
-					onPreviewAlert={() => void previewAlert()}
-				/>
-			) : (
-				<Text size={200}>
-					{environments.length === 0
-						? "No environments saved yet. Use Actions > Add New Environment to create one."
-						: "Select an environment to edit it, or add a new one from the Actions menu."}
-				</Text>
-			)}
-		</AreaContainer>
+			}>
+			<AreaContainer>
+				<FormRow>
+					<Grow>
+						<Field validationMessage={problems.messageFor("environment")}>
+							<Dropdown
+								placeholder="Select an environment..."
+								value={selectedLabel}
+								selectedOptions={selectedId ? [selectedId] : []}
+								onOptionSelect={(_, data) => data.optionValue && select(data.optionValue)}>
+								{selectedId === NEW_ENVIRONMENT ? (
+									<Option value={NEW_ENVIRONMENT} text="New environment">
+										New environment
+									</Option>
+								) : null}
+								{environments.map((environment) => (
+									<Option key={environment.id} value={environment.id} text={environment.name}>
+										{environment.name}
+									</Option>
+								))}
+							</Dropdown>
+						</Field>
+					</Grow>
+				</FormRow>
+				{draft ? (
+					<EnvironmentForm
+						draft={draft}
+						validation={validation}
+						principals={principals}
+						testingConnection={connectionTest.running}
+						canPreviewAlert={canPreviewAlert}
+						previewingAlert={alertPreview.running}
+						onChange={setDraft}
+						onTestConnection={() => void testConnection()}
+						onManagePrincipals={() => navigate("settings.service-principals")}
+						onPreviewAlert={() => void previewAlert()}
+					/>
+				) : (
+					<Text size={200}>
+						{environments.length === 0
+							? "No environments saved yet. Use Actions > Add New Environment to create one."
+							: "Select an environment to edit it, or add a new one from the Actions menu."}
+					</Text>
+				)}
+			</AreaContainer>
+		</AreaShell>
 	);
 };

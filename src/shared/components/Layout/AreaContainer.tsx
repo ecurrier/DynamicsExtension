@@ -12,11 +12,6 @@ const useStyles = makeStyles({
 		height: "100%",
 		boxSizing: "border-box",
 	},
-	toolbar: {
-		display: "flex",
-		alignItems: "flex-end",
-		gap: "8px",
-	},
 	grow: {
 		flex: 1,
 		minWidth: 0,
@@ -24,6 +19,7 @@ const useStyles = makeStyles({
 	row: {
 		display: "flex",
 		alignItems: "flex-end",
+		flexWrap: "wrap",
 		gap: "8px",
 	},
 	stack: {
@@ -48,11 +44,6 @@ interface FillableProps extends LayoutProps {
 export const AreaContainer = ({ children, className, fill = false }: FillableProps) => {
 	const styles = useStyles();
 	return <div className={mergeClasses(styles.root, fill && styles.fill, className)}>{children}</div>;
-};
-
-export const AreaToolbar = ({ children, className }: LayoutProps) => {
-	const styles = useStyles();
-	return <div className={mergeClasses(styles.toolbar, className)}>{children}</div>;
 };
 
 export const FormRow = ({ children, className }: LayoutProps) => {

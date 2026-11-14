@@ -1,4 +1,4 @@
-import { Button, Dropdown, makeStyles, Option, Text, tokens, Tooltip } from "@fluentui/react-components";
+import { Button, Dropdown, Field, makeStyles, Option, Text, tokens, Tooltip } from "@fluentui/react-components";
 import { ArrowClockwise20Regular } from "@fluentui/react-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
@@ -6,7 +6,8 @@ import { useMemo } from "react";
 import { useConnectableEnvironments, useExtensionSettings } from "@/modules/settings";
 import {
 	AreaContainer,
-	AreaToolbar,
+	AreaShell,
+	FilterPanel,
 	ConnectionPicker,
 	DataTable,
 	type DataTableColumn,
@@ -214,38 +215,6 @@ export const EnvironmentVariablesArea = () => {
 
 	const body = (
 		<FormStack fill>
-			<AreaToolbar>
-				<SearchField
-					value={filter}
-					onChange={setFilter}
-					placeholder="Search variables"
-					aria-label="Search variables by name, schema name or description"
-				/>
-				<Dropdown
-					style={{ minWidth: "140px" }}
-					value={typeFilter === null ? "All types" : ENVIRONMENT_VARIABLE_TYPE_LABELS[typeFilter]}
-					selectedOptions={[typeFilter === null ? ALL_TYPES : String(typeFilter)]}
-					onOptionSelect={(_, data) =>
-						setTypeFilter(!data.optionValue || data.optionValue === ALL_TYPES ? null : (Number(data.optionValue) as EnvironmentVariableType))
-					}>
-					<Option value={ALL_TYPES} text="All types">
-						All types
-					</Option>
-					{ENVIRONMENT_VARIABLE_TYPES.map((type) => (
-						<Option key={type} value={String(type)} text={ENVIRONMENT_VARIABLE_TYPE_LABELS[type]}>
-							{ENVIRONMENT_VARIABLE_TYPE_LABELS[type]}
-						</Option>
-					))}
-				</Dropdown>
-				<Tooltip content="Reload environment variables" relationship="label">
-					<Button
-						icon={<ArrowClockwise20Regular />}
-						disabled={!gateway.ready || definitions.isFetching}
-						onClick={() => void definitions.refetch()}
-						aria-label="Reload environment variables"
-					/>
-				</Tooltip>
-			</AreaToolbar>
 			{definitions.isError ? <Text size={200}>{definitions.error.message}</Text> : null}
 			<DataTable
 				items={filtered}
@@ -277,6 +246,46 @@ export const EnvironmentVariablesArea = () => {
 	);
 
 	return (
+		<AreaShell
+			search={
+				<SearchField
+					value={filter}
+					onChange={setFilter}
+					placeholder="Search variables"
+					aria-label="Search variables by name, schema name or description"
+				/>
+			}
+			filters={
+				<FilterPanel count={typeFilter === null ? 0 : 1} onClear={() => setTypeFilter(null)}>
+					<Field label="Type">
+						<Dropdown
+							value={typeFilter === null ? "All types" : ENVIRONMENT_VARIABLE_TYPE_LABELS[typeFilter]}
+							selectedOptions={[typeFilter === null ? ALL_TYPES : String(typeFilter)]}
+							onOptionSelect={(_, data) =>
+								setTypeFilter(!data.optionValue || data.optionValue === ALL_TYPES ? null : (Number(data.optionValue) as EnvironmentVariableType))
+							}>
+							<Option value={ALL_TYPES} text="All types">
+								All types
+							</Option>
+							{ENVIRONMENT_VARIABLE_TYPES.map((type) => (
+								<Option key={type} value={String(type)} text={ENVIRONMENT_VARIABLE_TYPE_LABELS[type]}>
+									{ENVIRONMENT_VARIABLE_TYPE_LABELS[type]}
+								</Option>
+							))}
+						</Dropdown>
+					</Field>
+				</FilterPanel>
+			}
+			actions={
+				<Tooltip content="Reload environment variables" relationship="label">
+					<Button
+						icon={<ArrowClockwise20Regular />}
+						disabled={!gateway.ready || definitions.isFetching}
+						onClick={() => void definitions.refetch()}
+						aria-label="Reload environment variables"
+					/>
+				</Tooltip>
+			}>
 		<AreaContainer fill>
 			<FormRow>
 				<Grow>
@@ -295,5 +304,6 @@ export const EnvironmentVariablesArea = () => {
 			) : null}
 			{gateway.mode === "page" ? <PageRequirementGate requires="model-driven-app">{body}</PageRequirementGate> : body}
 		</AreaContainer>
+		</AreaShell>
 	);
 };

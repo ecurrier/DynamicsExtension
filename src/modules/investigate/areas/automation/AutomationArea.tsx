@@ -6,7 +6,7 @@ import { useCallback, useMemo, useState } from "react";
 import { usePluginsStore } from "@/modules/plugins";
 import {
 	AreaContainer,
-	AreaToolbar,
+	AreaShell,
 	DataTable,
 	type DataTableColumn,
 	EmptyState,
@@ -227,22 +227,6 @@ export const AutomationArea = () => {
 	const body = (
 		<FormStack fill>
 			<TablePicker />
-			<AreaToolbar>
-				<SearchField
-					value={filter}
-					onChange={setFilter}
-					placeholder="Search automation"
-					aria-label="Search automation by name, type, message or column"
-				/>
-				<Tooltip content="Reload" relationship="label">
-					<Button
-						icon={<ArrowClockwise20Regular />}
-						disabled={!gateway.ready || !table || automation.isFetching}
-						onClick={() => void automation.refetch()}
-						aria-label="Reload automation"
-					/>
-				</Tooltip>
-			</AreaToolbar>
 			{!table ? <EmptyState intent="info" title="Choose a table to see everything registered against it." /> : null}
 			{automation.isError ? <EmptyState intent="error" title={automation.error.message} /> : null}
 			{table && data ? (
@@ -304,9 +288,29 @@ export const AutomationArea = () => {
 	);
 
 	return (
-		<AreaContainer fill>
-			<InvestigateConnection />
-			{gateway.mode === "page" ? <PageRequirementGate requires="model-driven-app">{body}</PageRequirementGate> : body}
-		</AreaContainer>
+		<AreaShell
+			search={
+				<SearchField
+					value={filter}
+					onChange={setFilter}
+					placeholder="Search automation"
+					aria-label="Search automation by name, type, message or column"
+				/>
+			}
+			actions={
+				<Tooltip content="Reload" relationship="label">
+					<Button
+						icon={<ArrowClockwise20Regular />}
+						disabled={!gateway.ready || !table || automation.isFetching}
+						onClick={() => void automation.refetch()}
+						aria-label="Reload automation"
+					/>
+				</Tooltip>
+			}>
+			<AreaContainer fill>
+				<InvestigateConnection />
+				{gateway.mode === "page" ? <PageRequirementGate requires="model-driven-app">{body}</PageRequirementGate> : body}
+			</AreaContainer>
+		</AreaShell>
 	);
 };

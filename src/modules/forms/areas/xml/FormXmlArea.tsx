@@ -20,7 +20,7 @@ import { useMemo, useState } from "react";
 
 import { pageKeys, usePageMutation, usePageQuery } from "@/messaging/client";
 import { useExtensionSettings } from "@/modules/settings";
-import { AreaContainer, AreaToolbar, CodeEditor, Grow, useAppToast, useConfirm } from "@/shared/components";
+import { AreaContainer, AreaShell, CodeEditor, FormRow, Grow, useAppToast, useConfirm } from "@/shared/components";
 import { useAsyncAction } from "@/shared/hooks";
 import { copyToClipboard, formatXml } from "@/shared/lib";
 import { useSessionStore } from "@/shared/stores";
@@ -145,28 +145,8 @@ export const FormXmlArea = () => {
 	};
 
 	return (
-		<AreaContainer fill>
-			<AreaToolbar>
-				<Grow>
-					<Field label="Form">
-						<Dropdown
-							placeholder={forms.isLoading ? "Loading forms..." : "Select a form..."}
-							value={form ? formLabel(form) : ""}
-							selectedOptions={formId ? [formId] : []}
-							disabled={formList.length === 0}
-							onOptionSelect={(_, data) => {
-								if (data.optionValue) {
-									void changeForm(data.optionValue);
-								}
-							}}>
-							{formList.map((candidate) => (
-								<Option key={candidate.id} value={candidate.id} text={formLabel(candidate)}>
-									{formLabel(candidate)}
-								</Option>
-							))}
-						</Dropdown>
-					</Field>
-				</Grow>
+		<AreaShell
+			primaryAction={
 				<Menu>
 					<MenuTrigger disableButtonEnhancement>
 						<MenuButton appearance="primary" disabled={!form}>
@@ -194,46 +174,70 @@ export const FormXmlArea = () => {
 						</MenuList>
 					</MenuPopover>
 				</Menu>
-			</AreaToolbar>
-			{forms.isError ? <Text size={200}>{forms.error.message}</Text> : null}
-			{xml.isError ? <Text size={200}>{xml.error.message}</Text> : null}
-			{forms.isSuccess && formList.length === 0 ? <Text size={200}>No forms were found for this table.</Text> : null}
-			{form?.isManaged && form.isCustomizable ? (
-				<MessageBar intent="warning">
-					<MessageBarBody>This form is managed. Saving creates an unmanaged customization layer on top of the managed solution.</MessageBarBody>
-				</MessageBar>
-			) : null}
-			{form && !form.isCustomizable ? (
-				<MessageBar intent="error">
-					<MessageBarBody>This form cannot be customized, so its XML is read-only.</MessageBarBody>
-				</MessageBar>
-			) : null}
-			{form ? (
-				<div className={styles.status}>
-					<Text size={200}>{formSummary(form, countLines(text))}</Text>
-					{dirty ? (
-						<Text size={200} className={styles.dirty}>
-							Unsaved changes
-						</Text>
-					) : null}
-					{update.isPending ? <Text size={200}>Saving...</Text> : null}
-				</div>
-			) : null}
-			<Field className={styles.editor} validationMessage={xmlProblem ?? undefined}>
-				<CodeEditor
-					fill
-					value={text}
-					language="xml"
-					readOnly={!canEdit}
-					placeholder={xml.isLoading ? "Loading form XML..." : "Select a form to view its XML"}
-					onChange={(value) => {
-						if (formId && canEdit) {
-							setXmlProblem(null);
-							setDraft({ formId, text: value });
-						}
-					}}
-				/>
-			</Field>
-		</AreaContainer>
+			}>
+			<AreaContainer fill>
+				<FormRow>
+					<Grow>
+						<Field label="Form">
+							<Dropdown
+								placeholder={forms.isLoading ? "Loading forms..." : "Select a form..."}
+								value={form ? formLabel(form) : ""}
+								selectedOptions={formId ? [formId] : []}
+								disabled={formList.length === 0}
+								onOptionSelect={(_, data) => {
+									if (data.optionValue) {
+										void changeForm(data.optionValue);
+									}
+								}}>
+								{formList.map((candidate) => (
+									<Option key={candidate.id} value={candidate.id} text={formLabel(candidate)}>
+										{formLabel(candidate)}
+									</Option>
+								))}
+							</Dropdown>
+						</Field>
+					</Grow>
+				</FormRow>
+				{forms.isError ? <Text size={200}>{forms.error.message}</Text> : null}
+				{xml.isError ? <Text size={200}>{xml.error.message}</Text> : null}
+				{forms.isSuccess && formList.length === 0 ? <Text size={200}>No forms were found for this table.</Text> : null}
+				{form?.isManaged && form.isCustomizable ? (
+					<MessageBar intent="warning">
+						<MessageBarBody>This form is managed. Saving creates an unmanaged customization layer on top of the managed solution.</MessageBarBody>
+					</MessageBar>
+				) : null}
+				{form && !form.isCustomizable ? (
+					<MessageBar intent="error">
+						<MessageBarBody>This form cannot be customized, so its XML is read-only.</MessageBarBody>
+					</MessageBar>
+				) : null}
+				{form ? (
+					<div className={styles.status}>
+						<Text size={200}>{formSummary(form, countLines(text))}</Text>
+						{dirty ? (
+							<Text size={200} className={styles.dirty}>
+								Unsaved changes
+							</Text>
+						) : null}
+						{update.isPending ? <Text size={200}>Saving...</Text> : null}
+					</div>
+				) : null}
+				<Field className={styles.editor} validationMessage={xmlProblem ?? undefined}>
+					<CodeEditor
+						fill
+						value={text}
+						language="xml"
+						readOnly={!canEdit}
+						placeholder={xml.isLoading ? "Loading form XML..." : "Select a form to view its XML"}
+						onChange={(value) => {
+							if (formId && canEdit) {
+								setXmlProblem(null);
+								setDraft({ formId, text: value });
+							}
+						}}
+					/>
+				</Field>
+			</AreaContainer>
+		</AreaShell>
 	);
 };
