@@ -37,7 +37,7 @@ A Power Automate cloud flow, and the Dialect whose output is pasted into one: Li
 _Avoid_: Automation (that is the wider term), workflow, Logic App
 
 **Workspace**:
-A full-window experience opened from an Area for one long-running job: the Data Transporter, the Trace Viewer, and the Results Viewer. It opens in its own browser tab, or, when Power Tools is pinned in a window, fills that window in place of the Areas until the user goes back. From the side panel it always opens in a tab, because a Workspace cannot be read at panel width.
+A full-window experience for one long-running job: the Data Transporter, the Trace Viewer, the Results Viewer, Schema Tools, and Security Tools. It opens in its own browser tab, or, when Power Tools is pinned in a window, fills that window in place of the Areas until the user goes back. From the side panel it always opens in a tab, because a Workspace cannot be read at panel width. An Area whose width tier is "workspace" opens one directly when the user selects it in the navigation drawer; the Results Viewer is the exception, launched from the Retrieve Records results footer.
 _Avoid_: Tool page, full-page tool, viewer tab, standalone page
 
 **Page Context**:
@@ -47,6 +47,18 @@ _Avoid_: Host type, app type, site type
 **Page Requirement**:
 The condition an Area states about the active tab before it will render.
 _Avoid_: Gate, guard, precondition
+
+**Area shell**:
+The shared chrome every Area renders inside. It owns the one toolbar row, which it renders into the row the app shell already draws, and takes named slots: search, filters, actions, and at most one primary action. An Area has nowhere else to put a toolbar.
+_Avoid_: Toolbar, header, command bar, action bar
+
+**Width tier**:
+The width an Area declares it needs: "panel" (the default, which works from about 400px up), "window" (which needs the pinned window or a tab), or "workspace" (the Area is a Workspace). A gate enforces it, the way a Page Requirement is enforced. See ADR 0003.
+_Avoid_: Breakpoint, minimum width, size class
+
+**Step explainer**:
+The numbered 1-2-3 display an Area shows while it has nothing to show yet. It renders full size on an empty screen and collapses to a "How it works" button after the user's first action. The state follows the work: there is no stored preference.
+_Avoid_: Onboarding, tour, wizard, intro
 
 ## Reaching an environment
 
