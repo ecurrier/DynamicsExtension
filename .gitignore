@@ -4,3 +4,8 @@ node_modules/
 .wxt/
 .env
 .env.*
+
+# Store asset generator intermediates
+store/tools/raw/
+store/tools/out/
+store/tools/logo/
