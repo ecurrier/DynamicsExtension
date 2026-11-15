@@ -17,38 +17,38 @@ Dynamics 365 model-driven apps are single-page applications: moving between reco
 
 The extension's tools can be shown in the browser's side panel so they stay open next to the Dynamics 365 page while the user works, instead of in a popup that closes when it loses focus. The sidePanel permission is used to register the panel page, to open the panel for the current tab when the user chooses that option, and to apply the user's setting for whether clicking the toolbar icon opens the side panel or the popup (sidePanel.setPanelBehavior). That setting is off by default. The side panel shows the same interface as the popup and does not access any additional data.
 
+### declarativeNetRequestWithHostAccess
+
+The extension adds two declarativeNetRequest session rules, each scoped as narrowly as the API allows. First, the Impersonation tool: Dataverse supports running Web API calls as another user through the MSCRMCallerID or CallerObjectId request header, so the rule sets that header only on requests to the user's own environment (urlFilter `<origin>/api/data/v*`), only in the single tab where the user started impersonation (tabIds), and removes it when they stop or the tab closes. Second, token requests: when the user has saved a service principal, the extension requests a token from login.microsoftonline.com, and Microsoft Entra rejects a request carrying a chrome-extension:// Origin header, so one rule removes the Origin header on POSTs to /oauth2/v2.0/token, restricted to those hosts, that path, and requests the extension itself initiates. Both are session rules, so neither persists. No request is blocked, redirected, or logged.
+
 ## Notes for certification
 
-Replace `<VIDEO URL>` before pasting.
+Paste as-is. Partner Center caps this field at 2000 characters; the block below is 1962 with LF endings and 1984 if the field counts CRLF, so it fits either way. Re-measure if you edit it.
 
 ```text
 TEST CREDENTIALS
 
-This extension does not have accounts or a login of its own. It is a developer and administrator tool that runs inside Microsoft Dynamics 365 / Power Platform model-driven apps (*.dynamics.com) and uses the session the tester is already signed in with. It has no functionality on any other website.
+This extension has no account or login of its own. It is a developer and admin tool that runs inside Microsoft Dynamics 365 / Power Platform model-driven apps (*.dynamics.com) and uses the session the tester is already signed in with. It has no functionality on any other website.
 
-We cannot provide credentials to a Dynamics 365 environment because the environments available to the developer belong to an employer and its clients and contain confidential business data. A test environment can be created in minutes with the free 30-day Dynamics 365 Sales trial (https://www.microsoft.com/dynamics-365/products/sales, "Try for free"); any Dynamics 365 or Dataverse environment works. A demo video showing every step below is available at: <VIDEO URL>
+We cannot provide environment credentials: the environments available to the developer belong to an employer and its clients and hold confidential business data. Any Dynamics 365 or Dataverse environment works, and a free one takes minutes with the Dynamics 365 Sales trial: https://www.microsoft.com/dynamics-365/products/sales
 
 TEST STEPS
 
-1. Install the extension. On any page that is not Dynamics 365, click the Power Tools toolbar icon. Expected: the popup shows "No Dynamics tab is open. Open a model-driven app or a Power Pages site, then check again." This is the only behaviour outside Dynamics 365.
+1. On any page that is not Dynamics 365, click the Power Tools icon. Expected: "No Dynamics tab is open. Open a model-driven app or a Power Pages site, then check again." This is the only behaviour outside Dynamics 365.
 
-2. Sign in to a Dynamics 365 environment and open a model-driven app (in the Sales trial, select the "Sales trial" link at the top and choose Sales Hub). Open Accounts and open any account record.
+2. Sign in to Dynamics 365 and open a model-driven app (Sales Hub, in the Sales trial). Open Accounts, then open any account record.
 
-3. Click the Power Tools icon. Expected: the popup opens with a navigation menu of modules (Utilities, Investigate, Web API, Schema, Security, Forms, Plug-ins, Code Generation, Settings).
+3. Click the Power Tools icon. Expected: a navigation drawer listing thirteen modules, among them Utilities, Investigate, Web API and Security.
 
-4. Utilities > Environment & Session. Expected: shows the signed-in user, security roles, organization version, current app, and the table and record that are open.
+4. Utilities > Admin > Environment & Session. Expected: the signed-in user, security roles, organization version, and the open table and record.
 
-5. Utilities > Column Browser. Expected: lists the columns of the Account table with their logical names and types.
+5. Web API > Record Columns. Expected: every column value of the open record.
 
-6. Web API > Record Columns. Expected: shows every column value of the open account record.
+6. In Dynamics 365, open a different account record without reloading the page. Expected: the extension follows and shows the new record. This is what webNavigation is used for.
 
-7. In Dynamics 365, open a different account record without reloading the page. Expected: the popup follows and shows the new record. This is what the webNavigation permission is used for.
+7. Settings > Extension Settings > turn on "Open In Side Panel", then click the icon. Expected: the same interface opens in the side panel. This is what sidePanel is used for.
 
-8. Settings > Extension Settings > turn on "Open In Side Panel", then click the Power Tools icon. Expected: the same interface opens in the browser side panel instead of the popup. This is what the sidePanel permission is used for.
-
-Optional: Settings > Environments and Settings > Service Principals let the user save environment URLs and Microsoft Entra app registration credentials for the Data Transporter and Bulk Users tools. These are not needed to test the extension.
-
-All data stays in the browser. The extension sends requests only to the Dynamics 365 environment the tester has open and, if a service principal is saved, to login.microsoftonline.com. Privacy policy: https://github.com/ecurrier/DynamicsExtension/blob/main/PRIVACY.md
+All data stays in the browser. Requests go only to the tester's Dynamics 365 environment and, if a service principal is saved, to login.microsoftonline.com. Privacy policy: https://github.com/ecurrier/DynamicsExtension/blob/main/PRIVACY.md
 ```
 
 ## If the explanation is rejected
