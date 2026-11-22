@@ -1,6 +1,6 @@
 # Query core: parse, serialise, edit
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Phase: 1
 
@@ -22,3 +22,22 @@ Acceptance:
 - Malformed input (unclosed tag, stray `<`, mismatched close tag) returns errors with ranges and does not throw.
 - Every edit operation has a test; none mutates its input.
 - `npm run typecheck`, `npm run lint` and `npm test` pass.
+
+## Comments
+
+Resolved 2026-11-22. Built by an Opus worker, reviewed and verified (typecheck, lint, 849 tests, build).
+
+API, from `@/shared/lib/fetchxml` (import from that path, never from the `@/shared/lib` barrel):
+
+- Types: `XmlElement` (with `switchedOff`), `XmlComment`, `XmlText`, `XmlNode`, `XmlAttribute`, `SourceRange`, `FetchXmlDocument` (`root`, plus `leading` and `trailing` comments outside the root), `NodePath` (`[]` is the root).
+- `parseFetchXml(text)` returns `{ ok: true, document }` or `{ ok: false, errors }`; `serializeFetchXml(document, { minify? })`; `toJavaScriptString`, `toCSharpString`.
+- `createElement`, `setAttribute`, `removeAttribute`, `insertChild`, `removeNode`, `moveNode`, `switchOff`, `switchOn`, each returning `{ ok: true, document }` or `{ ok: false, reason }`.
+- `nodeAtPath`, `pathOfNode`, `pathAtOffset`, `rangeOfNode`.
+
+Things later issues must know:
+
+- **Not in the shared barrel.** Re-exporting the folder from `src/shared/lib/index.ts` pulled the Lezer parser into `page.js` and `background.js` (about 60 kB each). The re-export was removed in review. Nothing under `src/page/**`, the background, or `src/shared/lib/dataverse/**` may import `@/shared/lib/fetchxml`.
+- Whitespace-only text between elements is dropped; text that is an element's only content (a `<value>`) is kept exactly. CDATA becomes ordinary text. A leading XML declaration is dropped; other processing instructions, DOCTYPE, unquoted or duplicate attributes and unknown entities are parse errors.
+- Switching off is refused for the root, for a node inside a switched-off node, for a node with switched-off descendants, and for a node that contains a comment (comments cannot nest). The tree has to show these as a disabled switch with the reason.
+- Comments outside the root are never read as switched-off rows. A switched-off node's range covers its whole comment.
+- After an edit only the edited nodes lose their ranges; the rest keep ranges from the last parse and are stale until the serialised text is parsed again. Serialise then parse after every tree edit.

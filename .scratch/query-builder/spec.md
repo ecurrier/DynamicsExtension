@@ -49,7 +49,7 @@ Terms from `CONTEXT.md`: Workspace, Module, Area, Width tier, Step explainer, Co
 
 ## Architecture
 
-**Query core**, `src/shared/lib/fetchxml/`, pure, no React, no extension APIs, tested in the node environment (so no `DOMParser`):
+**Query core**, `src/shared/lib/fetchxml/`, pure, no React, no extension APIs, tested in the node environment (so no `DOMParser`). It is imported from `@/shared/lib/fetchxml` and is deliberately not re-exported from the `@/shared/lib` barrel, and nothing in the page bundle, the background, or the Gateway operations may import it, because doing so pulls the parser into `page.js` and `background.js`:
 
 - A parser that turns Fetch XML text into a generic ordered tree of elements, attributes (in source order), comments and text, each with its source range. Build it on `@lezer/xml`, which is already in the bundle through `@codemirror/lang-xml`, is error-tolerant, and gives positions. Parse errors are returned, not thrown.
 - A serialiser with the standard formatting, a minified form, and the string-escaped forms.
