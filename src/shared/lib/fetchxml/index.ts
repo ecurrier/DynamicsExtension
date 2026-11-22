@@ -1,4 +1,5 @@
 export * from "./edit";
+export * from "./metadata";
 export * from "./operators";
 export * from "./paging";
 export * from "./parse";
@@ -7,3 +8,4 @@ export * from "./placement";
 export * from "./schema";
 export * from "./serialize";
 export * from "./types";
+export * from "./validate";

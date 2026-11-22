@@ -33,3 +33,20 @@ Acceptance:
 - One test per rule, positive and negative, plus a test that a valid complex Query produces no diagnostics.
 - In the harness: misspelling a Column in the XML underlines it and flags its row; choosing `like` on a Choice Column in the tree is not offered, and typing it in the XML is flagged.
 - `npm run typecheck`, `npm run lint` and `npm test` pass. Verify in the harness and include a screenshot.
+
+## Comments
+
+2026-11-22: the pure-logic half is done (Opus worker, reviewed; 47 tests). What remains for this issue is the "Display" section only.
+
+In `@/shared/lib/fetchxml`:
+
+- `metadata.ts`, the shared metadata contract and scope helpers used by validation, the Web API converter, autocomplete and the tree's pickers:
+  - `QueryMetadata = (tableLogicalName) => TableLookup`, where a Table is `loaded` (with its `QueryTable`), `missing`, or `pending`; `metadataFrom(tables, missing?)` builds one.
+  - `tablesNamedIn(document)`: the Tables a Query names, so the Workspace knows what to load.
+  - `columnTableAt(document, path, attributeName)`: the Table that owns a Column attribute, honouring `entityname` and a link-entity's `from`/`to`.
+  - `aliasesIn`, `linkEntityReferences`, `linkEntityFor`, `elementsIn`, `columnOf`, `valueOfTargets`, `valueOfColumns`, `resolveValueOf`.
+- `validate.ts`: `validate(document, metadata)` returns `Diagnostic[]` (`severity`, `rule`, `message`, `path`, optional `attribute`, optional `range`) in document order.
+  - Errors: `root-element`, `invalid-child`, `child-limit`, `required-attribute`, `enumeration`, `number`, `number-range`, `missing-table`, `missing-column`, `operator-column-type`, `value-count`, `value-type`, `duplicate-alias`, `invalid-alias`, `undefined-alias`, `aggregate-attribute`, `aggregate-all-attributes`, `aggregate-order`, `aggregate-not-set`, `top-with-paging`.
+  - Warnings: `choice-option`, `deprecated-operator`. Info: `unknown-element`, `unknown-attribute`.
+
+For the display half: a problem with a `<value>` child is reported on the `<value>` element's own path, so the tree must roll it up to its condition row. `valueOfColumns` includes Columns that have `attributeOf`; pickers filter those out. `from` and `to` are not required, because the reference marks both optional.
