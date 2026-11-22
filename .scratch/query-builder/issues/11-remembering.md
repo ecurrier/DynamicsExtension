@@ -19,3 +19,13 @@ Acceptance:
 - Unit tests: the cap, de-duplication and ordering of history; rename and overwrite of Stored Queries.
 - In the harness: edit a Query, reload the page, and it is restored; run twice and history shows one entry at the top; save, rename, reopen and delete a Stored Query; Clear empties history.
 - `npm run typecheck`, `npm run lint` and `npm test` pass. Verify in the harness and include a screenshot.
+
+## Comments
+
+2026-11-22: the non-UI half is done (Opus worker, reviewed; 38 tests). What remains is the UI: restoring on open, recording each Query Run, the Save button, the header's Stored Query name and changed mark, and the History and My queries panel.
+
+- Storage items in `src/shared/storage/` (all version 1; no schema bump or migration was needed, matching how `codeTemplates` and `feedbackDraft` were added): `workingQueryItem` (`local:workingQuery`, `{ fetchXml, writtenAt } | null`), `queryHistoryItem` (`local:queryHistory`, a list of `{ fetchXml, connection, connectionLabel, ranAt, outcome, elapsedMs }`), `storedQueriesItem` (`local:storedQueries`, keyed by id, each `{ id, name, fetchXml, createdAt, updatedAt }`).
+- Logic and hooks in `src/query-builder/remembered/` (named to stay clear of "saved query"): `recordRun`, `clearHistory`, `filterHistory`, `summarizeHistoryEntry`, `addStoredQuery`, `overwriteStoredQuery`, `renameStoredQuery`, `deleteStoredQuery`, `sortStoredQueries`, `filterStoredQueries`, `matchesStored`, `normalizeFetchXml`; hooks `useWorkingQuery`, `useQueryHistory`, `useStoredQueries`.
+- "The same Fetch XML" compares the minified serialisation of the parsed XML, falling back to trimmed text when it does not parse. The same Connection is the same page host or the same Environment id.
+
+What the UI calls and when: on open, read `useWorkingQuery().opened` once; on each edit, `write(text)` (saves 500 ms after the last change, and on unmount; `flush()` saves at once); on every Query Run, successful or not, `useQueryHistory().record(entry)`; on Save, `useStoredQueries().add(name, xml)` and, when refused with `name-taken`, offer `overwrite(name, xml)`; for the header's changed mark, `matchesStored(storedQuery, text)`.

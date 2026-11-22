@@ -23,7 +23,10 @@ import {
 	type Environments,
 	type ExtensionSettings,
 	type FormPresetsByContext,
+	type QueryHistory,
 	type ServicePrincipals,
+	type StoredQueries,
+	type WorkingQuery,
 } from "./schema";
 
 export type StorageItem<T> = WxtStorageItem<T, Record<string, unknown>>;
@@ -132,5 +135,20 @@ export const codegenPreferencesItem: StorageItem<CodegenPreferences> = storage.d
  */
 export const feedbackDraftItem: StorageItem<FeedbackDraft> = storage.defineItem<FeedbackDraft, Record<string, unknown>>("local:feedbackDraft", {
 	fallback: EMPTY_FEEDBACK_DRAFT,
+	version: 1,
+});
+
+export const workingQueryItem: StorageItem<WorkingQuery | null> = storage.defineItem<WorkingQuery | null, Record<string, unknown>>("local:workingQuery", {
+	fallback: null,
+	version: 1,
+});
+
+export const queryHistoryItem: StorageItem<QueryHistory> = storage.defineItem<QueryHistory, Record<string, unknown>>("local:queryHistory", {
+	fallback: [],
+	version: 1,
+});
+
+export const storedQueriesItem: StorageItem<StoredQueries> = storage.defineItem<StoredQueries, Record<string, unknown>>("local:storedQueries", {
+	fallback: {},
 	version: 1,
 });
