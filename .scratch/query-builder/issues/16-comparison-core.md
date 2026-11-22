@@ -1,6 +1,6 @@
 # Comparison core
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Phase: 2
 
@@ -32,3 +32,15 @@ Acceptance:
 
 - Tests for: each bucket; primary-key matching with brace and case differences; a chosen-column key with differing GUIDs; a lookup equal by name but not id under each kind of Match Key; ambiguous keys on one side and on both; empty keys; each value type; a column missing on one side; and the large-set timing.
 - `npm run typecheck`, `npm run lint` and `npm test` pass.
+
+## Comments
+
+Resolved 2026-11-22. Built by an Opus worker, reviewed and verified (30 tests; two 50,000-row comparisons in about 300 ms).
+
+API, from `@/query-builder/lib`: `compareQueryRuns(first, second, { columns, primaryKey, matchKey, comparedColumns })`, `suggestComparedColumns(columns, primaryKey, matchKey)`, `columnLogicalName(key)`, `FORMATTED_VALUE_SUFFIX`, and the types `QueryRunRecord`, `ResultColumn` (`{ key, label, type }`), `MatchKey`, `Comparison`.
+
+For issue 05: a lookup's result column key must be `_name_value` and its row must carry the formatted-value annotation, because comparing lookups by name reads it. Produce `ResultColumn` in this shape.
+
+For issue 17: use `keyMatching` and `lookupsComparedBy` from the result for the explanatory text. An ambiguous group counts as one. Differences carry `{ raw, friendly }` for each side.
+
+Decisions made here: a Match Key of several Columns is empty only when every part is empty; an empty primary key goes to "no key"; lookup names compare exactly as values but trimmed and case-insensitive as key parts; multi-select Choices compare as sets; bookkeeping Columns are recognised under link-entity aliases too.
