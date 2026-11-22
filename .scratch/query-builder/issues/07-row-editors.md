@@ -7,6 +7,8 @@ Blocked by: 06
 
 See `../spec.md`, decisions 9, 10, 12, 13, 27. The prototype's variant D shows the intended feel.
 
+Before starting, read the `## Comments` sections of issues 01 and 02: they document the Query core's API and the decisions made while building it.
+
 Each tree row becomes its own editor with compact controls, so the common edits never leave the row, and a details pane beside the tree shows every attribute of the selected row. Row and pane share the same editor components and edit the same Query. All labels are Fetch XML's own words (decision 27).
 
 - **One searchable picker** (decision 28), a shared component used for every single-select list in the row and the details pane: Table, Column, relationship, operator, link type, alias, aggregate, and single Choice or yes/no value.
@@ -34,6 +36,7 @@ Each tree row becomes its own editor with compact controls, so the common edits 
 - Pickers use metadata for the first Connection, loaded per Table and cached for the session; a row whose Table is still loading shows its current values as text and becomes editable when the metadata arrives.
 - Every edit goes through issue 01's edit operations, regenerates the XML, and joins the undo history from issue 06.
 - Widths: inline controls size to their content between a minimum and a maximum per kind of control, re-measuring as the value changes, so a value such as `1000021` or a long Column name is shown whole on the row whenever the row has room; only past the maximum does a control clip, and then the full value is in its tooltip and in the details pane. In the prototype a seven-digit number was cut off on the row; that must not happen. Controls must fit one line per row at a 700px-wide tree for ordinary values; below that the row scrolls sideways. The tree has a minimum width of 360px and the details pane of 240px; when the Workspace is too narrow for tree, details and XML together, the details pane collapses first, and it reopens at its last width when there is room or when the user asks for it.
+- From issue 02: the Add menu respects the occurrence limits in `ChildRule.max` (one `all-attributes` and one `filter` per `entity` or `link-entity`); booleans accept `1` as well as `true` (quick find writes `'1'`); the four `requiresTime` operators are not offered on date-only Columns; operators marked `deprecated` are never offered.
 
 Acceptance:
 

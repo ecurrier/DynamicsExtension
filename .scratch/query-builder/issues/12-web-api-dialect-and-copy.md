@@ -7,6 +7,8 @@ Blocked by: 02, 03, 04
 
 See `../spec.md`, decisions 3, 21, 22.
 
+Before starting, read the `## Comments` sections of issues 01 and 02: they document the Query core's API and the decisions made while building it.
+
 `toWebApi(query, metadata)` in `src/shared/lib/fetchxml/`, pure and tested, returning the request path (entity set plus query options) and a list of warnings. Derive it from the Web API query documentation on learn.microsoft.com (`$select`, `$filter`, `$orderby`, `$top`, `$expand`, `$count`, `$apply`, and the Web API query function reference). Do not read `MarkMpn.FetchXmlToWebAPI` or FetchXML Builder.
 
 - `$select` from the root Table's Columns, with lookups as `_name_value`; `all-attributes` omits `$select`.

@@ -144,6 +144,12 @@ const CORPUS: readonly { readonly title: string; readonly xml: string; readonly 
 		elements: 3,
 		comments: 2,
 	},
+	{
+		title: "comments holding elements that are not valid where they sit",
+		xml: `<fetch><!-- <condition attribute="a" operator="null" /> --><entity name="account"><!--<value>1</value>--><filter><!--  <attribute name="x"/>  --><!-- <condition attribute="b" operator="null" /> --></filter></entity></fetch>`,
+		elements: 4,
+		comments: 3,
+	},
 ];
 
 describe("round trip", () => {

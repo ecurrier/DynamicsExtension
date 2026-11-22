@@ -7,6 +7,8 @@ Blocked by: 02, 04
 
 See `../spec.md`, decision 14.
 
+Before starting, read the `## Comments` sections of issues 01 and 02: they document the Query core's API and the decisions made while building it.
+
 A CodeMirror completion source for the XML pane, in `src/query-builder/editor/`, with the context detection as a pure, tested function (given the text and a cursor offset, what is being completed and inside which elements). It has to work while the XML is mid-edit and does not parse, which is the normal state while typing; the error-tolerant `@lezer/xml` tree gives this.
 
 Completions:

@@ -1,6 +1,7 @@
 import { type SyntaxNode } from "@lezer/common";
 import { parser } from "@lezer/xml";
 
+import { isValidChild } from "./schema";
 import {
 	type FetchXmlParseError,
 	type FetchXmlParseResult,
@@ -11,10 +12,13 @@ import {
 	type XmlNode,
 } from "./types";
 
+export type XmlParseOptions = { readonly acceptSwitchedOff?: (parent: string, element: XmlElement) => boolean };
+
 type Context = {
 	readonly source: string;
 	readonly offset: number;
 	readonly allowDeclaration: boolean;
+	readonly acceptSwitchedOff: (parent: string, element: XmlElement) => boolean;
 	readonly errors: FetchXmlParseError[];
 };
 
@@ -122,12 +126,14 @@ const readElement = (context: Context, node: SyntaxNode): XmlElement => {
 	if (node.lastChild?.name !== "CloseTag") {
 		report(context, `<${name}> is not closed`, tag.from, tag.to);
 	}
-	const children = arrangeChildren(readEntities(context, tag.nextSibling, true));
+	const children = arrangeChildren(readEntities(context, tag.nextSibling, name));
 	return { kind: "element", name, attributes, children, switchedOff: false, range };
 };
 
-const parseFragment = (source: string, offset: number, allowDeclaration: boolean): Fragment => {
-	const context: Context = { source, offset, allowDeclaration, errors: [] };
+const acceptAny = (): boolean => true;
+
+const parseFragment = (source: string, offset: number, allowDeclaration: boolean, acceptSwitchedOff: Context["acceptSwitchedOff"]): Fragment => {
+	const context: Context = { source, offset, allowDeclaration, acceptSwitchedOff, errors: [] };
 	const tree = parser.parse(source);
 	tree.iterate({
 		enter: (cursor) => {
@@ -136,12 +142,12 @@ const parseFragment = (source: string, offset: number, allowDeclaration: boolean
 			}
 		},
 	});
-	const nodes = readEntities(context, tree.topNode.firstChild, false);
+	const nodes = readEntities(context, tree.topNode.firstChild, undefined);
 	return { nodes, errors: context.errors };
 };
 
 const switchedOffElement = (content: string, offset: number): XmlElement | undefined => {
-	const fragment = parseFragment(content, offset, false);
+	const fragment = parseFragment(content, offset, false, acceptAny);
 	if (fragment.errors.length > 0) {
 		return undefined;
 	}
@@ -150,7 +156,7 @@ const switchedOffElement = (content: string, offset: number): XmlElement | undef
 	return significant.length === 1 && only?.kind === "element" ? only : undefined;
 };
 
-const readComment = (context: Context, node: SyntaxNode, detectSwitchedOff: boolean): XmlNode => {
+const readComment = (context: Context, node: SyntaxNode, parent: string | undefined): XmlNode => {
 	const raw = sliceOf(context, node);
 	const closed = raw.length >= 7 && raw.endsWith("-->");
 	if (!closed) {
@@ -158,7 +164,8 @@ const readComment = (context: Context, node: SyntaxNode, detectSwitchedOff: bool
 	}
 	const content = context.source.slice(node.from + 4, closed ? node.to - 3 : node.to);
 	const range = rangeOf(context, node.from, node.to);
-	const element = closed && detectSwitchedOff ? switchedOffElement(content, context.offset + node.from + 4) : undefined;
+	const candidate = closed && parent !== undefined ? switchedOffElement(content, context.offset + node.from + 4) : undefined;
+	const element = candidate && parent !== undefined && context.acceptSwitchedOff(parent, candidate) ? candidate : undefined;
 	return element ? { ...element, switchedOff: true, range } : { kind: "comment", content, range };
 };
 
@@ -179,7 +186,7 @@ const readProcessingInstruction = (context: Context, node: SyntaxNode): void => 
 	}
 };
 
-const readEntities = (context: Context, first: SyntaxNode | null, detectSwitchedOff: boolean): XmlNode[] => {
+const readEntities = (context: Context, first: SyntaxNode | null, parent: string | undefined): XmlNode[] => {
 	const nodes: XmlNode[] = [];
 	let pending: PendingText | undefined;
 	const appendText = (value: string, from: number, to: number): void => {
@@ -207,7 +214,7 @@ const readEntities = (context: Context, first: SyntaxNode | null, detectSwitched
 				break;
 			case "Comment":
 				flush();
-				nodes.push(readComment(context, node, detectSwitchedOff));
+				nodes.push(readComment(context, node, parent));
 				break;
 			case "ProcessingInst":
 				flush();
@@ -236,8 +243,8 @@ const uniqueErrors = (errors: readonly FetchXmlParseError[]): FetchXmlParseError
 			errors.findIndex((other) => other.message === error.message && other.range.from === error.range.from && other.range.to === error.range.to) === index
 	);
 
-export const parseFetchXml = (text: string): FetchXmlParseResult => {
-	const fragment = parseFragment(text, 0, true);
+export const parseXml = (text: string, options: XmlParseOptions = {}): FetchXmlParseResult => {
+	const fragment = parseFragment(text, 0, true, options.acceptSwitchedOff ?? acceptAny);
 	const errors = [...fragment.errors];
 	const leading: XmlComment[] = [];
 	const trailing: XmlComment[] = [];
@@ -263,3 +270,6 @@ export const parseFetchXml = (text: string): FetchXmlParseResult => {
 	}
 	return { ok: true, document: { root, leading, trailing } };
 };
+
+export const parseFetchXml = (text: string): FetchXmlParseResult =>
+	parseXml(text, { acceptSwitchedOff: (parent, element) => isValidChild(parent, element.name) });

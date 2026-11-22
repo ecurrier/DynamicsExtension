@@ -7,6 +7,8 @@ Blocked by: 01
 
 See `../spec.md`, decisions 4, 5, 16, 17, 23 and "Architecture > Operations".
 
+Before starting, read the `## Comments` sections of issues 01 and 02: they document the Query core's API and the decisions made while building it.
+
 `queryOperations(http)` in `src/shared/lib/dataverse/query.ts`, following the dual-Connection recipe used by Environment Variables and the Data Transporter: one args object per operation, `CommandMap` entries named `query.<operation>`, page handlers that forward through `runOperation`, and a hook built with `defineGateway` and `useGateway`. Every operation is a read. Tests with `createFakeHttp`.
 
 - `listTables`: logical name, display name, entity set name, primary id, primary name, for Tables that can be queried.
@@ -18,6 +20,7 @@ See `../spec.md`, decisions 4, 5, 16, 17, 23 and "Architecture > Operations".
 - `pagedFetchXml(document, { page, pagingCookie, pageSize })` in `src/shared/lib/fetchxml/`, pure and tested: returns the Fetch XML to send for a given page, using issue 01's edit operations on a copy, never a regex on the text. The Workspace calls it and passes the result to `runQuery`. Paging follows "Page results using FetchXml" on learn.microsoft.com for the Web API: read that page and implement what it says about `page`, `count`, the paging cookie annotation and its encoding. A Query with `top` or `aggregate="true"` is a single page: `pagedFetchXml` leaves it untouched and reports that it cannot be paged. `pageSize` is applied only when the Query sets neither `count` nor `top`.
 - Server errors come back as the existing `DataverseHttpError` / `DataverseOperationError` types with the platform's message intact.
 - Harness: stubs for every `query.*` command in `dev/harness/chrome-shim.js` and matching routes in its fake `fetch` for the Environment connection. Fixtures: `account` and `contact` with a relationship each way, Choice and lookup Columns, and a result of at least 120 accounts served 50 at a time with a paging cookie, so Next page is reachable.
+- Map Dataverse attribute types onto issue 02's exported `ColumnType`. The hierarchy operators assume unique identifier and lookup Columns, and four operators are marked `requiresTime`, so the Column metadata must also say whether a date Column is date-only.
 
 Acceptance:
 

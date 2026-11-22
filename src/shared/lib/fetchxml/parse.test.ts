@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseFetchXml } from "./parse";
+import { parseFetchXml, parseXml } from "./parse";
 import { type FetchXmlDocument, type FetchXmlParseError, type XmlElement } from "./types";
 
 const parsed = (text: string): FetchXmlDocument => {
@@ -93,8 +93,34 @@ describe("parseFetchXml", () => {
 	});
 
 	it("decodes -&#45; inside a switched-off element", () => {
-		const { root } = parsed('<a><!--<b v="x-&#45;y" />--></a>');
+		const { root } = parsed('<filter><!--<condition value="x-&#45;y" />--></filter>');
 		expect(element(root.children[0]).attributes[0]?.value).toBe("x--y");
+	});
+
+	it("reads a comment as a switched-off row only when its element is valid under the comment's parent", () => {
+		const condition = '<condition attribute="name" operator="eq" value="a" />';
+		const underFilter = parsed(`<fetch><entity name="a"><filter><!-- ${condition} --></filter></entity></fetch>`);
+		const filter = element(element(underFilter.root.children[0]).children[0]);
+		expect(element(filter.children[0]).switchedOff).toBe(true);
+		const underFetch = parsed(`<fetch><!-- ${condition} --><entity name="a" /></fetch>`);
+		expect(underFetch.root.children[0]).toEqual({ kind: "comment", content: ` ${condition} `, range: { from: 7, to: 7 + condition.length + 9 } });
+	});
+
+	it("keeps an invalid or unknown element's comment content exactly as written", () => {
+		const text =
+			"<fetch><entity name='a'><!--<value>1</value>--><!--  <futurething  a='1'/>\n--><filter><!-- <entity name='b' /> --></filter></entity></fetch>";
+		const entity = element(parsed(text).root.children[0]);
+		expect(entity.children[0]).toMatchObject({ kind: "comment", content: "<value>1</value>" });
+		expect(entity.children[1]).toMatchObject({ kind: "comment", content: "  <futurething  a='1'/>\n" });
+		expect(element(entity.children[2]).children[0]).toMatchObject({ kind: "comment", content: " <entity name='b' /> " });
+	});
+
+	it("parseXml reads any single well-formed element in a comment as switched off unless told otherwise", () => {
+		const text = '<a><!--<b v="x-&#45;y" />--></a>';
+		const loose = parseXml(text);
+		expect(loose.ok && element(loose.document.root.children[0]).switchedOff).toBe(true);
+		const strict = parseXml(text, { acceptSwitchedOff: (parent, candidate) => parent === "a" && candidate.name === "c" });
+		expect(strict.ok && strict.document.root.children[0]?.kind).toBe("comment");
 	});
 
 	it("keeps any other comment as a comment", () => {

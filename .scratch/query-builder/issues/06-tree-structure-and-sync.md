@@ -7,6 +7,8 @@ Blocked by: 02, 04
 
 See `../spec.md`, decisions 7, 8, 9, 11, 12, 27, 29. The prototype's variant D in `src/query-builder-prototype/` (or on the `prototype/query-builder-tree` branch if it has been removed) shows the intended feel; it is throwaway code written without tests, so use it as a picture, not as a source to copy.
 
+Before starting, read the `## Comments` sections of issues 01 and 02: they document the Query core's API and the decisions made while building it.
+
 The left pane becomes the tree. This issue covers showing the Query, keeping it in step with the XML, and changing its structure. Editing a row's values is issue 07; in this issue each row shows a read-only one-line summary.
 
 - Render the last valid Query as a tree in document order: `fetch`, its `entity`, and everything beneath, with branches that expand and collapse. Expansion is keyed by node path and everything starts expanded.
@@ -20,6 +22,7 @@ The left pane becomes the tree. This issue covers showing the Query, keeping it 
 - A switched-off row and everything under it renders dimmed with an "off" marker.
 - While the XML does not parse, the tree shows the last valid Query greyed out and inert, under the same banner as the XML pane.
 - Keyboard: the tree is navigable with the arrow keys per the ARIA tree pattern. Use Fluent `Tree` with the two root handlers described in spec decision 9, so that a click inside a row never toggles its branch; issue 07 puts editors in the rows and depends on this.
+- From issue 02: an element that is not valid where it sits comes back as a plain comment after the next parse if it is switched off, so the switch is disabled for such rows, as it is for the other refused cases listed in issue 01's comments.
 
 Acceptance:
 

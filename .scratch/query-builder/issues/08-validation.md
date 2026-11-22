@@ -7,6 +7,8 @@ Blocked by: 02, 06
 
 See `../spec.md`, decision 15.
 
+Before starting, read the `## Comments` sections of issues 01 and 02: they document the Query core's API and the decisions made while building it.
+
 `validate(query, metadata)` in `src/shared/lib/fetchxml/`, pure and tested, and its two displays. `metadata` is a synchronous lookup over whatever Tables are already loaded; a Table that is not loaded yet produces no diagnostics for its Columns, and the Workspace loads the Tables a Query names and validates again when they arrive.
 
 Rules, each with a clear one-sentence message that names the Table, Column, operator or alias involved:
@@ -24,6 +26,7 @@ Display:
 - Tree: a row with a problem shows a severity icon whose tooltip lists its messages; a collapsed parent shows that something beneath it has a problem.
 - XML pane: diagnostics underlined at the attribute or element range, with the message on hover. Add `@codemirror/lint` if it is not already resolved, and let `CodeEditor` take extra extensions if it cannot already.
 - Run stays enabled when there are validation errors (the platform is the final judge, and a rule here could be wrong); the Run button shows a count of problems beside it.
+- From issue 02: also check `top` (at most 5,000) and `aggregatelimit` (at most 50,000), the occurrence limits in `ChildRule.max`, that an `order` has `attribute` or `alias`, and that operators with `valueKind: "integer"` have a whole-number value. A `documented: false` attribute is valid, not a warning.
 
 Acceptance:
 

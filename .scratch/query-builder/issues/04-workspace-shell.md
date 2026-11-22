@@ -7,6 +7,8 @@ Blocked by: 01, 03
 
 See `../spec.md`, decisions 1, 5, 6, 7, 8 and "Architecture > Workspace". ADR 0002, ADR 0003.
 
+Before starting, read the `## Comments` sections of issues 01 and 02: they document the Query core's API and the decisions made while building it.
+
 The first end-to-end slice: open the Workspace, paste Fetch XML, run it, see the first page. No tree yet; the left pane shows a placeholder.
 
 - Register the Workspace the way Schema Tools is, touching the same files: `src/entrypoints/query-builder/{index.html,main.tsx}`, `src/query-builder/` (app, bootstrap hook, store, stylesheet, barrel), `WorkspaceId` and a `QueryBuilderLaunch` type in `src/shared/types/workspaces.ts`, `WORKSPACE_PAGES`, a launch storage item, `areaWorkspaceLaunch`, a lazy import in `WorkspaceOutlet`, and a line in `dev/harness/build.mjs` producing `harness-query-builder.html`. The launch payload carries the source tab or Environment and an optional `fetchXml` to open with. The entrypoint owns its stylesheet; do not import a stylesheet through a barrel.
