@@ -1,6 +1,6 @@
 # Query operations and Gateway
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Phase: 1
 Blocked by: 01
@@ -30,3 +30,24 @@ Acceptance:
 - `npm run typecheck`, `npm run lint` and `npm test` pass.
 
 Needs a real org (list in the phase 1 smoke checklist, issue 14): paging past the first page on both Connections, and the Column metadata request.
+
+## Comments
+
+Resolved 2026-11-22. Built by an Opus worker, reviewed and verified (typecheck, lint, 947 tests, build).
+
+- `queryOperations(http)` in `src/shared/lib/dataverse/query.ts`, types in `src/shared/types/query.ts`, Gateway hook `useQueryGateway` / `queryGateway` in `src/query-builder/hooks/`.
+  - `listTables()` returns `QueryTableSummary[]` (logical, display and entity set names, primary id, primary name, `isIntersect`; intersect Tables are kept).
+  - `getTable({ logicalName })` returns `QueryTable`: `columns` (each with `columnType` or null, `dateOnly`, `isValidForRead`, `options`, `targets`), and `manyToOne`, `oneToMany`, `manyToMany` relationships. Columns come from `codegenOperations.getTableModel`.
+  - `runQuery({ entitySetName, fetchXml })` returns `rows`, `moreRecords`, `pagingCookie` (decoded), `totalRecordCount`, `totalRecordCountLimitExceeded`, `elapsedMs`, `annotations`.
+- `pagedFetchXml(document, { page, pagingCookie, pageSize })` and `DEFAULT_PAGE_SIZE` (50) in `src/shared/lib/fetchxml/paging.ts`. It returns `{ pageable: true, fetchXml, page, count }` or `{ pageable: false, fetchXml, reason }` for a Query with `top` or `aggregate`.
+- Paging follows "Page results using FetchXml": `Prefer: odata.include-annotations="*"`; more Records exist when `@Microsoft.Dynamics.CRM.morerecords` is true; the cookie annotation is an XML element whose `pagingcookie` attribute is URL-encoded twice, so it is decoded twice and then XML-encoded by the serialiser when placed on `paging-cookie`. This is not how `transport.ts` pages (`odata.maxpagesize` and `@odata.nextLink`), which the Fetch XML paging documentation does not describe.
+- Bundles: `page.js` 84.86 kB (+5.13, the operation code itself), `background.js` 21.73 kB (+0.07), no parser in either. Accepted.
+- Harness: account and contact fixtures and 130 accounts served 50 at a time with double-encoded cookies, for both the page stubs and the fake fetch. The fake fetch rejects type-specific properties in the base Column `$select`. Account and contact lookup reads now come from these fixtures, which the Data Transporter's harness page shares.
+
+For issue 04 and later:
+
+- Errors differ by Connection: over a Page connection they arrive as `PageCommandError` named `DataverseHttpError` with the message kept and the HTTP status lost; over an Environment connection as `DataverseHttpError`. Show the message in both cases.
+- Hide Columns that have `attributeOf`, and expect `columnType` to be null for Column types the operator catalogue does not cover.
+- A Query too long for a URL is not handled until issue 13.
+
+Needs a real org (for issue 14's checklist): paging past page 1 on both Connections, including a cookie containing `&`, `<` or `"`; whether a `+` ever appears in a real cookie; the Column metadata request on a real Table; the relationship request's selected properties; the total count annotations with `returntotalrecordcount`.

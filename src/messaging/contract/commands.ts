@@ -40,6 +40,10 @@ import {
 	type PluginTraceLog,
 	type PolymorphicLookup,
 	type PrivilegeDepth,
+	type QueryRunRequest,
+	type QueryRunResult,
+	type QueryTable,
+	type QueryTableSummary,
 	type RecordAccessReport,
 	type RecordAccessRequest,
 	type RecordCountRequest,
@@ -173,6 +177,9 @@ export interface CommandMap {
 	"codegen.getTableModel": { args: { entityLogicalName: string }; result: CodegenTable; kind: "query" };
 	"codegen.getGlobalChoices": { args: void; result: CodegenChoice[]; kind: "query" };
 	"investigate.getTableColumns": { args: { entityLogicalName: string }; result: TransportEntityMetadata; kind: "query" };
+	"query.listTables": { args: void; result: QueryTableSummary[]; kind: "query" };
+	"query.getTable": { args: { logicalName: string }; result: QueryTable; kind: "query" };
+	"query.runQuery": { args: QueryRunRequest; result: QueryRunResult; kind: "query" };
 }
 
 export type CommandName = keyof CommandMap;

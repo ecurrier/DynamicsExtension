@@ -9,6 +9,7 @@ import { globalHandlers } from "./global";
 import { investigateHandlers } from "./investigate";
 import { pluginPackagesHandlers } from "./pluginPackages";
 import { pluginStepsHandlers } from "./pluginSteps";
+import { queryHandlers } from "./query";
 import { schemaHandlers } from "./schema";
 import { securityHandlers } from "./security";
 import { settingsHandlers } from "./settings";
@@ -34,4 +35,5 @@ export const handlers: HandlerMap = {
 	...transportHandlers,
 	...investigateHandlers,
 	...codegenHandlers,
+	...queryHandlers,
 };

@@ -65,6 +65,9 @@ const STALE_TIMES: Record<QueryCommandName, number> = {
 	"investigate.getTableColumns": 0,
 	"codegen.getTableModel": Infinity,
 	"codegen.getGlobalChoices": Infinity,
+	"query.listTables": Infinity,
+	"query.getTable": Infinity,
+	"query.runQuery": 0,
 };
 
 export interface PageQueryOptions {

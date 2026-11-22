@@ -37,6 +37,9 @@ const COMMAND_TIMEOUTS: Partial<Record<CommandName, number>> = {
 	"investigate.listTables": 90_000,
 	"investigate.getTableColumns": 90_000,
 	"forms.getFormDiagnostics": 60_000,
+	"query.listTables": 90_000,
+	"query.getTable": 90_000,
+	"query.runQuery": 120_000,
 };
 
 const bridgeThunk = (name: string, args: unknown) => window.__powerTools?.invoke(name as never, args as never);

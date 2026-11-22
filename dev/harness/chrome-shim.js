@@ -265,6 +265,15 @@
 			const assembly = pluginAssemblies.find((candidate) => path.includes(candidate.id));
 			return assembly ? jsonResponse(toAssemblyRecord(assembly)) : jsonResponse({ error: { message: "Not found" } }, 404);
 		}
+		const queryMetadata = queryMetadataResponse(path);
+		if (queryMetadata) {
+			return queryMetadata;
+		}
+		const queryRun = path.match(/^(\w+)\?fetchXml=([\s\S]*)$/);
+		if (queryRun && init?.headers?.Prefer === 'odata.include-annotations="*"') {
+			const { status, body } = queryRunBody(queryRun[1], queryRun[2]);
+			return jsonResponse(body, status);
+		}
 		if (path.startsWith("EntityDefinitions?")) {
 			return jsonResponse({ value: transportEntities.map(toEntityDefinition) });
 		}
@@ -673,6 +682,474 @@
 		IsLogical: attribute.isLogical,
 	});
 	const transportPageLink = "https://org12345.crm.dynamics.com/api/data/v9.2/accounts?$skiptoken=page2";
+
+	const queryLabel = (text) => ({ UserLocalizedLabel: { Label: text } });
+	const queryOptions = (...pairs) => pairs.map(([value, label]) => ({ value, label }));
+	const queryCol = (logicalName, displayName, attributeType, overrides = {}) => ({
+		logicalName,
+		displayName,
+		attributeType,
+		typeName: `${attributeType}Type`,
+		attributeOf: null,
+		isPrimaryId: false,
+		isPrimaryName: false,
+		isValidForRead: true,
+		behavior: null,
+		format: null,
+		options: [],
+		targets: [],
+		...overrides,
+	});
+	const queryStateOptions = queryOptions([0, "Active"], [1, "Inactive"]);
+	const queryStatusOptions = queryOptions([1, "Active"], [2, "Inactive"]);
+	const queryYesNo = (no, yes) => queryOptions([0, no], [1, yes]);
+	const queryFixtures = {
+		account: {
+			columns: [
+				queryCol("accountid", "Account", "Uniqueidentifier", { isPrimaryId: true }),
+				queryCol("name", "Account Name", "String", { isPrimaryName: true }),
+				queryCol("accountnumber", "Account Number", "String"),
+				queryCol("revenue", "Annual Revenue", "Money"),
+				queryCol("numberofemployees", "Number of Employees", "Integer"),
+				queryCol("description", "Description", "Memo"),
+				queryCol("industrycode", "Industry", "Picklist", {
+					options: queryOptions([1, "Accounting"], [2, "Agriculture"], [3, "Broadcasting"], [4, "Consulting"]),
+				}),
+				queryCol("statecode", "Status", "State", { options: queryStateOptions }),
+				queryCol("statuscode", "Status Reason", "Status", { options: queryStatusOptions }),
+				queryCol("donotemail", "Do not allow Emails", "Boolean", { options: queryYesNo("Allow", "Do Not Allow") }),
+				queryCol("primarycontactid", "Primary Contact", "Lookup", { targets: [{ logicalName: "contact", navigationProperty: "primarycontactid" }] }),
+				queryCol("primarycontactidname", "Primary Contact Name", "String", { attributeOf: "primarycontactid", isValidForRead: true }),
+				queryCol("parentaccountid", "Parent Account", "Lookup", { targets: [{ logicalName: "account", navigationProperty: "parentaccountid" }] }),
+				queryCol("ownerid", "Owner", "Owner", { targets: [{ logicalName: "systemuser", navigationProperty: "ownerid" }] }),
+				queryCol("createdon", "Created On", "DateTime", { behavior: "UserLocal", format: "DateAndTime" }),
+				queryCol("lastusedincampaign", "Last Date Included in Campaign", "DateTime", { behavior: "DateOnly", format: "DateOnly" }),
+				queryCol("new_regions", "Regions", "Virtual", {
+					typeName: "MultiSelectPicklistType",
+					options: queryOptions([100000000, "North"], [100000001, "South"], [100000002, "East"], [100000003, "West"]),
+				}),
+				queryCol("new_secret", "Secret", "String", { isValidForRead: false }),
+			],
+			manyToOne: [
+				{
+					schemaName: "account_parent_account",
+					lookupColumn: "parentaccountid",
+					referencedTable: "account",
+					referencedColumn: "accountid",
+					navigationProperty: "parentaccountid",
+				},
+				{
+					schemaName: "account_primary_contact",
+					lookupColumn: "primarycontactid",
+					referencedTable: "contact",
+					referencedColumn: "contactid",
+					navigationProperty: "primarycontactid",
+				},
+				{
+					schemaName: "owner_accounts",
+					lookupColumn: "ownerid",
+					referencedTable: "systemuser",
+					referencedColumn: "systemuserid",
+					navigationProperty: "ownerid",
+				},
+			],
+			oneToMany: [
+				{
+					schemaName: "account_parent_account",
+					referencedColumn: "accountid",
+					referencingTable: "account",
+					referencingColumn: "parentaccountid",
+					navigationProperty: "account_parent_account",
+				},
+				{
+					schemaName: "contact_customer_accounts",
+					referencedColumn: "accountid",
+					referencingTable: "contact",
+					referencingColumn: "parentcustomerid",
+					navigationProperty: "contact_customer_accounts",
+				},
+			],
+			manyToMany: [
+				{
+					schemaName: "new_account_contact",
+					intersectTable: "new_account_contact",
+					first: { table: "account", intersectColumn: "accountid", navigationProperty: "new_account_contact" },
+					second: { table: "contact", intersectColumn: "contactid", navigationProperty: "new_account_contact" },
+				},
+			],
+		},
+		contact: {
+			columns: [
+				queryCol("contactid", "Contact", "Uniqueidentifier", { isPrimaryId: true }),
+				queryCol("fullname", "Full Name", "String", { isPrimaryName: true }),
+				queryCol("firstname", "First Name", "String"),
+				queryCol("lastname", "Last Name", "String"),
+				queryCol("emailaddress1", "Email", "String"),
+				queryCol("parentcustomerid", "Company Name", "Customer", {
+					targets: [
+						{ logicalName: "account", navigationProperty: "parentcustomerid_account" },
+						{ logicalName: "contact", navigationProperty: "parentcustomerid_contact" },
+					],
+				}),
+				queryCol("gendercode", "Gender", "Picklist", { options: queryOptions([1, "Male"], [2, "Female"]) }),
+				queryCol("birthdate", "Birthday", "DateTime", { behavior: "DateOnly", format: "DateOnly" }),
+				queryCol("donotphone", "Do not allow Phone Calls", "Boolean", { options: queryYesNo("Allow", "Do Not Allow") }),
+				queryCol("statecode", "Status", "State", { options: queryStateOptions }),
+				queryCol("statuscode", "Status Reason", "Status", { options: queryStatusOptions }),
+				queryCol("ownerid", "Owner", "Owner", { targets: [{ logicalName: "systemuser", navigationProperty: "ownerid" }] }),
+				queryCol("createdon", "Created On", "DateTime", { behavior: "UserLocal", format: "DateAndTime" }),
+			],
+			manyToOne: [
+				{
+					schemaName: "contact_customer_accounts",
+					lookupColumn: "parentcustomerid",
+					referencedTable: "account",
+					referencedColumn: "accountid",
+					navigationProperty: "parentcustomerid_account",
+				},
+				{
+					schemaName: "contact_customer_contacts",
+					lookupColumn: "parentcustomerid",
+					referencedTable: "contact",
+					referencedColumn: "contactid",
+					navigationProperty: "parentcustomerid_contact",
+				},
+				{
+					schemaName: "owner_contacts",
+					lookupColumn: "ownerid",
+					referencedTable: "systemuser",
+					referencedColumn: "systemuserid",
+					navigationProperty: "ownerid",
+				},
+			],
+			oneToMany: [
+				{
+					schemaName: "account_primary_contact",
+					referencedColumn: "contactid",
+					referencingTable: "account",
+					referencingColumn: "primarycontactid",
+					navigationProperty: "account_primary_contact",
+				},
+				{
+					schemaName: "contact_customer_contacts",
+					referencedColumn: "contactid",
+					referencingTable: "contact",
+					referencingColumn: "parentcustomerid",
+					navigationProperty: "contact_customer_contacts",
+				},
+			],
+			manyToMany: [
+				{
+					schemaName: "new_account_contact",
+					intersectTable: "new_account_contact",
+					first: { table: "account", intersectColumn: "accountid", navigationProperty: "new_account_contact" },
+					second: { table: "contact", intersectColumn: "contactid", navigationProperty: "new_account_contact" },
+				},
+			],
+		},
+	};
+	const queryTableSummaries = () =>
+		transportEntities.map((entity) => ({ ...entity, isIntersect: false })).sort((left, right) => left.displayName.localeCompare(right.displayName));
+	const queryEntitySet = (logicalName) => transportEntities.find((entity) => entity.logicalName === logicalName)?.entitySetName ?? null;
+	const queryColumnTypes = {
+		String: "text",
+		EntityName: "text",
+		Memo: "memo",
+		Integer: "wholeNumber",
+		BigInt: "wholeNumber",
+		Decimal: "decimalOrMoney",
+		Double: "decimalOrMoney",
+		Money: "decimalOrMoney",
+		DateTime: "dateTime",
+		Picklist: "choice",
+		Boolean: "yesNo",
+		Lookup: "lookup",
+		Customer: "lookup",
+		Owner: "owner",
+		Uniqueidentifier: "uniqueIdentifier",
+		State: "stateOrStatus",
+		Status: "stateOrStatus",
+	};
+	const toQueryTable = (logicalName) => {
+		const fixture = queryFixtures[logicalName];
+		if (!fixture) {
+			throw new Error(`The table ${logicalName} does not exist in this environment`);
+		}
+		const entity = transportEntities.find((candidate) => candidate.logicalName === logicalName);
+		return {
+			logicalName,
+			displayName: entity.displayName,
+			entitySetName: entity.entitySetName,
+			primaryIdAttribute: entity.primaryIdAttribute,
+			primaryNameAttribute: entity.primaryNameAttribute,
+			columns: fixture.columns
+				.map((column) => ({
+					logicalName: column.logicalName,
+					displayName: column.displayName,
+					attributeType: column.attributeType,
+					attributeTypeName: column.typeName,
+					columnType: column.typeName === "MultiSelectPicklistType" ? "multiChoice" : (queryColumnTypes[column.attributeType] ?? null),
+					attributeOf: column.attributeOf,
+					isPrimaryId: column.isPrimaryId,
+					isPrimaryName: column.isPrimaryName,
+					isValidForRead: column.isValidForRead,
+					dateOnly: column.behavior === "DateOnly" || column.format === "DateOnly",
+					options: column.options.map((option) => ({ ...option })),
+					targets: column.targets.map((target) => ({ ...target, entitySetName: queryEntitySet(target.logicalName) })),
+				}))
+				.sort((left, right) => left.logicalName.localeCompare(right.logicalName)),
+			manyToOne: fixture.manyToOne.map((relationship) => ({ ...relationship })),
+			oneToMany: fixture.oneToMany.map((relationship) => ({ ...relationship })),
+			manyToMany: fixture.manyToMany.map((relationship) => ({ ...relationship, first: { ...relationship.first }, second: { ...relationship.second } })),
+		};
+	};
+	const QUERY_TYPE_SPECIFIC = ["MaxLength", "Precision", "Format", "DateTimeBehavior", "Targets", "OptionSet"];
+	const queryCastOf = (column) => {
+		if (column.typeName === "MultiSelectPicklistType") {
+			return "MultiSelectPicklistAttributeMetadata";
+		}
+		return (
+			{
+				String: "StringAttributeMetadata",
+				Memo: "MemoAttributeMetadata",
+				Money: "MoneyAttributeMetadata",
+				Decimal: "DecimalAttributeMetadata",
+				Double: "DoubleAttributeMetadata",
+				DateTime: "DateTimeAttributeMetadata",
+				Lookup: "LookupAttributeMetadata",
+				Customer: "LookupAttributeMetadata",
+				Owner: "LookupAttributeMetadata",
+				Picklist: "PicklistAttributeMetadata",
+				State: "StateAttributeMetadata",
+				Status: "StatusAttributeMetadata",
+				Boolean: "BooleanAttributeMetadata",
+			}[column.attributeType] ?? null
+		);
+	};
+	const toRawOption = (option) => ({ Value: option.value, Label: queryLabel(option.label) });
+	const toRawTyped = (column) => {
+		const record = { LogicalName: column.logicalName };
+		if (column.attributeType === "String" || column.attributeType === "Memo") {
+			record.MaxLength = column.attributeType === "Memo" ? 2000 : 100;
+		}
+		if (column.attributeType === "Money" || column.attributeType === "Decimal" || column.attributeType === "Double") {
+			record.Precision = 2;
+		}
+		if (column.attributeType === "DateTime") {
+			record.DateTimeBehavior = { Value: column.behavior };
+			record.Format = column.format;
+		}
+		if (column.targets.length) {
+			record.Targets = column.targets.map((target) => target.logicalName);
+		}
+		if (column.attributeType === "Boolean") {
+			record.OptionSet = { Name: column.logicalName, TrueOption: toRawOption(column.options[1]), FalseOption: toRawOption(column.options[0]) };
+		} else if (column.options.length) {
+			record.OptionSet = { Name: column.logicalName, Options: column.options.map(toRawOption) };
+		}
+		return record;
+	};
+	const queryMetadataResponse = (path) => {
+		const logicalName = path.match(/^EntityDefinitions\(LogicalName='([^']+)'\)/)?.[1];
+		const fixture = logicalName ? queryFixtures[logicalName] : undefined;
+		if (!fixture) {
+			return null;
+		}
+		if (path.includes("/Attributes?")) {
+			const property = QUERY_TYPE_SPECIFIC.find((candidate) => path.includes(candidate));
+			if (property) {
+				return jsonResponse(
+					{ error: { code: "0x0", message: `Could not find a property named '${property}' on type 'Microsoft.Dynamics.CRM.AttributeMetadata'.` } },
+					400
+				);
+			}
+			return jsonResponse({
+				value: fixture.columns.map((column) => ({
+					LogicalName: column.logicalName,
+					SchemaName: column.logicalName,
+					DisplayName: queryLabel(column.displayName),
+					AttributeType: column.attributeType,
+					AttributeTypeName: { Value: column.typeName },
+					AttributeOf: column.attributeOf,
+					IsPrimaryId: column.isPrimaryId,
+					IsPrimaryName: column.isPrimaryName,
+					IsCustomAttribute: column.logicalName.startsWith("new_"),
+					IsLogical: false,
+					IsValidForCreate: !column.isPrimaryId,
+					IsValidForUpdate: !column.isPrimaryId,
+					IsValidForRead: column.isValidForRead,
+					RequiredLevel: { Value: column.isPrimaryName ? "ApplicationRequired" : "None" },
+				})),
+			});
+		}
+		const cast = path.match(/\/Attributes\/Microsoft\.Dynamics\.CRM\.(\w+)\?/)?.[1];
+		if (cast) {
+			return jsonResponse({ value: fixture.columns.filter((column) => queryCastOf(column) === cast).map(toRawTyped) });
+		}
+		if (path.includes("/ManyToOneRelationships?")) {
+			return jsonResponse({
+				value: fixture.manyToOne.map((relationship) => ({
+					ReferencingAttribute: relationship.lookupColumn,
+					ReferencedEntity: relationship.referencedTable,
+					ReferencingEntityNavigationPropertyName: relationship.navigationProperty,
+				})),
+			});
+		}
+		if (path.includes("$expand=ManyToOneRelationships(")) {
+			return jsonResponse({
+				LogicalName: logicalName,
+				ManyToOneRelationships: fixture.manyToOne.map((relationship) => ({
+					SchemaName: relationship.schemaName,
+					ReferencingAttribute: relationship.lookupColumn,
+					ReferencedEntity: relationship.referencedTable,
+					ReferencedAttribute: relationship.referencedColumn,
+					ReferencingEntityNavigationPropertyName: relationship.navigationProperty,
+				})),
+				OneToManyRelationships: fixture.oneToMany.map((relationship) => ({
+					SchemaName: relationship.schemaName,
+					ReferencedAttribute: relationship.referencedColumn,
+					ReferencingEntity: relationship.referencingTable,
+					ReferencingAttribute: relationship.referencingColumn,
+					ReferencedEntityNavigationPropertyName: relationship.navigationProperty,
+				})),
+				ManyToManyRelationships: fixture.manyToMany.map((relationship) => ({
+					SchemaName: relationship.schemaName,
+					IntersectEntityName: relationship.intersectTable,
+					Entity1LogicalName: relationship.first.table,
+					Entity1IntersectAttribute: relationship.first.intersectColumn,
+					Entity1NavigationPropertyName: relationship.first.navigationProperty,
+					Entity2LogicalName: relationship.second.table,
+					Entity2IntersectAttribute: relationship.second.intersectColumn,
+					Entity2NavigationPropertyName: relationship.second.navigationProperty,
+				})),
+			});
+		}
+		return null;
+	};
+	const QUERY_INDUSTRIES = ["Accounting", "Agriculture", "Broadcasting", "Consulting"];
+	const queryAccounts = Array.from({ length: 130 }, (_, i) => {
+		const industry = (i % 4) + 1;
+		const active = i % 7 !== 0;
+		return {
+			"@odata.etag": `W/"${90000 + i}"`,
+			accountid: guid(9000 + i),
+			name: i === 49 ? 'Fourth Coffee & Tea <Ltd> "East"' : `Query Account ${String(i + 1).padStart(3, "0")}`,
+			accountnumber: `AC-${1000 + i}`,
+			revenue: i * 2500,
+			"revenue@OData.Community.Display.V1.FormattedValue": `$${(i * 2500).toLocaleString("en-US")}.00`,
+			numberofemployees: 10 + i,
+			industrycode: industry,
+			"industrycode@OData.Community.Display.V1.FormattedValue": QUERY_INDUSTRIES[industry - 1],
+			statecode: active ? 0 : 1,
+			"statecode@OData.Community.Display.V1.FormattedValue": active ? "Active" : "Inactive",
+			statuscode: active ? 1 : 2,
+			"statuscode@OData.Community.Display.V1.FormattedValue": active ? "Active" : "Inactive",
+			donotemail: i % 5 === 0,
+			"donotemail@OData.Community.Display.V1.FormattedValue": i % 5 === 0 ? "Do Not Allow" : "Allow",
+			...(i % 3
+				? {
+						_primarycontactid_value: guid(9500 + (i % 12)),
+						"_primarycontactid_value@OData.Community.Display.V1.FormattedValue": `Query Contact ${(i % 12) + 1}`,
+						"_primarycontactid_value@Microsoft.Dynamics.CRM.lookuplogicalname": "contact",
+					}
+				: {}),
+			_ownerid_value: guid(501),
+			"_ownerid_value@OData.Community.Display.V1.FormattedValue": "Jane Doe",
+			"_ownerid_value@Microsoft.Dynamics.CRM.lookuplogicalname": "systemuser",
+			createdon: new Date(Date.UTC(2026, 0, 1 + i)).toISOString(),
+			"createdon@OData.Community.Display.V1.FormattedValue": new Date(Date.UTC(2026, 0, 1 + i)).toLocaleString("en-US"),
+		};
+	});
+	const queryContacts = Array.from({ length: 12 }, (_, i) => ({
+		"@odata.etag": `W/"${95000 + i}"`,
+		contactid: guid(9500 + i),
+		fullname: `Query Contact ${i + 1}`,
+		firstname: "Query",
+		lastname: `Contact ${i + 1}`,
+		emailaddress1: `contact${i + 1}@contoso.example`,
+		_parentcustomerid_value: guid(9000 + i),
+		"_parentcustomerid_value@OData.Community.Display.V1.FormattedValue": `Query Account ${String(i + 1).padStart(3, "0")}`,
+		"_parentcustomerid_value@Microsoft.Dynamics.CRM.lookuplogicalname": "account",
+		statecode: 0,
+		"statecode@OData.Community.Display.V1.FormattedValue": "Active",
+	}));
+	const QUERY_SETS = {
+		accounts: { logicalName: "account", primaryId: "accountid", rows: queryAccounts },
+		contacts: { logicalName: "contact", primaryId: "contactid", rows: queryContacts },
+	};
+	const unescapeQueryXml = (value) =>
+		value.replace(/&(lt|gt|quot|apos|amp|#\d+);/g, (_, entity) =>
+			entity.startsWith("#") ? String.fromCharCode(Number(entity.slice(1))) : { lt: "<", gt: ">", quot: '"', apos: "'", amp: "&" }[entity]
+		);
+	const fetchAttribute = (fetchXml, name) => {
+		const open = fetchXml.match(/<fetch\b[^>]*>/)?.[0] ?? "";
+		const match = open.match(new RegExp(`\\s${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)')`));
+		return match ? unescapeQueryXml(match[1] ?? match[2]) : undefined;
+	};
+	const queryError = (status, message) => ({ status, body: { error: { code: "0x80041103", message } } });
+	const queryRunBody = (entitySetName, fetchXml) => {
+		const set = QUERY_SETS[entitySetName];
+		if (!set) {
+			return queryError(404, `Resource not found for the segment '${entitySetName}'.`);
+		}
+		const known = new Set(Object.values(queryFixtures).flatMap((fixture) => fixture.columns.map((column) => column.logicalName)));
+		const unknown = [...fetchXml.matchAll(/<attribute\s+name\s*=\s*["']([^"']+)["']/g)].map((match) => match[1]).find((name) => !known.has(name));
+		if (unknown) {
+			return queryError(400, `'${set.logicalName}' entity doesn't contain attribute with Name = '${unknown}' and NameMapping = 'Logical'.`);
+		}
+		const context = `https://org12345.crm.dynamics.com/api/data/v9.2/$metadata#${entitySetName}`;
+		const top = fetchAttribute(fetchXml, "top");
+		if (fetchAttribute(fetchXml, "aggregate") === "true") {
+			const aliases = [...fetchXml.matchAll(/\salias\s*=\s*["']([^"']+)["']/g)].map((match) => match[1]);
+			return { status: 200, body: { "@odata.context": context, value: [Object.fromEntries(aliases.map((alias) => [alias, set.rows.length]))] } };
+		}
+		if (top !== undefined) {
+			return { status: 200, body: { "@odata.context": context, value: set.rows.slice(0, Number(top)) } };
+		}
+		const count = Number(fetchAttribute(fetchXml, "count") ?? 5000);
+		const page = Number(fetchAttribute(fetchXml, "page") ?? 1);
+		const cookie = fetchAttribute(fetchXml, "paging-cookie");
+		if (page > 1 && cookie !== undefined && !cookie.startsWith(`<cookie page="${page - 1}">`)) {
+			return queryError(400, `harness: the paging cookie for page ${page} must come from page ${page - 1}, got ${cookie.slice(0, 40)}`);
+		}
+		const rows = set.rows.slice((page - 1) * count, page * count);
+		const more = page * count < set.rows.length;
+		const body = { "@odata.context": context };
+		if (fetchAttribute(fetchXml, "returntotalrecordcount") === "true") {
+			body["@odata.count"] = Math.min(set.rows.length, 5000);
+			body["@Microsoft.Dynamics.CRM.totalrecordcount"] = Math.min(set.rows.length, 5000);
+			body["@Microsoft.Dynamics.CRM.totalrecordcountlimitexceeded"] = set.rows.length > 5000;
+		}
+		if (more && rows.length) {
+			const first = rows[0];
+			const last = rows[rows.length - 1];
+			const escape = (value) => String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+			const nameColumn = set.logicalName === "account" ? "name" : "fullname";
+			const inner = `<cookie page="${page}"><${nameColumn} last="${escape(last[nameColumn])}" first="${escape(first[nameColumn])}" /><${set.primaryId} last="{${last[set.primaryId].toUpperCase()}}" first="{${first[set.primaryId].toUpperCase()}}" /></cookie>`;
+			body["@Microsoft.Dynamics.CRM.fetchxmlpagingcookie"] =
+				`<cookie pagenumber="${page + 1}" pagingcookie="${encodeURIComponent(encodeURIComponent(inner))}" istracking="False" />`;
+			body["@Microsoft.Dynamics.CRM.morerecords"] = true;
+		}
+		body.value = rows;
+		return { status: 200, body };
+	};
+	const toQueryRunResult = ({ status, body }) => {
+		if (status !== 200) {
+			const error = new Error(body.error.message);
+			error.name = "DataverseHttpError";
+			throw error;
+		}
+		const encoded = body["@Microsoft.Dynamics.CRM.fetchxmlpagingcookie"]?.match(/\spagingcookie="([^"]*)"/)?.[1];
+		return {
+			rows: body.value,
+			moreRecords: body["@Microsoft.Dynamics.CRM.morerecords"] === true,
+			pagingCookie: encoded ? decodeURIComponent(decodeURIComponent(encoded)) : null,
+			totalRecordCount: body["@Microsoft.Dynamics.CRM.totalrecordcount"] ?? null,
+			totalRecordCountLimitExceeded: body["@Microsoft.Dynamics.CRM.totalrecordcountlimitexceeded"] === true,
+			elapsedMs: 150,
+			annotations: Object.fromEntries(Object.entries(body).filter(([key]) => key.startsWith("@"))),
+		};
+	};
 
 	const harnessFormAttributes = [
 		{
@@ -1614,6 +2091,9 @@
 			},
 			warnings: [],
 		}),
+		"query.listTables": () => queryTableSummaries(),
+		"query.getTable": ({ logicalName }) => toQueryTable(logicalName),
+		"query.runQuery": ({ entitySetName, fetchXml }) => toQueryRunResult(queryRunBody(entitySetName, fetchXml)),
 		"transport.listViews": () => transportViews.map((view) => ({ ...view })),
 		"transport.getEntityMetadata": (args) => ({
 			info: transportEntities.find((entity) => entity.logicalName === args.logicalName) ?? transportEntities[0],
@@ -2318,7 +2798,9 @@
 				try {
 					return [{ frameId: 0, result: { ok: true, value: handler(args) } }];
 				} catch (error) {
-					return [{ frameId: 0, result: { ok: false, error: { name: "Error", message: String(error) } } }];
+					const commandError =
+						error instanceof Error ? { name: error.name || "Error", message: error.message } : { name: "Error", message: String(error) };
+					return [{ frameId: 0, result: { ok: false, error: commandError } }];
 				}
 			},
 		},

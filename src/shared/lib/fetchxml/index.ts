@@ -1,5 +1,6 @@
 export * from "./edit";
 export * from "./operators";
+export * from "./paging";
 export * from "./parse";
 export * from "./paths";
 export * from "./placement";

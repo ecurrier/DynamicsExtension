@@ -27,3 +27,7 @@ Acceptance (in the harness):
 - Deleting a closing tag shows the error banner and disables Run; restoring it re-enables Run.
 - The dividers drag, and each pane collapses and restores.
 - No console errors. `npm run typecheck`, `npm run lint` and `npm test` pass. Verify in the harness and include a screenshot in your report.
+
+## Notes from earlier issues
+
+Read the `## Comments` section of issue 03 before starting: it has the Gateway hook, the operation shapes, `pagedFetchXml`, and how errors differ by Connection. The harness fixtures already exist (account, contact, 130 accounts in pages of 50); this issue adds the `harness-query-builder` page and its seeded launch payload.
