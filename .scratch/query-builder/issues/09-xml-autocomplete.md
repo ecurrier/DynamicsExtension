@@ -29,3 +29,24 @@ Acceptance:
 - Unit tests for context detection: each position above, in valid XML and in XML broken ahead of and behind the cursor, nested link-entities resolving to the right Table, and a condition inside a link-entity's filter.
 - In the harness: typing `<condition attribute="` inside the account entity's filter offers account Columns, and inside the contact link-entity's filter offers contact Columns; `operator="` after a Choice Column offers the list operators and not `like`.
 - `npm run typecheck`, `npm run lint` and `npm test` pass. Verify in the harness and include a screenshot.
+
+## Comments
+
+2026-11-22: the pure-logic half is done (Opus worker, reviewed; 85 tests). What remains is the CodeMirror adapter and attaching it to the XML pane.
+
+In `src/query-builder/editor/` (barrel `index.ts`, no CodeMirror imports):
+
+- `completionContextAt(text, offset)` returns a `CompletionContext`: `element-name`, `closing-tag`, `attribute-name`, `attribute-value` (with a resolved `scope`: owning Table, links, aliases, `valueof` targets, the condition's Column), `value-text` (the body of a `<value>`), or `none`. Every kind but `none` carries `from`, `to` and `typed`. It reads the error-tolerant Lezer tree, after two small repairs to unterminated values and tags, so it works on XML that does not parse.
+- `completionsFor(context, metadata, { names, tables })` returns `{ from, to, typed, items, pendingTables }`. An item is `{ label, value, detail?, description?, kind, rank, apply?: { insert, cursorOffset } }`, already sorted, lower rank first.
+
+What the adapter has to do:
+
+1. Call both with the document text and cursor position; return null when there are no items.
+2. Request the Tables in `pendingTables` through the shared Table metadata loader, and call `startCompletion` again when they arrive.
+3. Map each item to `{ label, detail, info: description, type: kind, boost: -rank }`.
+4. `apply` is `item.value`, or, when the item has `apply`, a function that dispatches `{ changes: { from, to, insert }, selection: { anchor: from + cursorOffset } }`.
+5. CodeMirror filters on `label` only. To match on display names and operator meanings too (spec decision 28), filter in the source on `label`, `detail` and `value` and return the result with `filter: false`.
+
+Decide in the adapter step: accepting `<condition` inserts only `operator=""`, because the catalogue marks only `operator` as required. It should insert `attribute="" operator=""` with the cursor in `attribute`; special-case it in `completions.ts`.
+
+Known limits: the scope rules here are a second copy of those in `@/shared/lib/fetchxml` `metadata.ts` (they have to run on text that does not parse), so a change to one must be made in both. The cursor just before an opening quote, or after `<` followed by a space, completes nothing. An unclosed `<condition>` swallows what follows it, so only `value` is offered there until it is closed.
