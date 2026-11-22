@@ -1,3 +1,4 @@
+import { type Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { makeStyles, mergeClasses, tokens } from "@fluentui/react-components";
 import CodeMirror from "@uiw/react-codemirror";
@@ -35,7 +36,11 @@ export interface CodeEditorProps {
 	placeholder?: string;
 	lineWrapping?: boolean;
 	fill?: boolean;
+	extensions?: readonly Extension[];
+	onCreateEditor?: (view: EditorView) => void;
 }
+
+const NO_EXTENSIONS: readonly Extension[] = [];
 
 export const CodeEditor = ({
 	value,
@@ -47,10 +52,15 @@ export const CodeEditor = ({
 	placeholder,
 	lineWrapping = true,
 	fill = false,
+	extensions: extra = NO_EXTENSIONS,
+	onCreateEditor,
 }: CodeEditorProps) => {
 	const styles = useStyles();
 	const mode = useResolvedTheme();
-	const extensions = useMemo(() => [languageExtension(language), ...(lineWrapping ? [EditorView.lineWrapping] : [])], [language, lineWrapping]);
+	const extensions = useMemo(
+		() => [languageExtension(language), ...(lineWrapping ? [EditorView.lineWrapping] : []), ...extra],
+		[language, lineWrapping, extra]
+	);
 	return (
 		<div className={mergeClasses(styles.root, fill && styles.fill)}>
 			<CodeMirror
@@ -63,6 +73,7 @@ export const CodeEditor = ({
 				editable={!readOnly}
 				placeholder={placeholder}
 				onChange={onChange}
+				onCreateEditor={onCreateEditor}
 				basicSetup={{
 					lineNumbers: true,
 					foldGutter: !readOnly,

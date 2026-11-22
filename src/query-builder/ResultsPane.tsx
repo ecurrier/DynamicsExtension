@@ -18,7 +18,7 @@ import { useMemo, useState } from "react";
 import { type ConnectionTarget } from "@/shared/connections";
 import { useSessionStore } from "@/shared/stores";
 
-import { useQueryGateway, useResultTables } from "./hooks";
+import { useQueryGateway, useQueryTables } from "./hooks";
 import {
 	connectionRecordAppUrl,
 	deriveResultColumns,
@@ -148,7 +148,7 @@ export const ResultsPane = ({
 
 	const query = run.source?.query ?? null;
 	const tableNames = useMemo(() => queryTableNames(query), [query]);
-	const tables = useResultTables(gateway, tableNames);
+	const { tables } = useQueryTables(gateway, tableNames);
 	const columns = useMemo(() => deriveResultColumns(query, run.rows, tables), [query, run.rows, tables]);
 	const appUrl = connectionRecordAppUrl(connection, { environmentUrl: gateway.environment?.modelDrivenAppUrl ?? null, tabUrl });
 	const visible = displayWindow(run.rows.length, current.page);

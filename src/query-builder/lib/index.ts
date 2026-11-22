@@ -6,4 +6,8 @@ export * from "./resultColumn";
 export * from "./results";
 export * from "./resultsView";
 export * from "./rootTable";
+export * from "./rowSummary";
 export * from "./textPosition";
+export * from "./treeEdits";
+export * from "./treePaths";
+export * from "./treeRows";

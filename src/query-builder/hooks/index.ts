@@ -1,2 +1,2 @@
 export * from "./useQueryGateway";
-export * from "./useResultTables";
+export * from "./useQueryTables";

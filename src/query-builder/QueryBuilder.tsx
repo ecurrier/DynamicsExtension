@@ -12,10 +12,10 @@ import { useQueryGateway } from "./hooks";
 import { connectionLabel } from "./lib";
 import { CollapsedPane } from "./PaneChrome";
 import { QueryBuilderHeader } from "./QueryBuilderHeader";
+import { QueryTree } from "./QueryTree";
 import { ResultsPane } from "./ResultsPane";
 import { Splitter, SPLITTER_THICKNESS } from "./Splitter";
 import { createQueryBuilderStore, QueryBuilderStoreContext, useQueryBuilder } from "./store";
-import { TreePlaceholder } from "./TreePlaceholder";
 import { connectionFor, type QueryBuilderBootstrapStatus } from "./useQueryBuilderBootstrap";
 import { useQueryRun } from "./useQueryRun";
 import { XmlPane } from "./XmlPane";
@@ -116,6 +116,8 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 	const resizePane = useQueryBuilder((state) => state.resizePane);
 	const togglePane = useQueryBuilder((state) => state.togglePane);
 	const setResultsMaximised = useQueryBuilder((state) => state.setResultsMaximised);
+	const namesLead = useQueryBuilder((state) => state.namesLead);
+	const setNamesLead = useQueryBuilder((state) => state.setNamesLead);
 	const gateway = useQueryGateway(connection);
 	const connectionName = connectionLabel(connection, byId);
 	const { run: runQuery, nextPage, loadAll, keepLoading, stop } = useQueryRun(gateway, connectionName);
@@ -166,7 +168,9 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 				connecting={connect.running}
 				canRun={canRun}
 				running={running}
+				namesLead={namesLead}
 				onConnectionChange={onConnectionChange}
+				onNamesLeadChange={setNamesLead}
 				onRun={() => void runQuery()}
 			/>
 			<FailureBanner />
@@ -180,7 +184,7 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 							aria-label="Tree"
 							className={mergeClasses(styles.pane, styles.tree, collapsed.xml && styles.treeAlone)}
 							style={collapsed.xml ? undefined : { width: `${layout.treeWidth}px` }}>
-							<TreePlaceholder onCollapse={() => togglePane("tree")} />
+							<QueryTree onCollapse={() => togglePane("tree")} />
 						</section>
 					)}
 					{collapsed.tree || collapsed.xml ? null : (

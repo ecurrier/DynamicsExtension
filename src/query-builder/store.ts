@@ -2,12 +2,25 @@ import { createContext, useContext } from "react";
 import { createStore, type StoreApi, useStore } from "zustand";
 
 import { type ConnectionTarget } from "@/shared/connections";
-import { type FetchXmlDocument, type FetchXmlParseError, type NodePath, parseFetchXml } from "@/shared/lib/fetchxml";
+import { type FetchXmlDocument, type FetchXmlParseError, type NodePath, parseFetchXml, pathAtOffset, serializeFetchXml } from "@/shared/lib/fetchxml";
 import { type QueryRow, type QueryRunResult } from "@/shared/types";
 
-import { type ResultsPaging } from "./lib";
+import {
+	ancestorKeys,
+	type ChangeResult,
+	type NamesLead,
+	pathKey,
+	type QueryChange,
+	remapKeys,
+	remapPath,
+	type ResultsPaging,
+	rowPathOf,
+	samePath,
+} from "./lib";
 
 export const PARSE_DELAY_MS = 300;
+
+export const HISTORY_LIMIT = 100;
 
 export type QueryRunStatus = "idle" | "running" | "done" | "failed";
 
@@ -58,17 +71,52 @@ export interface ParsedQuery {
 	errors: readonly FetchXmlParseError[];
 }
 
+export type SelectionOrigin = "tree" | "editor";
+
+export interface TreeSnapshot {
+	text: string;
+	selectedPath: NodePath | null;
+	collapsed: ReadonlySet<string>;
+}
+
+export interface HistoryEntry {
+	before: TreeSnapshot;
+	after: TreeSnapshot;
+}
+
+export interface TreeHistory {
+	undo: readonly HistoryEntry[];
+	redo: readonly HistoryEntry[];
+}
+
+export interface EditorHistory {
+	undo: () => boolean;
+	redo: () => boolean;
+}
+
 export interface QueryBuilderState extends ParsedQuery {
 	connection: ConnectionTarget;
 	text: string;
 	parsedText: string;
 	selectedPath: NodePath | null;
+	selectionOrigin: SelectionOrigin;
+	collapsed: ReadonlySet<string>;
+	namesLead: NamesLead;
+	history: TreeHistory;
 	run: QueryRunState;
 	layout: PaneLayout;
 	setText: (text: string) => void;
 	parseNow: () => ParsedQuery;
 	setConnection: (connection: ConnectionTarget) => void;
-	select: (path: NodePath | null) => void;
+	select: (path: NodePath | null, origin?: SelectionOrigin) => void;
+	selectAtOffset: (offset: number) => void;
+	setExpanded: (path: NodePath, open: boolean) => void;
+	setNamesLead: (lead: NamesLead) => void;
+	edit: (build: (query: FetchXmlDocument) => ChangeResult) => ChangeResult;
+	applyChange: (change: QueryChange) => void;
+	undo: () => void;
+	redo: () => void;
+	attachEditor: (editor: EditorHistory) => () => void;
 	startRun: () => number;
 	finishRun: (id: number, result: QueryRunResult, source?: QueryRunSource | null) => void;
 	failRun: (id: number, message: string) => void;
@@ -116,6 +164,25 @@ const idleRun = (id: number): QueryRunState => ({
 	awaitingLimitConfirmation: false,
 });
 
+const EMPTY_HISTORY: TreeHistory = { undo: [], redo: [] };
+
+const NO_KEYS: ReadonlySet<string> = new Set();
+
+const withoutAncestors = (collapsed: ReadonlySet<string>, path: NodePath | null): ReadonlySet<string> => {
+	if (path === null) {
+		return collapsed;
+	}
+	const keys = ancestorKeys(path);
+	if (!keys.some((key) => collapsed.has(key))) {
+		return collapsed;
+	}
+	const next = new Set(collapsed);
+	keys.forEach((key) => next.delete(key));
+	return next;
+};
+
+const snapshotOf = (state: QueryBuilderState): TreeSnapshot => ({ text: state.text, selectedPath: state.selectedPath, collapsed: state.collapsed });
+
 const updateRun = (state: QueryBuilderState, id: number, update: (run: QueryRunState) => Partial<QueryRunState>): Partial<QueryBuilderState> =>
 	state.run.id === id ? { run: { ...state.run, ...update(state.run) } } : state;
 
@@ -136,7 +203,20 @@ export const createQueryBuilderStore = ({ connection, fetchXml }: QueryBuilderIn
 		}
 	};
 	const text = fetchXml ?? "";
+	let pendingOffset: number | null = null;
+	let editor: EditorHistory | null = null;
 	return createStore<QueryBuilderState>()((set, get) => {
+		const selectionAt = (query: FetchXmlDocument, offset: number): NodePath | null => {
+			const path = pathAtOffset(query, offset);
+			return path === undefined ? null : rowPathOf(query, path);
+		};
+		const selectFromEditor = (path: NodePath | null) => {
+			const state = get();
+			if (samePath(state.selectedPath, path) && state.selectionOrigin === "editor") {
+				return;
+			}
+			set({ selectedPath: path, selectionOrigin: "editor", collapsed: withoutAncestors(state.collapsed, path) });
+		};
 		const applyParse = (): ParsedQuery => {
 			cancelParse();
 			const state = get();
@@ -145,7 +225,40 @@ export const createQueryBuilderStore = ({ connection, fetchXml }: QueryBuilderIn
 			}
 			const parsed = parseQueryText(state.text, state.query);
 			set({ ...parsed, parsedText: state.text });
+			if (pendingOffset !== null && parsed.errors.length === 0 && parsed.query) {
+				const offset = pendingOffset;
+				pendingOffset = null;
+				selectFromEditor(selectionAt(parsed.query, offset));
+			}
 			return parsed;
+		};
+		const restore = (snapshot: TreeSnapshot, history: TreeHistory) => {
+			cancelParse();
+			pendingOffset = null;
+			const parsed = parseQueryText(snapshot.text, get().query);
+			set({
+				...parsed,
+				text: snapshot.text,
+				parsedText: snapshot.text,
+				selectedPath: snapshot.selectedPath,
+				selectionOrigin: "tree",
+				collapsed: snapshot.collapsed,
+				history,
+			});
+		};
+		const travel = (next: string): boolean => {
+			const { text: current, history } = get();
+			const undone = history.undo.at(-1);
+			if (undone && undone.after.text === current && undone.before.text === next) {
+				restore(undone.before, { undo: history.undo.slice(0, -1), redo: [...history.redo, undone] });
+				return true;
+			}
+			const redone = history.redo.at(-1);
+			if (redone && redone.before.text === current && redone.after.text === next) {
+				restore(redone.after, { undo: [...history.undo, redone], redo: history.redo.slice(0, -1) });
+				return true;
+			}
+			return false;
 		};
 		return {
 			connection,
@@ -153,16 +266,104 @@ export const createQueryBuilderStore = ({ connection, fetchXml }: QueryBuilderIn
 			parsedText: text,
 			...parseQueryText(text, null),
 			selectedPath: null,
+			selectionOrigin: "tree",
+			collapsed: NO_KEYS,
+			namesLead: "logical",
+			history: EMPTY_HISTORY,
 			run: idleRun(0),
 			layout: DEFAULT_LAYOUT,
 			setText: (next) => {
+				if (next === get().text || travel(next)) {
+					return;
+				}
 				set({ text: next });
 				cancelParse();
 				timer = setTimeout(applyParse, PARSE_DELAY_MS);
 			},
 			parseNow: applyParse,
 			setConnection: (next) => set((state) => ({ connection: next, run: idleRun(state.run.id + 1) })),
-			select: (path) => set({ selectedPath: path }),
+			select: (path, origin = "tree") => {
+				const state = get();
+				if (samePath(state.selectedPath, path) && state.selectionOrigin === origin) {
+					return;
+				}
+				set({ selectedPath: path, selectionOrigin: origin, collapsed: withoutAncestors(state.collapsed, path) });
+			},
+			selectAtOffset: (offset) => {
+				const state = get();
+				if (state.parsedText === state.text && state.query && state.errors.length === 0) {
+					pendingOffset = null;
+					selectFromEditor(selectionAt(state.query, offset));
+					return;
+				}
+				pendingOffset = offset;
+			},
+			setExpanded: (path, open) => {
+				const { collapsed } = get();
+				const key = pathKey(path);
+				if (collapsed.has(key) !== open) {
+					return;
+				}
+				const next = new Set(collapsed);
+				if (open) {
+					next.delete(key);
+				} else {
+					next.add(key);
+				}
+				set({ collapsed: next });
+			},
+			setNamesLead: (lead) => set({ namesLead: lead }),
+			edit: (build) => {
+				const { query, errors } = applyParse();
+				if (!query || errors.length > 0) {
+					return { ok: false, reason: "The Fetch XML does not parse" };
+				}
+				const result = build(query);
+				if (result.ok) {
+					get().applyChange(result.change);
+				}
+				return result;
+			},
+			applyChange: (change) => {
+				const state = get();
+				const nextText = serializeFetchXml(change.document);
+				const selectedPath = change.select ?? (state.selectedPath === null ? null : remapPath(state.selectedPath, change.shift));
+				const after: TreeSnapshot = {
+					text: nextText,
+					selectedPath,
+					collapsed: withoutAncestors(remapKeys(state.collapsed, change.shift), selectedPath),
+				};
+				const entry: HistoryEntry = { before: snapshotOf(state), after };
+				restore(after, { undo: [...state.history.undo, entry].slice(-HISTORY_LIMIT), redo: [] });
+			},
+			undo: () => {
+				if (editor?.undo()) {
+					return;
+				}
+				const { history, text: current } = get();
+				const entry = history.undo.at(-1);
+				if (entry && entry.after.text === current) {
+					travel(entry.before.text);
+				}
+			},
+			redo: () => {
+				if (editor?.redo()) {
+					return;
+				}
+				const { history, text: current } = get();
+				const entry = history.redo.at(-1);
+				if (entry && entry.before.text === current) {
+					travel(entry.after.text);
+				}
+			},
+			attachEditor: (next) => {
+				editor = next;
+				return () => {
+					if (editor === next) {
+						editor = null;
+					}
+				};
+			},
 			startRun: () => {
 				const { run, connection: current } = get();
 				const id = run.id + 1;
