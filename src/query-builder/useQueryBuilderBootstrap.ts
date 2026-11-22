@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { ensurePageBridge } from "@/messaging/client";
 import { type ConnectionTarget } from "@/shared/connections";
+import { getTabById } from "@/shared/extension";
 import { queryBuilderLaunchItem } from "@/shared/storage";
 import { useSessionStore } from "@/shared/stores";
 import { type QueryBuilderLaunch } from "@/shared/types";
@@ -27,8 +28,9 @@ export const useQueryBuilderBootstrap = () => {
 			if (launch.tabId !== null) {
 				try {
 					await ensurePageBridge(launch.tabId);
+					const tab = await getTabById(launch.tabId);
 					if (active) {
-						setTab(launch.tabId, null);
+						setTab(launch.tabId, tab?.url ?? null);
 						setBridgeStatus("ready");
 					}
 				} catch {

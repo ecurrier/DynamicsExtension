@@ -1087,6 +1087,30 @@
 		return match ? unescapeQueryXml(match[1] ?? match[2]) : undefined;
 	};
 	const queryError = (status, message) => ({ status, body: { error: { code: "0x80041103", message } } });
+	const linkedContactRows = (rows, fetchXml) => {
+		const link = fetchXml.match(/<link-entity\b([^>]*)>([\s\S]*?)<\/link-entity>/);
+		if (!link || !/\sname\s*=\s*["']contact["']/.test(link[1])) {
+			return rows;
+		}
+		const prefix = link[1].match(/\salias\s*=\s*["']([^"']+)["']/)?.[1] ?? "contact1";
+		const columns = [...link[2].matchAll(/<attribute\s+name\s*=\s*["']([^"']+)["']/g)].map((match) => match[1]);
+		return rows.map((row) => {
+			const contact = queryContacts.find((candidate) => candidate.contactid === row._primarycontactid_value);
+			if (!contact) {
+				return row;
+			}
+			const linked = {};
+			for (const column of columns) {
+				const key = contact[column] !== undefined ? column : `_${column}_value`;
+				for (const [name, value] of Object.entries(contact)) {
+					if (name === key || name.startsWith(`${key}@`)) {
+						linked[`${prefix}.${column}${name.slice(key.length)}`] = value;
+					}
+				}
+			}
+			return { ...row, ...linked };
+		});
+	};
 	const queryRunBody = (entitySetName, fetchXml) => {
 		const set = QUERY_SETS[entitySetName];
 		if (!set) {
@@ -1112,7 +1136,7 @@
 		if (page > 1 && cookie !== undefined && !cookie.startsWith(`<cookie page="${page - 1}">`)) {
 			return queryError(400, `harness: the paging cookie for page ${page} must come from page ${page - 1}, got ${cookie.slice(0, 40)}`);
 		}
-		const rows = set.rows.slice((page - 1) * count, page * count);
+		const rows = linkedContactRows(set.rows.slice((page - 1) * count, page * count), fetchXml);
 		const more = page * count < set.rows.length;
 		const body = { "@odata.context": context };
 		if (fetchAttribute(fetchXml, "returntotalrecordcount") === "true") {

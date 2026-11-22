@@ -87,6 +87,17 @@ const useStyles = makeStyles({
 	resultsCollapsed: {
 		minHeight: 0,
 	},
+	resultsMaximised: {
+		flexGrow: 1,
+		flexShrink: 1,
+		flexBasis: 0,
+		minHeight: 0,
+		maxHeight: "none",
+		borderTopStyle: "none",
+	},
+	hidden: {
+		display: "none",
+	},
 });
 
 interface QueryBuilderWorkspaceProps {
@@ -104,13 +115,15 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 	const layout = useQueryBuilder((state) => state.layout);
 	const resizePane = useQueryBuilder((state) => state.resizePane);
 	const togglePane = useQueryBuilder((state) => state.togglePane);
+	const setResultsMaximised = useQueryBuilder((state) => state.setResultsMaximised);
 	const gateway = useQueryGateway(connection);
 	const connectionName = connectionLabel(connection, byId);
-	const { run: runQuery } = useQueryRun(gateway, connectionName);
+	const { run: runQuery, nextPage, loadAll, keepLoading, stop } = useQueryRun(gateway, connectionName);
 	const connect = useAsyncAction("Could not switch connection");
-	const running = run.status === "running";
+	const running = run.status === "running" || run.paging !== "idle";
 	const canRun = gateway.ready && text.trim() !== "" && errors.length === 0 && !running;
-	const { collapsed } = layout;
+	const { collapsed, resultsMaximised: maximised } = layout;
+	const resultsCollapsed = collapsed.results && !maximised;
 
 	const onConnectionChange = (target: ConnectionTarget) =>
 		void connect.run(async () => {
@@ -126,6 +139,13 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 			setConnection(target);
 		});
 
+	const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+		if (event.key === "Escape" && maximised && !event.defaultPrevented) {
+			event.preventDefault();
+			setResultsMaximised(false);
+		}
+	};
+
 	const onKeyDownCapture = (event: KeyboardEvent<HTMLDivElement>) => {
 		if (event.key !== "Enter" || !(event.ctrlKey || event.metaKey)) {
 			return;
@@ -138,7 +158,7 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 	};
 
 	return (
-		<div className={styles.root} onKeyDownCapture={onKeyDownCapture}>
+		<div className={styles.root} onKeyDownCapture={onKeyDownCapture} onKeyDown={onKeyDown}>
 			<QueryBuilderHeader
 				hosted={hosted}
 				connection={connection}
@@ -151,7 +171,7 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 			/>
 			<FailureBanner />
 			<div className={styles.body}>
-				<div className={styles.editors}>
+				<div className={mergeClasses(styles.editors, maximised && styles.hidden)}>
 					{collapsed.tree ? (
 						<CollapsedPane title="Tree" icon={PanelLeftExpand20Regular} label="Restore the tree" onRestore={() => togglePane("tree")} />
 					) : (
@@ -183,7 +203,7 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 						</section>
 					)}
 				</div>
-				{collapsed.results ? null : (
+				{resultsCollapsed || maximised ? null : (
 					<Splitter
 						orientation="horizontal"
 						reverse
@@ -199,14 +219,21 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 				<section
 					id={RESULTS_PANE_ID}
 					aria-label="Results"
-					className={mergeClasses(styles.pane, styles.results, collapsed.results && styles.resultsCollapsed)}
-					style={collapsed.results ? undefined : { height: `${layout.resultsHeight}px` }}>
+					className={mergeClasses(styles.pane, styles.results, resultsCollapsed && styles.resultsCollapsed, maximised && styles.resultsMaximised)}
+					style={resultsCollapsed || maximised ? undefined : { height: `${layout.resultsHeight}px` }}>
 					<ResultsPane
-						collapsed={collapsed.results}
+						run={run}
+						connection={run.connection ?? connection}
+						connectionName={run.connection ? connectionLabel(run.connection, byId) : connectionName}
 						ready={gateway.ready}
-						connectionName={connectionName}
-						runConnectionName={run.connection ? connectionLabel(run.connection, byId) : connectionName}
+						collapsed={collapsed.results}
+						maximised={maximised}
 						onToggle={() => togglePane("results")}
+						onMaximisedChange={setResultsMaximised}
+						onNextPage={nextPage}
+						onLoadAll={loadAll}
+						onKeepLoading={keepLoading}
+						onStop={stop}
 					/>
 				</section>
 			</div>

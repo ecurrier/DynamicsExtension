@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { compareQueryRuns, columnLogicalName, type ComparisonOptions, type QueryRunRecord, type ResultColumn, suggestComparedColumns } from "./comparison";
+import { compareQueryRuns, type ComparisonOptions, suggestComparedColumns } from "./comparison";
+import { columnLogicalName, type QueryRunRecord, type ResultColumn } from "./resultColumn";
 
 const FORMATTED = "@OData.Community.Display.V1.FormattedValue";
 const LOOKUP_TABLE = "@Microsoft.Dynamics.CRM.lookuplogicalname";

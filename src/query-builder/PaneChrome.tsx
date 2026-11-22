@@ -43,13 +43,13 @@ const useStyles = makeStyles({
 	},
 });
 
-interface PaneToggleProps {
+interface PaneButtonProps {
 	icon: FluentIcon;
 	label: string;
 	onClick: () => void;
 }
 
-const PaneToggle = ({ icon: Icon, label, onClick }: PaneToggleProps) => (
+export const PaneButton = ({ icon: Icon, label, onClick }: PaneButtonProps) => (
 	<Tooltip content={label} relationship="label">
 		<Button appearance="subtle" size="small" icon={<Icon />} onClick={onClick} />
 	</Tooltip>
@@ -59,17 +59,19 @@ interface PaneHeaderProps {
 	title: string;
 	toggleIcon: FluentIcon;
 	toggleLabel: string;
-	onToggle: () => void;
+	onToggle?: () => void;
+	actions?: ReactNode;
 	children?: ReactNode;
 }
 
-export const PaneHeader = ({ title, toggleIcon, toggleLabel, onToggle, children }: PaneHeaderProps) => {
+export const PaneHeader = ({ title, toggleIcon, toggleLabel, onToggle, actions, children }: PaneHeaderProps) => {
 	const styles = useStyles();
 	return (
 		<div className={styles.header}>
 			<Caption1Strong className={styles.title}>{title}</Caption1Strong>
 			<div className={styles.middle}>{children}</div>
-			<PaneToggle icon={toggleIcon} label={toggleLabel} onClick={onToggle} />
+			{actions}
+			{onToggle ? <PaneButton icon={toggleIcon} label={toggleLabel} onClick={onToggle} /> : null}
 		</div>
 	);
 };
@@ -85,7 +87,7 @@ export const CollapsedPane = ({ title, icon, label, onRestore }: CollapsedPanePr
 	const styles = useStyles();
 	return (
 		<div className={styles.strip}>
-			<PaneToggle icon={icon} label={label} onClick={onRestore} />
+			<PaneButton icon={icon} label={label} onClick={onRestore} />
 			<Caption1Strong className={styles.stripLabel}>{title}</Caption1Strong>
 		</div>
 	);

@@ -1,6 +1,6 @@
 # Results pane
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Phase: 1
 Blocked by: 04
@@ -26,3 +26,16 @@ Acceptance:
 - `npm run typecheck`, `npm run lint` and `npm test` pass. Verify in the harness and include a screenshot.
 
 Needs a real org (issue 14): the exact keys linked-Table Columns arrive under, with and without an alias.
+
+## Comments
+
+Resolved 2026-11-22. Built by an Opus worker, reviewed and verified (typecheck, lint, tests, and in the harness: Next page took the account Query from 50 to 100 Records loaded, with friendly values and Record links).
+
+- Pure logic in `src/query-builder/lib/`: `resultColumn.ts` (the shared `ResultColumn` type, moved out of `comparison.ts`), `results.ts` (`deriveResultColumns` returns `ResultGridColumn`, which adds the Table, Column and a primary-key flag; friendly and raw values), `recordLinks.ts`, `resultsView.ts` (display paging, the Load all decision with the 50,000 check, the status text).
+- `hooks/useResultTables` loads `getTable` for each Table a Query names, keyed by `gateway.key`.
+- Components: `ResultsPane` (takes a Query Run and its Connection as props), `ResultsGrid`, `ResultsJson`. The store's Query Run holds every loaded page, the paging state, a stop flag and the 50,000 pause; `layout.resultsMaximised` holds the maximise state.
+- Decisions made here: client-side sorting of the grid is off, because sorting only the loaded Records would mislead; a display page is 50 rows; empty values are blank cells.
+
+For issue 15: `ResultsPane` can be instantiated once per Connection, but its paging callbacks are tied to the single Query Run in the store, so the store needs one run per Connection.
+
+Needs a real org (for issue 14's checklist): the keys linked-Table Columns arrive under, with an alias (`a.col`, `a._col_value`) and without one; the key for an aliased root lookup; that null values are left out of rows; that the source tab's URL is readable for a Record link over a Page connection. The JSON view rebuilds each response from its annotations and rows, so key order may differ from the real response.

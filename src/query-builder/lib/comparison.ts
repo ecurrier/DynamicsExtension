@@ -1,14 +1,6 @@
 import { normalizeGuid } from "@/shared/lib";
 
-export type QueryRunRecord = Readonly<Record<string, unknown>>;
-
-export type ResultColumnType = "text" | "number" | "date" | "choice" | "boolean" | "lookup" | "uniqueidentifier";
-
-export interface ResultColumn {
-	key: string;
-	label: string;
-	type: ResultColumnType;
-}
+import { columnLogicalName, FORMATTED_VALUE_SUFFIX, type QueryRunRecord, type ResultColumn } from "./resultColumn";
 
 export type MatchKey = { kind: "primaryKey" } | { kind: "columns"; columns: readonly string[] };
 
@@ -77,19 +69,9 @@ export interface Comparison {
 	comparedColumns: ResultColumn[];
 }
 
-export const FORMATTED_VALUE_SUFFIX = "@OData.Community.Display.V1.FormattedValue";
-
 const BOOKKEEPING_COLUMNS: ReadonlySet<string> = new Set(["createdon", "createdby", "createdonbehalfby", "modifiedon", "modifiedby", "modifiedonbehalfby"]);
 
 const KEY_SEPARATOR = "\u001f";
-
-const LOOKUP_KEY_PATTERN = /^_(.+)_value$/;
-
-export const columnLogicalName = (key: string): string => {
-	const column = key.slice(key.lastIndexOf(".") + 1);
-	const lookup = LOOKUP_KEY_PATTERN.exec(column);
-	return lookup?.[1] ?? column;
-};
 
 const single = (records: readonly QueryRunRecord[]): QueryRunRecord | null => (records.length === 1 ? (records[0] ?? null) : null);
 
