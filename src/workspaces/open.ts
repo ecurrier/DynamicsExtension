@@ -1,7 +1,14 @@
 import { browser } from "wxt/browser";
 
 import { openExtensionPage } from "@/shared/extension";
-import { resultsShareItem, schemaToolsLaunchItem, securityToolsLaunchItem, traceViewerLaunchItem, transporterLaunchItem } from "@/shared/storage";
+import {
+	queryBuilderLaunchItem,
+	resultsShareItem,
+	schemaToolsLaunchItem,
+	securityToolsLaunchItem,
+	traceViewerLaunchItem,
+	transporterLaunchItem,
+} from "@/shared/storage";
 import { type WorkspaceLaunch } from "@/shared/types";
 
 import { WORKSPACE_PAGES } from "./pages";
@@ -19,6 +26,8 @@ const persistLaunch = (workspace: WorkspaceLaunch): Promise<void> => {
 			return securityToolsLaunchItem.setValue(workspace.launch);
 		case "schema-tools":
 			return schemaToolsLaunchItem.setValue(workspace.launch);
+		case "query-builder":
+			return queryBuilderLaunchItem.setValue(workspace.launch);
 	}
 };
 

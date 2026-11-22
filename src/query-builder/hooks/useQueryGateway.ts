@@ -9,3 +9,5 @@ export const queryGateway = defineGateway({
 });
 
 export const useQueryGateway = (connection: ConnectionTarget) => useGateway(queryGateway, connection);
+
+export type QueryGateway = ReturnType<typeof useQueryGateway>;

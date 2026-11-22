@@ -20,7 +20,14 @@ export interface SchemaToolsLaunch {
 	launchedAt: string;
 }
 
-export type WorkspaceId = "data-transporter" | "plugin-traces" | "results-viewer" | "security-tools" | "schema-tools";
+export interface QueryBuilderLaunch {
+	tabId: number | null;
+	environmentId: string | null;
+	fetchXml: string | null;
+	launchedAt: string;
+}
+
+export type WorkspaceId = "data-transporter" | "plugin-traces" | "results-viewer" | "security-tools" | "schema-tools" | "query-builder";
 
 export type WorkspaceTarget = "window" | "tab";
 
@@ -29,4 +36,5 @@ export type WorkspaceLaunch =
 	| { id: "plugin-traces"; launch: TraceViewerLaunch }
 	| { id: "results-viewer"; share: ResultsShare }
 	| { id: "security-tools"; launch: SecurityToolsLaunch }
-	| { id: "schema-tools"; launch: SchemaToolsLaunch };
+	| { id: "schema-tools"; launch: SchemaToolsLaunch }
+	| { id: "query-builder"; launch: QueryBuilderLaunch };

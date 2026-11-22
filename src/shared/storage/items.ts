@@ -5,6 +5,7 @@ import {
 	type CodegenPreferences,
 	EMPTY_CODEGEN_PREFERENCES,
 	type ImpersonationStates,
+	type QueryBuilderLaunch,
 	type ResultsShare,
 	type TemplateDefaults,
 	type SchemaToolsLaunch,
@@ -90,6 +91,11 @@ export const securityToolsLaunchItem: StorageItem<SecurityToolsLaunch | null> = 
 
 export const schemaToolsLaunchItem: StorageItem<SchemaToolsLaunch | null> = storage.defineItem<SchemaToolsLaunch | null, Record<string, unknown>>(
 	"session:schemaToolsLaunch",
+	{ fallback: null }
+);
+
+export const queryBuilderLaunchItem: StorageItem<QueryBuilderLaunch | null> = storage.defineItem<QueryBuilderLaunch | null, Record<string, unknown>>(
+	"session:queryBuilderLaunch",
 	{ fallback: null }
 );
 

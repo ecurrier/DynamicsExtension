@@ -2623,6 +2623,26 @@
 				environmentId: null,
 				launchedAt: new Date().toISOString(),
 			},
+			queryBuilderLaunch: {
+				tabId: 1,
+				environmentId: new URLSearchParams(location.search).get("queryConnection") === "environment" ? "env-dev" : null,
+				fetchXml:
+					new URLSearchParams(location.search).get("queryFetchXml") === "account"
+						? [
+								'<fetch version="1.0" mapping="logical">',
+								'  <entity name="account">',
+								'    <attribute name="name" />',
+								'    <attribute name="accountnumber" />',
+								'    <attribute name="revenue" />',
+								'    <attribute name="industrycode" />',
+								'    <attribute name="primarycontactid" />',
+								'    <order attribute="name" />',
+								"  </entity>",
+								"</fetch>",
+							].join("\n")
+						: null,
+				launchedAt: new Date().toISOString(),
+			},
 		},
 		"session"
 	);

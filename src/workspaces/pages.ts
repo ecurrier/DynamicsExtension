@@ -6,4 +6,5 @@ export const WORKSPACE_PAGES: Record<WorkspaceId, string> = {
 	"results-viewer": "/results-viewer.html",
 	"security-tools": "/security-tools.html",
 	"schema-tools": "/schema-tools.html",
+	"query-builder": "/query-builder.html",
 };

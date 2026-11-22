@@ -6,7 +6,7 @@ export const schemaModule: ModuleDefinition = {
 	id: "schema",
 	label: "Schema",
 	icon: Table20Regular,
-	order: 8,
+	order: 9,
 	areas: [
 		{
 			id: "schema.columns",

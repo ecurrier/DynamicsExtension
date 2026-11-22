@@ -42,6 +42,7 @@ describe("the Area registry", () => {
 		const workspaceAreas = modules.flatMap((module) => module.areas.filter((area) => area.fit === "workspace"));
 		expect(workspaceAreas.map((area) => area.id).sort()).toEqual([
 			"plugins.traces",
+			"querybuilder.builder",
 			"schema.columns",
 			"schema.polymorphic",
 			"security.compare",

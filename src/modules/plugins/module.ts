@@ -9,7 +9,7 @@ export const pluginsModule: ModuleDefinition = {
 	id: "plugins",
 	label: "Plug-ins",
 	icon: PlugConnectedSettings20Regular,
-	order: 9,
+	order: 10,
 	areas: [
 		{
 			id: "plugins.steps",

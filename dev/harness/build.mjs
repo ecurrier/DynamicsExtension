@@ -17,10 +17,11 @@ for (const [source, target] of [
 	["data-transporter.html", "harness-transporter.html"],
 	["security-tools.html", "harness-security.html"],
 	["schema-tools.html", "harness-schema.html"],
+	["query-builder.html", "harness-query-builder.html"],
 ]) {
 	const html = readFileSync(join(output, source), "utf8").replace('<script type="module"', '<script src="./chrome-shim.js"></script><script type="module"');
 	writeFileSync(join(output, target), html);
 }
 
-console.log("Harness written to .output/chrome-mv3/harness.html, harness-sidepanel.html, harness-results.html, and harness-traces.html");
+console.log("Harness written to .output/chrome-mv3/harness.html, harness-sidepanel.html, harness-results.html, harness-traces.html, and the Workspace pages");
 console.log("Serve the folder, for example: npx serve -l 5173 .output/chrome-mv3");

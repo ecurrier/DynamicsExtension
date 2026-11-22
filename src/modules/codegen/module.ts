@@ -9,7 +9,7 @@ export const codegenModule: ModuleDefinition = {
 	id: "codegen",
 	label: "Code Generation",
 	icon: Braces20Regular,
-	order: 5,
+	order: 6,
 	areas: [
 		{
 			id: "codegen.generate",
