@@ -3,6 +3,7 @@
 Status: ready-for-agent
 Type: task
 Phase: 1
+Blocked by: 01
 
 See `../spec.md`, decisions 4, 5, 16, 17, 23 and "Architecture > Operations".
 
