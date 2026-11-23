@@ -228,16 +228,16 @@ describe("toWebApi: the request", () => {
 	it("returns no path when the root Table is missing or pending", () => {
 		const missing = convert('<fetch><entity name="nosuch"><attribute name="name" /></entity></fetch>');
 		expect(missing.path).toBeNull();
-		expect(messages(missing)).toEqual(["Table nosuch does not exist in this Environment, so no Web API URL can be produced."]);
+		expect(messages(missing)).toEqual(["Table nosuch is not in this Environment. The converter cannot make a Web API URL."]);
 		expect(missing.warnings[0]?.path).toEqual([0]);
 		const pending = convert('<fetch><entity name="lead"><attribute name="name" /></entity></fetch>');
 		expect(pending.path).toBeNull();
-		expect(messages(pending)[0]).toContain("has not loaded yet");
+		expect(messages(pending)[0]).toContain("is not loaded yet");
 	});
 
 	it("returns no path, without throwing, for a document that is not a query", () => {
 		expect(convert("<fetch />").path).toBeNull();
-		expect(messages(convert("<fetch />"))).toEqual(["The fetch element has no entity, so no Web API URL can be produced."]);
+		expect(messages(convert("<fetch />"))).toEqual(["fetch has no entity. The converter cannot make a Web API URL."]);
 		expect(convert("<fetch><entity /></fetch>").path).toBeNull();
 		expect(convert("<savedquery />").path).toBeNull();
 	});
@@ -267,7 +267,7 @@ describe("toWebApi: $select", () => {
 		expect(result.options.select).toBe("name");
 		expect(result.warnings).toEqual([
 			{
-				message: "The attribute name has alias accountname; the Web API has no column alias outside $apply, so it is returned as name.",
+				message: "attribute name has alias accountname. The Web API has no Column alias outside $apply. The URL returns it as name.",
 				path: [0, 0],
 				attribute: "alias",
 			},
@@ -277,16 +277,16 @@ describe("toWebApi: $select", () => {
 	it("selects the base Column of a name Column and warns", () => {
 		const result = convert(accountQuery('<attribute name="owneridname" />'));
 		expect(result.options.select).toBe("_ownerid_value");
-		expect(messages(result)[0]).toContain("belongs to Column ownerid");
+		expect(messages(result)[0]).toContain("is part of Column ownerid");
 	});
 
 	it("keeps an unknown Column as written and warns", () => {
 		const result = convert(accountQuery('<attribute name="nocolumn" />'));
 		expect(result.options.select).toBe("nocolumn");
-		expect(messages(result)).toEqual(["Table account has no Column nocolumn, so it is selected as written."]);
+		expect(messages(result)).toEqual(["Column nocolumn is not in Table account. The URL selects it as written."]);
 	});
 
-	it("skips switched-off attributes", () => {
+	it("skips Excluded attributes", () => {
 		expect(convert(accountQuery('<attribute name="name" /><!-- <attribute name="revenue" /> -->')).options.select).toBe("name");
 	});
 });
@@ -311,7 +311,7 @@ describe("toWebApi: $filter grouping", () => {
 		expect(filter).toBe("name eq 'a' and (revenue gt 5 or (numberofemployees lt 10 and (statecode eq 0 or statecode eq 1)))");
 	});
 
-	it("drops parentheses around a group with one part and skips switched-off rows", () => {
+	it("drops parentheses around a group with one part and skips Excluded rows", () => {
 		const filter = filterOf(
 			[
 				'<filter type="or"><condition attribute="name" operator="eq" value="a" /></filter>',
@@ -384,7 +384,7 @@ describe("toWebApi: operators", () => {
 		expect(result.warnings).toEqual([
 			{
 				message:
-					'The like pattern "a%b" has a wildcard that is not a single leading or trailing %, which contains, startswith and endswith cannot express, so this condition is left out.',
+					'The like pattern "a%b" has a wildcard that is not one % at the start or end. contains, startswith and endswith cannot express it. The URL leaves out this condition.',
 				path: [0, 1, 0],
 				attribute: "value",
 			},
@@ -424,7 +424,7 @@ describe("toWebApi: operators", () => {
 		);
 		const result = convert(accountQuery('<filter><condition attribute="numberofemployees" operator="between"><value>5</value></condition></filter>'));
 		expect(result.options.filter).toBeNull();
-		expect(messages(result)).toEqual(["The operator between needs two value elements, so this condition is left out."]);
+		expect(messages(result)).toEqual(["Operator between needs two value elements. The URL leaves out this condition."]);
 	});
 
 	it("maps relative and fixed date operators to query functions", () => {
@@ -454,7 +454,7 @@ describe("toWebApi: operators", () => {
 	it("warns when a relative date operator's value is not a whole number", () => {
 		const result = convert(accountQuery('<filter><condition attribute="createdon" operator="last-x-days" value="soon" /></filter>'));
 		expect(result.options.filter).toBeNull();
-		expect(messages(result)).toEqual(['The operator last-x-days takes a whole number, and "soon" is not one, so this condition is left out.']);
+		expect(messages(result)).toEqual(['Operator last-x-days takes a whole number. "soon" is not a whole number. The URL leaves out this condition.']);
 	});
 
 	it("maps the user, business unit, language and hierarchy operators", () => {
@@ -485,7 +485,7 @@ describe("toWebApi: operators", () => {
 		const result = convert(accountQuery('<filter><condition attribute="name" operator="sounds-like" value="x" /></filter>'));
 		expect(result.options.filter).toBeNull();
 		expect(result.warnings).toEqual([
-			{ message: "The operator sounds-like is not recognised, so this condition is left out.", path: [0, 0, 0], attribute: "operator" },
+			{ message: "Operator sounds-like is not a Fetch XML operator. The URL leaves out this condition.", path: [0, 0, 0], attribute: "operator" },
 		]);
 	});
 
@@ -493,9 +493,9 @@ describe("toWebApi: operators", () => {
 		expect(filterOf('<condition attribute="name" operator="ne" valueof="description" />')).toBe("name ne description");
 		const result = convert(accountQuery('<filter><condition attribute="name" operator="eq" valueof="c.fullname" /></filter>'));
 		expect(result.options.filter).toBeNull();
-		expect(messages(result)[0]).toContain("only compares Columns of the same row");
+		expect(messages(result)[0]).toContain("compares only Columns of the same Record");
 		expect(messages(convert(accountQuery('<filter><condition attribute="name" operator="like" valueof="description" /></filter>')))[0]).toContain(
-			"valueof is only converted with eq"
+			"The converter uses valueof only with eq"
 		);
 	});
 });
@@ -601,15 +601,15 @@ describe("toWebApi: values", () => {
 	it("warns when a value does not fit its Column and quotes it", () => {
 		const result = convert(accountQuery('<filter><condition attribute="numberofemployees" operator="eq" value="lots" /></filter>'));
 		expect(result.options.filter).toBe("numberofemployees eq 'lots'");
-		expect(messages(result)).toEqual(['The value "lots" is not a number, which numberofemployees expects, so it is written as a quoted string.']);
+		expect(messages(result)).toEqual(['Column numberofemployees expects a number. The value "lots" is not correct. The URL writes it as a quoted string.']);
 		expect(messages(convert(accountQuery('<filter><condition attribute="primarycontactid" operator="eq" value="bob" /></filter>')))[0]).toContain(
-			"is not a GUID"
+			"expects a GUID"
 		);
 		expect(messages(convert(accountQuery('<filter><condition attribute="createdon" operator="eq" value="31/01/2024" /></filter>')))[0]).toContain(
-			"is not an ISO date"
+			"expects an ISO date"
 		);
 		expect(messages(convert(accountQuery('<filter><condition attribute="donotemail" operator="eq" value="maybe" /></filter>')))[0]).toContain(
-			"is not 0, 1, true or false"
+			"expects 0, 1, true or false"
 		);
 	});
 
@@ -618,7 +618,7 @@ describe("toWebApi: values", () => {
 		expect(unknown.options.filter).toBe("nocolumn eq 42");
 		expect(unknown.warnings).toEqual([
 			{
-				message: "The value of this condition could not be typed because Table account has no Column nocolumn, so it is written as a best guess.",
+				message: "The type of this value is not known, because Column nocolumn is not in Table account. The URL uses a best guess.",
 				path: [0, 0, 0],
 				attribute: "value",
 			},
@@ -627,7 +627,7 @@ describe("toWebApi: values", () => {
 			accountQuery('<filter><condition attribute="mystery" operator="eq" value="{00000000-0000-0000-0000-000000000003}" /></filter>')
 		);
 		expect(untyped.options.filter).toBe("mystery eq 00000000-0000-0000-0000-000000000003");
-		expect(messages(untyped)[0]).toContain("the type of Column mystery is not one the converter knows");
+		expect(messages(untyped)[0]).toContain("the converter does not know the type of Column mystery");
 		const pending = convert(
 			accountQuery(
 				'<attribute name="name" /><link-entity name="contact" from="parentcustomerid" to="accountid" link-type="outer"><attribute name="fullname" /><filter><condition attribute="jobtitle" operator="eq" value="Boss" /></filter></link-entity>'
@@ -635,8 +635,8 @@ describe("toWebApi: values", () => {
 			metadataFrom([ACCOUNT])
 		);
 		expect(messages(pending)).toEqual([
-			"The metadata for Table contact has not loaded yet, so its attribute elements are selected as written; a lookup Column needs the _name_value form.",
-			"The value of this condition could not be typed because the metadata for Table contact has not loaded yet, so it is written as a best guess.",
+			"The metadata for Table contact is not loaded yet. The URL selects its attribute elements as written. A lookup Column needs the _name_value form.",
+			"The type of this value is not known, because the metadata for Table contact is not loaded yet. The URL uses a best guess.",
 		]);
 		expect(pending.options.expand).toBe("contact_customer_accounts($select=fullname;$filter=jobtitle eq 'Boss')");
 	});
@@ -652,7 +652,7 @@ describe("toWebApi: order, top, count and fetch attributes", () => {
 	it("warns that a Choice Column sorts differently unless useraworderby is set", () => {
 		const result = convert(accountQuery('<order attribute="industrycode" />'));
 		expect(result.options.orderby).toBe("industrycode");
-		expect(messages(result)[0]).toContain("Fetch XML sorts it by label but the Web API sorts it by number");
+		expect(messages(result)[0]).toContain("Fetch XML sorts it by label, but the Web API sorts it by number");
 		expect(convert(accountQuery('<order attribute="industrycode" />', ' useraworderby="true"')).warnings).toEqual([]);
 	});
 
@@ -668,7 +668,7 @@ describe("toWebApi: order, top, count and fetch attributes", () => {
 		expect(result.warnings).toEqual([
 			{
 				message:
-					"The count attribute controls Fetch XML paging; the Web API pages with the Prefer: odata.maxpagesize header and @odata.nextLink instead, so page, count and paging-cookie are left out.",
+					"count controls Fetch XML paging. The Web API uses the Prefer: odata.maxpagesize header and @odata.nextLink for pages. The URL leaves out page, count and paging-cookie.",
 				path: [],
 				attribute: "count",
 			},
@@ -744,8 +744,8 @@ describe("toWebApi: link-entity", () => {
 		expect(result.options.filter).toBeNull();
 		expect(result.options.expand).toBe("primarycontactid($select=fullname)");
 		expect(messages(result)).toEqual([
-			"link-entity contact is a many-to-one link-entity; the Web API cannot sort the rows by its Columns, so this order is left out.",
-			"link-entity contact is an outer many-to-one link-entity with a filter or inner link-entity; the Web API cannot filter a single-valued navigation property inside $expand, so they are left out.",
+			"link-entity contact is a many-to-one link-entity. The Web API cannot sort the Records by its Columns. The URL leaves out this order.",
+			"link-entity contact is an outer many-to-one link-entity with a filter or an inner link-entity. The Web API cannot filter a single-valued navigation property inside $expand. The URL leaves them out.",
 		]);
 	});
 
@@ -816,9 +816,9 @@ describe("toWebApi: link-entity", () => {
 			)
 		);
 		expect(oneToMany.options.filter).toBeNull();
-		expect(messages(oneToMany)[0]).toContain("reaches a one-to-many link-entity");
+		expect(messages(oneToMany)[0]).toContain("refers to a one-to-many link-entity");
 		expect(messages(convert(accountQuery('<filter><condition attribute="x" entityname="nobody" operator="null" /></filter>')))[0]).toBe(
-			"The entityname nobody does not name a link-entity, so this condition is left out."
+			"entityname nobody does not refer to a link-entity. The URL leaves out this condition."
 		);
 	});
 
@@ -831,7 +831,7 @@ describe("toWebApi: link-entity", () => {
 		expect(result.options.filter).toBe("contact_customer_accounts/any()");
 		expect(result.options.expand).toBeNull();
 		expect(messages(result)).toEqual([
-			"The operator last-x-days becomes the query function Microsoft.Dynamics.CRM.LastXDays, which the Web API documentation only shows on a Column of the Table being filtered, not through a navigation property or lambda, so this condition is left out.",
+			"Operator last-x-days becomes the query function Microsoft.Dynamics.CRM.LastXDays. The Web API documentation shows this function only on a Column of the filtered Table. The URL leaves out this condition.",
 		]);
 	});
 
@@ -842,7 +842,7 @@ describe("toWebApi: link-entity", () => {
 			)
 		);
 		expect(result.options.filter).toBe("_primarycontactid_value ne null");
-		expect(messages(result)[0]).toContain("cannot filter on a collection reached through a lookup");
+		expect(messages(result)[0]).toContain("cannot filter on a collection through a lookup");
 	});
 
 	it("drops $orderby inside $expand when the query has a nested $expand", () => {
@@ -855,7 +855,7 @@ describe("toWebApi: link-entity", () => {
 		expect(result.warnings).toEqual([
 			{
 				message:
-					"The order elements of link-entity contact are left out because the Web API does not allow $orderby inside $expand when the query also has a nested $expand.",
+					"If a Query has a nested $expand, the Web API does not allow $orderby inside $expand. The URL leaves out the order elements of link-entity contact.",
 				path: [0, 0],
 			},
 		]);
@@ -869,7 +869,7 @@ describe("toWebApi: link-entity", () => {
 		);
 		expect(manyToMany.path).toBe("accounts?$select=name");
 		expect(messages(manyToMany)).toEqual([
-			"link-entity accountleads joins accountleads, the intersect Table of a many-to-many relationship; the converter does not produce many-to-many joins, so it and the link-entity elements inside it are left out.",
+			"link-entity accountleads joins accountleads, the intersect Table of a many-to-many relationship. The converter cannot make many-to-many joins. The URL leaves out link-entity accountleads and the link-entity elements in it.",
 		]);
 		const custom = convert(
 			accountQuery(
@@ -880,12 +880,12 @@ describe("toWebApi: link-entity", () => {
 		expect(custom.warnings).toEqual([
 			{
 				message:
-					"link-entity namesake (from lastname to name) matches no relationship of Table account, so it is a custom join the Web API cannot express and is left out.",
+					"link-entity namesake (from lastname to name) matches no relationship of Table account. The Web API cannot make a custom join. The URL leaves it out.",
 				path: [0, 1],
 			},
 		]);
 		expect(messages(convert(accountQuery('<link-entity name="contact" to="primarycontactid"><attribute name="fullname" /></link-entity>')))[0]).toContain(
-			"does not set both from and to"
+			"does not have both from and to"
 		);
 	});
 
@@ -897,9 +897,7 @@ describe("toWebApi: link-entity", () => {
 			metadataFrom([ACCOUNT])
 		);
 		expect(result.options.expand).toBeNull();
-		expect(messages(result)).toEqual([
-			"The relationships of Table contact have not loaded yet, so link-entity systemuser cannot be matched to a navigation property and is left out.",
-		]);
+		expect(messages(result)).toEqual(["The relationships of Table contact are not loaded yet. The URL leaves out link-entity systemuser."]);
 	});
 
 	it("warns about link-types with no equivalent", () => {
@@ -910,7 +908,11 @@ describe("toWebApi: link-entity", () => {
 		);
 		expect(unknown.options.expand).toBeNull();
 		expect(unknown.warnings).toEqual([
-			{ message: "link-entity task has link-type sideways, which has no Web API equivalent, so it is left out.", path: [0, 0], attribute: "link-type" },
+			{
+				message: "The Web API has no equivalent for link-type sideways on link-entity task. The URL leaves it out.",
+				path: [0, 0],
+				attribute: "link-type",
+			},
 		]);
 		const crossApply = convert(
 			accountQuery(
@@ -919,7 +921,7 @@ describe("toWebApi: link-entity", () => {
 		);
 		expect(crossApply.options.filter).toBe("Account_Tasks/any()");
 		expect(crossApply.options.expand).toBe("Account_Tasks($select=subject)");
-		expect(messages(crossApply)[0]).toContain("returns every matching row, not only the first");
+		expect(messages(crossApply)[0]).toContain("returns all matching Records, not only the first");
 	});
 
 	it("warns when a query needs more than fifteen $expand options", () => {
@@ -928,7 +930,7 @@ describe("toWebApi: link-entity", () => {
 			(_, index) =>
 				`<link-entity name="contact" from="contactid" to="primarycontactid" link-type="outer" alias="c${index}"><attribute name="fullname" /></link-entity>`
 		).join("");
-		expect(messages(convert(accountQuery(links)))).toEqual(["The query needs 16 $expand options, more than the 15 the Web API allows."]);
+		expect(messages(convert(accountQuery(links)))).toEqual(["The Query needs 16 $expand options. The Web API allows no more than 15."]);
 	});
 });
 
@@ -993,7 +995,7 @@ describe("toWebApi: aggregates", () => {
 		cases.forEach((body) => {
 			const result = convert(accountQuery(body, ' aggregate="true"'));
 			expect(result.path).toBeNull();
-			expect(messages(result).some((message) => message.startsWith("This aggregate query has no Web API equivalent:"))).toBe(true);
+			expect(messages(result).some((message) => message.startsWith("The Web API has no equivalent for this aggregate Query:"))).toBe(true);
 		});
 	});
 });

@@ -146,6 +146,7 @@ describe("the Query Builder store", () => {
 			collapsed: { tree: false, details: false, xml: true, results: false },
 			detailsForced: false,
 			resultsMaximised: false,
+			detailsGroups: { more: false, legacy: false },
 		});
 		store.getState().togglePane("xml");
 		expect(store.getState().layout.collapsed.xml).toBe(false);
@@ -185,6 +186,15 @@ describe("the Query Builder store", () => {
 		store.getState().edit((query) => ({ ok: true, change: { document: query, shift: { kind: "none" }, select: [0] } }));
 		expect(store.getState().history.undo).toHaveLength(1);
 		expect(store.getState().selectedPath).toEqual([0]);
+	});
+
+	it("remembers which details groups are open, per group and not per row", () => {
+		const store = createQueryBuilderStore({ connection: PAGE_CONNECTION, fetchXml: GOOD });
+		store.getState().setDetailsGroupOpen("more", true);
+		store.getState().select([0]);
+		expect(store.getState().layout.detailsGroups).toEqual({ more: true, legacy: false });
+		store.getState().setDetailsGroupOpen("more", false);
+		expect(store.getState().layout.detailsGroups.more).toBe(false);
 	});
 
 	it("maximises the results and restores the layout as it was", () => {

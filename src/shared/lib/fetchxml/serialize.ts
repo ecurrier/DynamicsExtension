@@ -1,6 +1,7 @@
+import { deleteExcluded } from "./edit";
 import { type FetchXmlDocument, type XmlAttribute, type XmlElement, type XmlNode } from "./types";
 
-export type SerializeOptions = { readonly minify?: boolean };
+export type SerializeOptions = { readonly minify?: boolean; readonly omitExcluded?: boolean };
 
 const INDENT = "  ";
 
@@ -63,7 +64,7 @@ const linesOf = (node: XmlNode, depth: number, insideComment: boolean): string[]
 	if (node.kind === "comment") {
 		return [`${indent}<!--${node.content}-->`];
 	}
-	if (node.switchedOff && !insideComment) {
+	if (node.excluded && !insideComment) {
 		const lines = linesOf(node, depth, true);
 		const last = lines.length - 1;
 		return lines.map((line, index) => {
@@ -89,7 +90,7 @@ const minified = (node: XmlNode, insideComment: boolean): string => {
 	if (node.kind === "comment") {
 		return `<!--${node.content}-->`;
 	}
-	if (node.switchedOff && !insideComment) {
+	if (node.excluded && !insideComment) {
 		return `<!--${minified(node, true)}-->`;
 	}
 	const content = contentOf(node);
@@ -101,14 +102,27 @@ const minified = (node: XmlNode, insideComment: boolean): string => {
 	return `${open}>${inner}</${node.name}>`;
 };
 
+const withoutExcluded = (document: FetchXmlDocument): FetchXmlDocument => {
+	const result = deleteExcluded(document);
+	return result.ok ? result.document : document;
+};
+
 export const serializeFetchXml = (document: FetchXmlDocument, options: SerializeOptions = {}): string => {
-	const nodes: readonly XmlNode[] = [...document.leading, document.root, ...document.trailing];
+	const source = (options.omitExcluded ?? options.minify === true) ? withoutExcluded(document) : document;
+	const nodes: readonly XmlNode[] = [...source.leading, source.root, ...source.trailing];
 	if (options.minify) {
 		return nodes.map((node) => minified(node, false)).join("");
 	}
 	return nodes.flatMap((node) => linesOf(node, 0, false)).join("\n");
 };
 
-export const toJavaScriptString = (xml: string): string => `\`${xml.replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$\{/g, "\\${")}\``;
+const escapeJavaScript = (xml: string): string => `\`${xml.replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$\{/g, "\\${")}\``;
 
-export const toCSharpString = (xml: string): string => `@"${xml.replace(/"/g, '""')}"`;
+const escapeCSharp = (xml: string): string => `@"${xml.replace(/"/g, '""')}"`;
+
+const stringSource = (document: FetchXmlDocument, options: SerializeOptions): string =>
+	serializeFetchXml(document, { ...options, omitExcluded: options.omitExcluded ?? true });
+
+export const toJavaScriptString = (document: FetchXmlDocument, options: SerializeOptions = {}): string => escapeJavaScript(stringSource(document, options));
+
+export const toCSharpString = (document: FetchXmlDocument, options: SerializeOptions = {}): string => escapeCSharp(stringSource(document, options));

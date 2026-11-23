@@ -160,7 +160,7 @@ export const MultiPicker = ({ label, values, options, onChange }: MultiPickerPro
 	const styles = useStyles();
 	const inPane = useInPane();
 	const shown = values.map((value) => options.find((option) => option.value === value)?.text ?? value).join(", ");
-	const fitted = fittedControl("value", shown || "(choose)", "picker");
+	const fitted = fittedControl("value", shown || "(select)", "picker");
 	return (
 		<Dropdown
 			multiselect
@@ -173,7 +173,7 @@ export const MultiPicker = ({ label, values, options, onChange }: MultiPickerPro
 			listbox={{ className: styles.listbox }}
 			positioning={{ matchTargetSize: undefined }}
 			value={shown}
-			placeholder="(choose)"
+			placeholder="(select)"
 			selectedOptions={[...values]}
 			onOptionSelect={(_, data) => onChange(data.selectedOptions)}>
 			{options.map((option) => (

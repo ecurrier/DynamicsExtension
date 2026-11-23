@@ -29,7 +29,7 @@ export const TablePicker = ({ label, value, optional = false, onChange }: TableP
 			value={value ?? null}
 			text={value}
 			options={options}
-			placeholder="(choose a Table)"
+			placeholder="(select a Table)"
 			onPick={pickValue(onChange)}
 		/>
 	);
@@ -55,7 +55,7 @@ export const ColumnPicker = ({ label, scope, value, purpose = "filter", optional
 			value={value ?? null}
 			text={value}
 			options={options}
-			placeholder={scope.state === "none" ? "(no Table)" : "(choose a Column)"}
+			placeholder={scope.state === "none" ? "(no Table)" : "(select a Column)"}
 			onPick={pickValue(onChange)}
 		/>
 	);

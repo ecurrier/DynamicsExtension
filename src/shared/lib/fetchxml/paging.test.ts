@@ -66,7 +66,7 @@ describe("pagedFetchXml", () => {
 		const text = '<fetch top="10"><entity name="account"><attribute name="name" /></entity></fetch>';
 		const document = parse(text);
 		const result = pagedFetchXml(document, { page: 2, pagingCookie: COOKIE, pageSize: 50 });
-		expect(result).toEqual({ pageable: false, fetchXml: serializeFetchXml(document, { minify: true }), reason: "A Query with top returns a single page" });
+		expect(result).toEqual({ pageable: false, fetchXml: serializeFetchXml(document, { minify: true }), reason: "A Query with top returns one page" });
 		expect(fetchAttributes(result.fetchXml)).toEqual({ top: "10" });
 	});
 
@@ -81,7 +81,7 @@ describe("pagedFetchXml", () => {
 		const text = '<fetch aggregate="true"><entity name="account"><attribute name="accountid" alias="total" aggregate="count" /></entity></fetch>';
 		const document = parse(text);
 		const result = pagedFetchXml(document, { page: 1, pagingCookie: null, pageSize: 50 });
-		expect(result).toMatchObject({ pageable: false, reason: "An aggregate Query returns a single page" });
+		expect(result).toMatchObject({ pageable: false, reason: "An aggregate Query returns one page" });
 		expect(result.fetchXml).toBe(serializeFetchXml(document, { minify: true }));
 	});
 

@@ -1,9 +1,23 @@
-import { makeStyles, mergeClasses, Text, tokens } from "@fluentui/react-components";
-import { PanelRightContract20Regular } from "@fluentui/react-icons";
+import { Button, makeStyles, mergeClasses, Text, tokens } from "@fluentui/react-components";
+import { ChevronDown16Regular, ChevronRight16Regular, PanelRightContract20Regular } from "@fluentui/react-icons";
+import { type ReactNode, useState } from "react";
 
-import { elementDefinition, isKnownElement, type NodePath, nodeAtPath } from "@/shared/lib/fetchxml";
+import { type Diagnostic, elementDefinition, isKnownElement, type NodePath, nodeAtPath, type XmlElement } from "@/shared/lib/fetchxml";
 
-import { attributeProblems, detailsEntries, problemsOfRow, rowSummary, summaryText } from "../lib";
+import {
+	type CollapsibleGroup,
+	type DetailsGroupView,
+	detailsGroups,
+	entryProblems,
+	groupHeading,
+	groupHasProblem,
+	groupIsOpen,
+	pathKey,
+	type PlacedEntry,
+	problemsOfRow,
+	rowSummary,
+	summaryText,
+} from "../lib";
 import { PaneButton } from "../PaneChrome";
 import { ProblemList } from "../ProblemIcon";
 import { useQueryDiagnostics } from "../QueryDiagnostics";
@@ -75,9 +89,78 @@ const useStyles = makeStyles({
 		backgroundColor: tokens.colorNeutralBackground3,
 		color: tokens.colorNeutralForeground2,
 	},
+	group: {
+		display: "flex",
+		flexDirection: "column",
+		flexShrink: 0,
+		rowGap: tokens.spacingVerticalM,
+		paddingTop: tokens.spacingVerticalS,
+		borderTop: `1px solid ${tokens.colorNeutralStroke2}`,
+	},
+	groupToggle: {
+		justifyContent: "flex-start",
+		alignSelf: "stretch",
+		minWidth: 0,
+		paddingLeft: 0,
+		fontWeight: tokens.fontWeightSemibold,
+	},
 });
 
-const insideSwitchedOff = (path: NodePath, find: (path: NodePath) => boolean): boolean => path.some((_, length) => length > 0 && find(path.slice(0, length)));
+const insideExcluded = (path: NodePath, find: (path: NodePath) => boolean): boolean => path.some((_, length) => length > 0 && find(path.slice(0, length)));
+
+interface ClosedGroups {
+	readonly rowKey: string;
+	readonly groups: readonly CollapsibleGroup[];
+}
+
+interface GroupSectionProps {
+	view: DetailsGroupView & { group: CollapsibleGroup };
+	open: boolean;
+	onToggle: () => void;
+	children: ReactNode;
+}
+
+const GroupSection = ({ view, open, onToggle, children }: GroupSectionProps) => {
+	const styles = useStyles();
+	return (
+		<section className={styles.group}>
+			<Button
+				appearance="transparent"
+				size="small"
+				className={styles.groupToggle}
+				icon={open ? <ChevronDown16Regular /> : <ChevronRight16Regular />}
+				aria-expanded={open}
+				onClick={onToggle}>
+				{groupHeading(view.group, view.setCount)}
+			</Button>
+			{open ? children : null}
+		</section>
+	);
+};
+
+interface EntryFieldProps {
+	placed: PlacedEntry;
+	problems: readonly Diagnostic[];
+	editor: Omit<Parameters<typeof AttributeControl>[0], "entry">;
+}
+
+const EntryField = ({ placed, problems, editor }: EntryFieldProps) => {
+	const { entry } = placed;
+	if (entry.kind === "unknown") {
+		return (
+			<DetailsField name={entry.name} hint="Not in the Fetch XML reference. It stays as written." problems={problems}>
+				<WrittenValue value={entry.value} />
+			</DetailsField>
+		);
+	}
+	return (
+		<DetailsField name={entry.name} hint={entry.definition.description} optional={placed.optional} problems={problems}>
+			<AttributeControl {...editor} entry={entry} />
+		</DetailsField>
+	);
+};
+
+const isCollapsible = (view: DetailsGroupView): view is DetailsGroupView & { group: CollapsibleGroup } => view.group !== "main";
 
 interface DetailsPaneProps {
 	onCollapse: () => void;
@@ -90,63 +173,82 @@ export const DetailsPane = ({ onCollapse }: DetailsPaneProps) => {
 	const selectedPath = useQueryBuilder((state) => state.selectedPath);
 	const lead = useQueryBuilder((state) => state.namesLead);
 	const edit = useQueryBuilder((state) => state.edit);
+	const preferred = useQueryBuilder((state) => state.layout.detailsGroups);
+	const setGroupOpen = useQueryBuilder((state) => state.setDetailsGroupOpen);
 	const { metadata } = useQueryEditing();
 	const { diagnostics, rows } = useQueryDiagnostics();
+	const [closed, setClosed] = useState<ClosedGroups>({ rowKey: "", groups: [] });
 	const node = query && selectedPath ? nodeAtPath(query, selectedPath) : undefined;
 	const path = selectedPath ?? [];
+	const rowKey = selectedPath === null ? "" : pathKey(selectedPath);
+	const closedHere = closed.rowKey === rowKey ? closed.groups : [];
 	const summary = query && node ? summaryText(rowSummary(query, path, metadata, lead)) : "";
-	const parentOff =
+	const parentExcluded =
 		query !== null &&
-		insideSwitchedOff(path, (each) => {
+		insideExcluded(path, (each) => {
 			const ancestor = nodeAtPath(query, each);
-			return ancestor?.kind === "element" && ancestor.switchedOff;
+			return ancestor?.kind === "element" && ancestor.excluded;
 		});
 
-	const body = () => {
-		if (!query || !node) {
-			return <Text className={styles.hint}>Select a row in the tree to see all of its attributes.</Text>;
+	const toggleGroup = (group: CollapsibleGroup, open: boolean) => {
+		setGroupOpen(group, !open);
+		setClosed({ rowKey, groups: open ? [...closedHere, group] : closedHere.filter((each) => each !== group) });
+	};
+
+	const elementBody = (element: XmlElement) => {
+		if (!query) {
+			return null;
 		}
-		if (node.kind !== "element") {
-			return <Text className={styles.hint}>A comment, kept as written. Edit it in the Fetch XML.</Text>;
-		}
-		const entries = detailsEntries(node);
-		const props = { document: query, path, element: node, edit };
-		const listed = new Set(entries.map((entry) => entry.name));
+		const views = detailsGroups(query, path, element, metadata);
+		const editor = { document: query, path, element, edit };
+		const listed = new Set(views.flatMap((view) => view.entries.flatMap((placed) => placed.covers)));
 		const rowLevel = problemsOfRow(rows, path).filter(
 			(problem) => problem.attribute === undefined || !listed.has(problem.attribute) || problem.path.length !== path.length
 		);
+		const fields = (view: DetailsGroupView) =>
+			view.entries.map((placed) => (
+				<EntryField key={placed.entry.name} placed={placed} problems={entryProblems(diagnostics, path, placed)} editor={editor} />
+			));
+		const main = views.find((view) => view.group === "main");
+		const hasAttributes = views.some((view) => view.entries.length > 0);
 		return (
 			<InPane>
-				{node.switchedOff || parentOff ? (
+				{element.excluded || parentExcluded ? (
 					<Text size={200} className={styles.note}>
-						{node.switchedOff
-							? "Switched off: written into the Fetch XML as a comment."
-							: "Inside a switched-off row: written into the Fetch XML as a comment."}
+						{element.excluded
+							? "Excluded. The Fetch XML holds this row as a comment."
+							: "Inside an Excluded row. The Fetch XML holds this row as a comment."}
 					</Text>
 				) : null}
 				{rowLevel.length > 0 ? <ProblemList diagnostics={rowLevel} className={styles.problems} /> : null}
-				{isKnownElement(node.name) ? null : <Text className={styles.hint}>Not recognised by the Fetch XML reference; edit it in the Fetch XML.</Text>}
-				{node.name === "link-entity" ? <RelationshipField {...props} /> : null}
-				{entries.map((entry) =>
-					entry.kind === "known" ? (
-						<DetailsField
-							key={entry.name}
-							name={entry.name}
-							hint={entry.definition.description}
-							problems={attributeProblems(diagnostics, path, entry.name)}>
-							<AttributeControl {...props} entry={entry} />
-						</DetailsField>
-					) : (
-						<DetailsField key={entry.name} name={entry.name} hint="left as written" problems={attributeProblems(diagnostics, path, entry.name)}>
-							<WrittenValue value={entry.value} />
-						</DetailsField>
-					)
+				{isKnownElement(element.name) ? null : (
+					<Text className={styles.hint}>This element is not in the Fetch XML reference. Edit it in the Fetch XML.</Text>
 				)}
-				{entries.length === 0 && isKnownElement(node.name) ? (
-					<Text className={styles.hint}>{elementDefinition(node.name)?.description} It has no attributes.</Text>
+				{element.name === "link-entity" ? <RelationshipField {...editor} /> : null}
+				{main ? fields(main) : null}
+				{views.filter(isCollapsible).map((view) => {
+					const open = groupIsOpen(preferred[view.group], groupHasProblem(diagnostics, path, view), closedHere.includes(view.group));
+					return (
+						<GroupSection key={view.group} view={view} open={open} onToggle={() => toggleGroup(view.group, open)}>
+							{fields(view)}
+						</GroupSection>
+					);
+				})}
+				{!hasAttributes && isKnownElement(element.name) ? (
+					<Text className={styles.hint}>{elementDefinition(element.name)?.description} It has no attributes.</Text>
 				) : null}
 			</InPane>
 		);
+	};
+
+	const body = () => {
+		if (!query || !node) {
+			return <Text className={styles.hint}>Select a row to see its attributes.</Text>;
+		}
+		if (node.kind !== "element") {
+			return <Text className={styles.hint}>This row is a comment. Edit it in the Fetch XML.</Text>;
+		}
+		return elementBody(node);
 	};
 
 	return (

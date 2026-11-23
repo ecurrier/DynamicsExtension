@@ -126,7 +126,7 @@ const checkAttributeValues = (at: Located): Diagnostic[] =>
 				diagnostic(
 					"info",
 					"unknown-attribute",
-					`The attribute ${attribute.name} on ${element} is not recognised and is left as written.`,
+					`Attribute ${attribute.name} is not in the Fetch XML reference for ${element}. It stays as written.`,
 					at,
 					attribute.name
 				),
@@ -144,24 +144,47 @@ const checkAttributeValues = (at: Located): Diagnostic[] =>
 			const message =
 				element === "condition" && attribute.name === "operator"
 					? `"${wrong}" is not a Fetch XML operator.`
-					: `${attribute.name} "${wrong}" on ${element} is not one of ${kind.values.map((candidate) => candidate.value).join(", ")}.`;
+					: `The value "${wrong}" is not valid for ${attribute.name} on ${element}. Use one of these values: ${kind.values.map((candidate) => candidate.value).join(", ")}.`;
 			return [error("enumeration", message, at, attribute.name)];
 		}
 		if (kind.kind === "boolean") {
 			return BOOLEAN_VALUES.includes(value.toLowerCase())
 				? []
-				: [error("enumeration", `${attribute.name} on ${element} must be true or false, not "${attribute.value}".`, at, attribute.name)];
+				: [
+						error(
+							"enumeration",
+							`The value "${attribute.value}" is not valid for ${attribute.name} on ${element}. Use true or false.`,
+							at,
+							attribute.name
+						),
+					];
 		}
 		if (kind.kind === "number") {
 			if (!WHOLE.test(value)) {
-				return [error("number", `${attribute.name} on ${element} must be a whole number, not "${attribute.value}".`, at, attribute.name)];
+				return [
+					error("number", `The value "${attribute.value}" is not valid for ${attribute.name} on ${element}. Use a whole number.`, at, attribute.name),
+				];
 			}
 			const number = Number.parseInt(value, 10);
 			if (kind.minimum !== undefined && number < kind.minimum) {
-				return [error("number-range", `${attribute.name} on ${element} must be at least ${formatNumber(kind.minimum)}.`, at, attribute.name)];
+				return [
+					error(
+						"number-range",
+						`The value of ${attribute.name} on ${element} is too small. Use ${formatNumber(kind.minimum)} or more.`,
+						at,
+						attribute.name
+					),
+				];
 			}
 			if (kind.maximum !== undefined && number > kind.maximum) {
-				return [error("number-range", `${attribute.name} on ${element} must be at most ${formatNumber(kind.maximum)}.`, at, attribute.name)];
+				return [
+					error(
+						"number-range",
+						`The value of ${attribute.name} on ${element} is too large. Use ${formatNumber(kind.maximum)} or less.`,
+						at,
+						attribute.name
+					),
+				];
 			}
 		}
 		return [];
@@ -170,10 +193,10 @@ const checkAttributeValues = (at: Located): Diagnostic[] =>
 const checkRequired = (at: Located): Diagnostic[] => {
 	const required = attributesOf(at.element.name)
 		.filter((definition) => definition.required && present(at.element, definition.name) === undefined)
-		.map((definition) => error("required-attribute", `${at.element.name} is missing its required ${definition.name} attribute.`, at));
+		.map((definition) => error("required-attribute", `${at.element.name} has no ${definition.name} attribute. Add this attribute.`, at));
 	const order =
 		at.element.name === "order" && present(at.element, "attribute") === undefined && present(at.element, "alias") === undefined
-			? [error("required-attribute", "order needs an attribute or an alias.", at)]
+			? [error("required-attribute", "order has no attribute and no alias. Add one of them.", at)]
 			: [];
 	return [...required, ...order];
 };
@@ -196,13 +219,20 @@ const checkColumn = (context: Context, at: Located, attribute: string): ColumnCh
 	const column = columnOf(lookup.table, name);
 	return column
 		? { diagnostics: [], column }
-		: { diagnostics: [error("missing-column", `Table ${owner.tableLogicalName} has no Column named ${name}.`, at, attribute)] };
+		: { diagnostics: [error("missing-column", `Column ${name} is not in Table ${owner.tableLogicalName}.`, at, attribute)] };
 };
 
 const checkEntityName = (context: Context, at: Located, attribute: string): Diagnostic[] => {
 	const owner = columnTableAt(context.document, at.path, attribute);
 	return owner.kind === "unknown-entityname"
-		? [error("undefined-alias", `entityname ${owner.entityName} does not match the alias or name of any link-entity.`, at, "entityname")]
+		? [
+				error(
+					"undefined-alias",
+					`entityname ${owner.entityName} does not refer to a link-entity. Use the alias or name of a link-entity.`,
+					at,
+					"entityname"
+				),
+			]
 		: [];
 };
 
@@ -211,7 +241,7 @@ const checkTable = (context: Context, at: Located): Diagnostic[] => {
 	if (name === undefined || context.metadata(name).state !== "missing") {
 		return [];
 	}
-	return [error("missing-table", `There is no Table named ${name} on this Connection.`, at, "name")];
+	return [error("missing-table", `Table ${name} is not in this Connection.`, at, "name")];
 };
 
 const checkAliasDefinition = (context: Context, at: Located): Diagnostic[] => {
@@ -224,13 +254,13 @@ const checkAliasDefinition = (context: Context, at: Located): Diagnostic[] => {
 		: [
 				error(
 					"invalid-alias",
-					`The alias ${alias} is not a valid identifier: start with a letter or underscore and use only letters, digits and underscores.`,
+					`Alias ${alias} is not valid. Start it with a letter or an underscore. Use only letters, digits and underscores.`,
 					at,
 					"alias"
 				),
 			];
 	const duplicate = context.duplicates.has(pathKey(at.path))
-		? [error("duplicate-alias", `The alias ${alias} is already defined by another ${at.element.name}.`, at, "alias")]
+		? [error("duplicate-alias", `Another ${at.element.name} has the alias ${alias}. Use a different alias.`, at, "alias")]
 		: [];
 	return [...invalid, ...duplicate];
 };
@@ -240,7 +270,7 @@ const checkFetch = (at: Located): Diagnostic[] => {
 		return [];
 	}
 	const paging = ["page", "count"].filter((name) => present(at.element, name) !== undefined);
-	return paging.length === 0 ? [] : [error("top-with-paging", `top cannot be used together with ${paging.join(" or ")}.`, at, "top")];
+	return paging.length === 0 ? [] : [error("top-with-paging", `top does not work with ${paging.join(" or ")}. Remove one of them.`, at, "top")];
 };
 
 const checkAttribute = (context: Context, at: Located): Diagnostic[] => {
@@ -250,17 +280,17 @@ const checkAttribute = (context: Context, at: Located): Diagnostic[] => {
 	const aggregate: Diagnostic[] = [];
 	if (context.aggregate) {
 		if (aggregateValue === undefined && !groupBy) {
-			aggregate.push(error("aggregate-attribute", `In an aggregate query, attribute ${name} needs aggregate or groupby.`, at));
+			aggregate.push(error("aggregate-attribute", `In an aggregate Query, attribute ${name} must have aggregate or groupby.`, at));
 		}
 		if (present(at.element, "alias") === undefined) {
-			aggregate.push(error("aggregate-attribute", `In an aggregate query, attribute ${name} needs an alias.`, at));
+			aggregate.push(error("aggregate-attribute", `In an aggregate Query, attribute ${name} must have an alias.`, at, "alias"));
 		}
 	} else {
 		if (aggregateValue !== undefined) {
-			aggregate.push(error("aggregate-not-set", `attribute ${name} uses aggregate, but fetch does not set aggregate="true".`, at, "aggregate"));
+			aggregate.push(error("aggregate-not-set", `fetch does not have aggregate="true". Set it to use aggregate on attribute ${name}.`, at, "aggregate"));
 		}
 		if (groupBy) {
-			aggregate.push(error("aggregate-not-set", `attribute ${name} uses groupby, but fetch does not set aggregate="true".`, at, "groupby"));
+			aggregate.push(error("aggregate-not-set", `fetch does not have aggregate="true". Set it to use groupby on attribute ${name}.`, at, "groupby"));
 		}
 	}
 	return [...checkColumn(context, at, "name").diagnostics, ...checkAliasDefinition(context, at), ...aggregate];
@@ -269,12 +299,10 @@ const checkAttribute = (context: Context, at: Located): Diagnostic[] => {
 const checkOrder = (context: Context, at: Located): Diagnostic[] => {
 	const alias = present(at.element, "alias");
 	const undefinedAlias =
-		alias !== undefined && !context.attributeAliases.has(alias)
-			? [error("undefined-alias", `order alias ${alias} does not match the alias of any attribute.`, at, "alias")]
-			: [];
+		alias !== undefined && !context.attributeAliases.has(alias) ? [error("undefined-alias", `No attribute has the alias ${alias}.`, at, "alias")] : [];
 	const aggregate =
 		context.aggregate && alias === undefined && present(at.element, "attribute") !== undefined
-			? [error("aggregate-order", "In an aggregate query, order must use an alias, not attribute.", at, "attribute")]
+			? [error("aggregate-order", "In an aggregate Query, order cannot use attribute. Use alias.", at, "attribute")]
 			: [];
 	return [...checkEntityName(context, at, "attribute"), ...checkColumn(context, at, "attribute").diagnostics, ...undefinedAlias, ...aggregate];
 };
@@ -293,7 +321,7 @@ const checkValueOf = (context: Context, at: Located): Diagnostic[] => {
 	}
 	const resolved = resolveValueOf(context.document, at.path, reference);
 	if (resolved.kind === "unknown-alias") {
-		return [error("undefined-alias", `valueof ${reference} uses ${resolved.alias}, which is not the alias or name of any link-entity.`, at, "valueof")];
+		return [error("undefined-alias", `valueof ${reference} refers to ${resolved.alias}. No link-entity has this alias or name.`, at, "valueof")];
 	}
 	if (resolved.kind !== "column") {
 		return [];
@@ -302,7 +330,7 @@ const checkValueOf = (context: Context, at: Located): Diagnostic[] => {
 	if (lookup.state !== "loaded" || columnOf(lookup.table, resolved.columnLogicalName)) {
 		return [];
 	}
-	return [error("missing-column", `Table ${resolved.tableLogicalName} has no Column named ${resolved.columnLogicalName}.`, at, "valueof")];
+	return [error("missing-column", `Column ${resolved.columnLogicalName} is not in Table ${resolved.tableLogicalName}.`, at, "valueof")];
 };
 
 type ConditionValue = { readonly text: string; readonly at: Located; readonly attribute?: string };
@@ -311,7 +339,7 @@ const conditionValues = (at: Located): ConditionValue[] => {
 	const own = attributeValue(at.element, "value");
 	const fromAttribute: ConditionValue[] = own === undefined ? [] : [{ text: own.trim(), at, attribute: "value" }];
 	const fromChildren = at.element.children.flatMap((child, index): ConditionValue[] =>
-		child.kind === "element" && !child.switchedOff && child.name === "value"
+		child.kind === "element" && !child.excluded && child.name === "value"
 			? [
 					{
 						text: child.children
@@ -327,18 +355,18 @@ const conditionValues = (at: Located): ConditionValue[] => {
 };
 
 const countProblem = (operator: OperatorDefinition, count: number): string | undefined => {
-	const has = `the condition has ${count}`;
+	const has = `The condition has ${count}`;
 	if (operator.values === "none" && count !== 0) {
-		return `Operator ${operator.name} takes no value, but ${has}.`;
+		return `Operator ${operator.name} takes no value. ${has}.`;
 	}
 	if (operator.values === "one" && count !== 1) {
-		return `Operator ${operator.name} takes one value, but ${has}.`;
+		return `Operator ${operator.name} takes one value. ${has}.`;
 	}
 	if (operator.values === "two" && count !== 2) {
-		return `Operator ${operator.name} takes two values, but ${has}.`;
+		return `Operator ${operator.name} takes two values. ${has}.`;
 	}
 	if (operator.values === "list" && count === 0) {
-		return `Operator ${operator.name} takes a list of one or more values, but the condition has none.`;
+		return `Operator ${operator.name} takes one or more values. The condition has none.`;
 	}
 	return undefined;
 };
@@ -371,7 +399,7 @@ const checkValue = (operator: OperatorDefinition, column: QueryColumn | undefine
 	if (operator.valueKind === "integer") {
 		return WHOLE.test(value.text)
 			? []
-			: [error("value-type", `Operator ${operator.name} takes a whole number, so "${value.text}" is not a valid value.`, value.at, value.attribute)];
+			: [error("value-type", `"${value.text}" is not a whole number. Operator ${operator.name} takes a whole number.`, value.at, value.attribute)];
 	}
 	const type = column?.columnType;
 	if (!column || !type) {
@@ -381,7 +409,7 @@ const checkValue = (operator: OperatorDefinition, column: QueryColumn | undefine
 		return [
 			error(
 				"value-type",
-				`Column ${column.logicalName} holds ${COLUMN_TYPE_HOLDS[type]}, so "${value.text}" is not a valid value.`,
+				`"${value.text}" is not a valid value. Column ${column.logicalName} holds ${COLUMN_TYPE_HOLDS[type]}.`,
 				value.at,
 				value.attribute
 			),
@@ -389,7 +417,7 @@ const checkValue = (operator: OperatorDefinition, column: QueryColumn | undefine
 	}
 	const isChoice = type === "choice" || type === "multiChoice" || type === "stateOrStatus";
 	if (isChoice && column.options.length > 0 && !column.options.some((option) => option.value === Number.parseInt(value.text, 10))) {
-		return [diagnostic("warning", "choice-option", `Column ${column.logicalName} has no option with the value ${value.text}.`, value.at, value.attribute)];
+		return [diagnostic("warning", "choice-option", `Column ${column.logicalName} has no option ${value.text}.`, value.at, value.attribute)];
 	}
 	return [];
 };
@@ -399,14 +427,14 @@ const checkOperator = (at: Located, operator: OperatorDefinition, column: QueryC
 	const values = conditionValues(at);
 	const count = valueOf
 		? values.length > 0
-			? [error("value-count", `The condition compares with valueof, so it takes no value, but it has ${plural(values.length, "value")}.`, at, "valueof")]
+			? [error("value-count", `A condition with valueof takes no value. This condition has ${plural(values.length, "value")}.`, at, "valueof")]
 			: []
 		: (() => {
 				const problem = countProblem(operator, values.length);
 				return problem === undefined ? [] : [error("value-count", problem, at, "operator")];
 			})();
 	if (operator.deprecated) {
-		return [diagnostic("warning", "deprecated-operator", `Operator ${operator.name} is deprecated; use ne.`, at, "operator"), ...count];
+		return [diagnostic("warning", "deprecated-operator", `Operator ${operator.name} is an old spelling of ne. Use ne.`, at, "operator"), ...count];
 	}
 	const type = column?.columnType;
 	if (column && type) {
@@ -414,7 +442,7 @@ const checkOperator = (at: Located, operator: OperatorDefinition, column: QueryC
 			return [
 				error(
 					"operator-column-type",
-					`Operator ${operator.name} does not apply to Column ${column.logicalName}, which is ${COLUMN_TYPE_LABEL[type]}.`,
+					`Operator ${operator.name} does not apply to Column ${column.logicalName}. Use an operator for ${COLUMN_TYPE_LABEL[type]}.`,
 					at,
 					"operator"
 				),
@@ -423,7 +451,7 @@ const checkOperator = (at: Located, operator: OperatorDefinition, column: QueryC
 		}
 		if (operator.requiresTime && column.dateOnly) {
 			return [
-				error("operator-column-type", `Operator ${operator.name} needs a time, but Column ${column.logicalName} holds only a date.`, at, "operator"),
+				error("operator-column-type", `Operator ${operator.name} needs a time. Column ${column.logicalName} holds only a date.`, at, "operator"),
 				...count,
 			];
 		}
@@ -453,7 +481,7 @@ const checkSpecific = (context: Context, at: Located): Diagnostic[] => {
 		case "attribute":
 			return checkAttribute(context, at);
 		case "all-attributes":
-			return context.aggregate ? [error("aggregate-all-attributes", "all-attributes cannot be used in an aggregate query.", at)] : [];
+			return context.aggregate ? [error("aggregate-all-attributes", "An aggregate Query cannot use all-attributes.", at)] : [];
 		case "order":
 			return checkOrder(context, at);
 		case "condition":
@@ -468,12 +496,12 @@ const visit = (context: Context, at: Located, into: Diagnostic[]): void => {
 	const limits = new Map((elementDefinition(at.element.name)?.children ?? []).map((rule) => [rule.name, rule.max]));
 	const counts = new Map<string, number>();
 	at.element.children.forEach((child, index) => {
-		if (child.kind !== "element" || child.switchedOff) {
+		if (child.kind !== "element" || child.excluded) {
 			return;
 		}
 		const childAt: Located = { element: child, path: [...at.path, index] };
 		if (!isKnownElement(child.name)) {
-			into.push(diagnostic("info", "unknown-element", `The element ${child.name} is not recognised and is left as written.`, childAt));
+			into.push(diagnostic("info", "unknown-element", `Element ${child.name} is not in the Fetch XML reference. It stays as written.`, childAt));
 			return;
 		}
 		if (!isValidChild(at.element.name, child.name)) {
@@ -514,7 +542,7 @@ const contextFor = (document: FetchXmlDocument, metadata: QueryMetadata): Contex
 export const validate = (document: FetchXmlDocument, metadata: QueryMetadata): readonly Diagnostic[] => {
 	const root: Located = { element: document.root, path: [] };
 	if (document.root.name !== "fetch") {
-		return [error("root-element", `The root element must be fetch, not ${document.root.name}.`, root)];
+		return [error("root-element", `The root element is ${document.root.name}. It must be fetch.`, root)];
 	}
 	const into: Diagnostic[] = [];
 	visit(contextFor(document, metadata), root, into);

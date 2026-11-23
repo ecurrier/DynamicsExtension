@@ -47,7 +47,7 @@ const enumValues = (element: string, attribute: string): readonly EnumerationVal
 };
 
 export const AGGREGATE_VALUES: readonly EnumerationValue[] = [
-	{ value: GROUP_BY, description: "Groups the results by this column." },
+	{ value: GROUP_BY, description: "Groups the results by this Column." },
 	...enumValues("attribute", "aggregate"),
 ];
 
@@ -115,7 +115,7 @@ const AttributeRow = ({ document, path, element, edit }: ElementEditorProps) => 
 						label="alias"
 						kind="alias"
 						value={alias ?? ""}
-						placeholder={aggregate ? "required" : "alias"}
+						placeholder={aggregate ? "required" : "optional"}
 						required={aggregate}
 						onCommit={text("alias")}
 					/>
@@ -140,7 +140,7 @@ const OrderRow = ({ document, path, element, edit }: ElementEditorProps) => {
 						kind="alias"
 						value={presentValue(element, "alias")}
 						options={aliases}
-						placeholder="(choose an alias)"
+						placeholder="(select an alias)"
 						onChange={(value) => edit((query) => setAttributes(query, path, { alias: value }))}
 					/>
 				</>
@@ -224,7 +224,7 @@ export const RelationshipPicker = ({ document, path, element, edit }: ElementEdi
 			value={match?.key ?? null}
 			text={name === undefined ? undefined : CUSTOM_JOIN}
 			options={options}
-			placeholder="(choose a relationship)"
+			placeholder="(select a relationship)"
 			onPick={(key) => {
 				const relationship = relationships.find((candidate) => candidate.key === key);
 				if (relationship) {
@@ -252,7 +252,7 @@ const LinkEntityRow = (props: ElementEditorProps) => {
 				onChange={(value) => edit((query) => setAttributes(query, path, { "link-type": value }))}
 			/>
 			<Word>alias</Word>
-			<DraftInput label="alias" kind="alias" value={attributeValue(element, "alias") ?? ""} placeholder="alias" onCommit={text("alias")} />
+			<DraftInput label="alias" kind="alias" value={attributeValue(element, "alias") ?? ""} placeholder="optional" onCommit={text("alias")} />
 		</>
 	);
 };

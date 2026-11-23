@@ -151,7 +151,7 @@ export const XmlPane = ({ onCollapse }: XmlPaneProps) => {
 						viewRef.current = created;
 						setView(created);
 					}}
-					placeholder="Paste a Fetch XML query here, then press Ctrl+Enter to run it"
+					placeholder="Paste a Fetch XML Query here. Press Ctrl+Enter to run it."
 				/>
 			</div>
 		</>

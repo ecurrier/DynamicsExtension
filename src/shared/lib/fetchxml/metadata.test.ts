@@ -81,7 +81,7 @@ describe("metadataFrom", () => {
 });
 
 describe("tablesNamedIn", () => {
-	it("lists each Table once, including link-entities under filters and inside switched-off rows", () => {
+	it("lists each Table once, including link-entities under filters and inside Excluded rows", () => {
 		expect(tablesNamedIn(QUERY)).toEqual(["account", "task", "contact", "systemuser", "lead"]);
 	});
 
@@ -123,7 +123,7 @@ describe("columnTableAt", () => {
 		expect(columnTableAt(document, [0, 0, 1], "attribute")).toEqual({ kind: "unknown-entityname", entityName: "contact" });
 	});
 
-	it("does not resolve entityname to a switched-off link-entity", () => {
+	it("does not resolve entityname to an Excluded link-entity", () => {
 		const document = parsed(
 			'<fetch><entity name="account"><order attribute="a" entityname="off" /><!-- <link-entity name="lead" from="a" to="b" alias="off" /> --></entity></fetch>'
 		);
@@ -141,7 +141,7 @@ describe("columnTableAt", () => {
 });
 
 describe("aliasesIn", () => {
-	it("lists link-entity and attribute aliases in document order, leaving out switched-off rows", () => {
+	it("lists link-entity and attribute aliases in document order, leaving out Excluded rows", () => {
 		expect(aliasesIn(QUERY)).toEqual([
 			{ alias: "accountname", definedBy: "attribute", path: [0, 0], tableLogicalName: "account", columnLogicalName: "name" },
 			{ alias: "c", definedBy: "link-entity", path: [0, 3], tableLogicalName: "contact", columnLogicalName: null },

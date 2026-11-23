@@ -181,10 +181,10 @@ describe("validate: structure", () => {
 	it("required-attribute: entity name, link-entity name, condition operator, order attribute or alias", () => {
 		const diagnostics = check('<fetch><entity><link-entity from="a" to="b" /><order /><filter><condition attribute="name" /></filter></entity></fetch>');
 		expect(diagnostics.map((entry) => [entry.rule, entry.message])).toEqual([
-			["required-attribute", "entity is missing its required name attribute."],
-			["required-attribute", "link-entity is missing its required name attribute."],
-			["required-attribute", "order needs an attribute or an alias."],
-			["required-attribute", "condition is missing its required operator attribute."],
+			["required-attribute", "entity has no name attribute. Add this attribute."],
+			["required-attribute", "link-entity has no name attribute. Add this attribute."],
+			["required-attribute", "order has no attribute and no alias. Add one of them."],
+			["required-attribute", "condition has no operator attribute. Add this attribute."],
 		]);
 		expect(
 			rulesOf(
@@ -205,18 +205,18 @@ describe("validate: structure", () => {
 			].join("")
 		);
 		expect(diagnostics.map((entry) => [entry.rule, entry.attribute, entry.message])).toEqual([
-			["enumeration", "distinct", 'distinct on fetch must be true or false, not "yes".'],
+			["enumeration", "distinct", 'The value "yes" is not valid for distinct on fetch. Use true or false.'],
 			[
 				"enumeration",
 				"options",
-				'options "Bogus" on fetch is not one of ForceOrder, DisableRowGoal, EnableOptimizerHotfixes, LoopJoin, MergeJoin, HashJoin, NO_PERFORMANCE_SPOOL, ENABLE_HIST_AMENDMENT_FOR_ASC_KEYS.',
+				'The value "Bogus" is not valid for options on fetch. Use one of these values: ForceOrder, DisableRowGoal, EnableOptimizerHotfixes, LoopJoin, MergeJoin, HashJoin, NO_PERFORMANCE_SPOOL, ENABLE_HIST_AMENDMENT_FOR_ASC_KEYS.',
 			],
 			[
 				"enumeration",
 				"link-type",
-				'link-type "left" on link-entity is not one of inner, outer, any, not any, all, not all, exists, in, matchfirstrowusingcrossapply.',
+				'The value "left" is not valid for link-type on link-entity. Use one of these values: inner, outer, any, not any, all, not all, exists, in, matchfirstrowusingcrossapply.',
 			],
-			["enumeration", "type", 'type "xor" on filter is not one of and, or.'],
+			["enumeration", "type", 'The value "xor" is not valid for type on filter. Use one of these values: and, or.'],
 			["enumeration", "operator", '"equals" is not a Fetch XML operator.'],
 		]);
 		expect(
@@ -228,25 +228,25 @@ describe("validate: structure", () => {
 
 	it("number: a non-numeric value where a whole number is required", () => {
 		expect(check(inAccount("", ' top="abc"')).map((entry) => [entry.rule, entry.message])).toEqual([
-			["number", 'top on fetch must be a whole number, not "abc".'],
+			["number", 'The value "abc" is not valid for top on fetch. Use a whole number.'],
 		]);
 		expect(rulesOf(inAccount("", ' count="1.5"'))).toEqual(["number"]);
 		expect(rulesOf(inAccount("", ' count="25" page="2"'))).toEqual([]);
 	});
 
 	it("number-range: top above 5,000, aggregatelimit above 50,000, page below 1", () => {
-		expect(check(inAccount("", ' top="5001"'))[0]?.message).toBe("top on fetch must be at most 5,000.");
+		expect(check(inAccount("", ' top="5001"'))[0]?.message).toBe("The value of top on fetch is too large. Use 5,000 or less.");
 		expect(check(inAccount('<attribute name="name" groupby="true" alias="n" />', ' aggregate="true" aggregatelimit="50001"'))[0]?.message).toBe(
-			"aggregatelimit on fetch must be at most 50,000."
+			"The value of aggregatelimit on fetch is too large. Use 50,000 or less."
 		);
-		expect(check(inAccount("", ' page="0"'))[0]?.message).toBe("page on fetch must be at least 1.");
+		expect(check(inAccount("", ' page="0"'))[0]?.message).toBe("The value of page on fetch is too small. Use 1 or more.");
 		expect(rulesOf(inAccount("", ' top="5000"'))).toEqual([]);
 	});
 
 	it("unknown-element: an information note, with nothing beneath it validated", () => {
 		const diagnostics = check(inAccount('<thing><condition operator="nonsense" /></thing>'));
 		expect(diagnostics.map((entry) => [entry.rule, entry.severity, entry.message])).toEqual([
-			["unknown-element", "info", "The element thing is not recognised and is left as written."],
+			["unknown-element", "info", "Element thing is not in the Fetch XML reference. It stays as written."],
 		]);
 		expect(rulesOf(inAccount("<all-attributes />"))).toEqual([]);
 	});
@@ -254,7 +254,7 @@ describe("validate: structure", () => {
 	it("unknown-attribute: an information note, while documented: false attributes are silent", () => {
 		const diagnostics = check('<fetch version="1.0"><entity name="account" bogus="1" /></fetch>');
 		expect(diagnostics.map((entry) => [entry.rule, entry.severity, entry.attribute, entry.message])).toEqual([
-			["unknown-attribute", "info", "bogus", "The attribute bogus on entity is not recognised and is left as written."],
+			["unknown-attribute", "info", "bogus", "Attribute bogus is not in the Fetch XML reference for entity. It stays as written."],
 		]);
 		expect(rulesOf('<fetch version="1.0" mapping="logical"><entity name="account" /></fetch>')).toEqual([]);
 	});
@@ -266,7 +266,7 @@ describe("validate: metadata", () => {
 			'<fetch><entity name="account"><link-entity name="nosuch" from="x" to="accountid"><attribute name="y" /><link-entity name="contact" from="contactid" to="z" /></link-entity></entity></fetch>'
 		);
 		expect(diagnostics.map((entry) => [entry.rule, entry.attribute, entry.message])).toEqual([
-			["missing-table", "name", "There is no Table named nosuch on this Connection."],
+			["missing-table", "name", "Table nosuch is not in this Connection."],
 		]);
 		expect(rulesOf('<fetch><entity name="contact" /></fetch>')).toEqual([]);
 	});
@@ -287,12 +287,12 @@ describe("validate: metadata", () => {
 			].join("")
 		);
 		expect(diagnostics.map((entry) => [entry.rule, entry.attribute, entry.message])).toEqual([
-			["missing-column", "name", "Table account has no Column named nme."],
-			["missing-column", "attribute", "Table account has no Column named nam."],
-			["missing-column", "attribute", "Table contact has no Column named fullnme."],
-			["missing-column", "valueof", "Table contact has no Column named fulname."],
-			["missing-column", "from", "Table contact has no Column named contactidd."],
-			["missing-column", "to", "Table account has no Column named primarycontact."],
+			["missing-column", "name", "Column nme is not in Table account."],
+			["missing-column", "attribute", "Column nam is not in Table account."],
+			["missing-column", "attribute", "Column fullnme is not in Table contact."],
+			["missing-column", "valueof", "Column fulname is not in Table contact."],
+			["missing-column", "from", "Column contactidd is not in Table contact."],
+			["missing-column", "to", "Column primarycontact is not in Table account."],
 		]);
 		expect(rulesOf(inAccount('<attribute name="Name" /><link-entity name="contact" from="contactid" to="primarycontactid" />'))).toEqual([]);
 	});
@@ -302,40 +302,38 @@ describe("validate: operators", () => {
 	it("deprecated-operator: neq is a warning", () => {
 		const diagnostics = check(condition('attribute="name" operator="neq" value="x"'));
 		expect(diagnostics.map((entry) => [entry.rule, entry.severity, entry.message])).toEqual([
-			["deprecated-operator", "warning", "Operator neq is deprecated; use ne."],
+			["deprecated-operator", "warning", "Operator neq is an old spelling of ne. Use ne."],
 		]);
 		expect(rulesOf(condition('attribute="name" operator="ne" value="x"'))).toEqual([]);
 	});
 
 	it("operator-column-type: the operator must apply to the Column's type, and hour operators need a time", () => {
 		expect(check(condition('attribute="industrycode" operator="like" value="%1%"')).map((entry) => [entry.rule, entry.message])).toEqual([
-			["operator-column-type", "Operator like does not apply to Column industrycode, which is a Choice Column."],
+			["operator-column-type", "Operator like does not apply to Column industrycode. Use an operator for a Choice Column."],
 		]);
 		const dateOnly = check(
 			inAccount(
 				'<link-entity name="contact" from="contactid" to="primarycontactid"><filter><condition attribute="birthdate" operator="last-x-hours" value="3" /></filter></link-entity>'
 			)
 		);
-		expect(dateOnly.map((entry) => entry.message)).toEqual(["Operator last-x-hours needs a time, but Column birthdate holds only a date."]);
+		expect(dateOnly.map((entry) => entry.message)).toEqual(["Operator last-x-hours needs a time. Column birthdate holds only a date."]);
 		expect(rulesOf(condition('attribute="createdon" operator="last-x-hours" value="3"'))).toEqual([]);
 		expect(rulesOf(condition('attribute="address1_composite" operator="last-x-hours" value="x"'))).toEqual(["value-type"]);
 	});
 
 	it("value-count: none, one, two, a list, and valueof with a value", () => {
-		expect(check(condition('attribute="name" operator="eq"')).map((entry) => entry.message)).toEqual([
-			"Operator eq takes one value, but the condition has 0.",
-		]);
+		expect(check(condition('attribute="name" operator="eq"')).map((entry) => entry.message)).toEqual(["Operator eq takes one value. The condition has 0."]);
 		expect(check(condition('attribute="createdon" operator="between"', "<value>2024-01-01</value>")).map((entry) => entry.message)).toEqual([
-			"Operator between takes two values, but the condition has 1.",
+			"Operator between takes two values. The condition has 1.",
 		]);
 		expect(check(condition('attribute="name" operator="null" value="x"')).map((entry) => entry.message)).toEqual([
-			"Operator null takes no value, but the condition has 1.",
+			"Operator null takes no value. The condition has 1.",
 		]);
 		expect(check(condition('attribute="industrycode" operator="in"')).map((entry) => entry.message)).toEqual([
-			"Operator in takes a list of one or more values, but the condition has none.",
+			"Operator in takes one or more values. The condition has none.",
 		]);
 		expect(check(condition('attribute="name" operator="eq" valueof="description" value="x"')).map((entry) => entry.message)).toEqual([
-			"The condition compares with valueof, so it takes no value, but it has 1 value.",
+			"A condition with valueof takes no value. This condition has 1 value.",
 		]);
 		expect(rulesOf(condition('attribute="name" operator="eq"', "<value>x</value>"))).toEqual([]);
 		expect(rulesOf(condition('attribute="name" operator="eq" valueof="description"'))).toEqual([]);
@@ -343,14 +341,14 @@ describe("validate: operators", () => {
 
 	it("value-type: text in a number, non-GUID in a lookup, non-integer for integer operators, non-date, yes/no", () => {
 		const cases: readonly (readonly [string, string])[] = [
-			['attribute="revenue" operator="gt" value="lots"', 'Column revenue holds numbers, so "lots" is not a valid value.'],
-			['attribute="numberofemployees" operator="eq" value="1.5"', 'Column numberofemployees holds whole numbers, so "1.5" is not a valid value.'],
-			['attribute="primarycontactid" operator="eq" value="pat"', 'Column primarycontactid holds GUIDs, so "pat" is not a valid value.'],
-			['attribute="ownerid" operator="ne" value="12"', 'Column ownerid holds GUIDs, so "12" is not a valid value.'],
-			['attribute="createdon" operator="last-x-days" value="three"', 'Operator last-x-days takes a whole number, so "three" is not a valid value.'],
-			['attribute="createdon" operator="on" value="yesterday"', 'Column createdon holds dates, so "yesterday" is not a valid value.'],
-			['attribute="donotemail" operator="eq" value="maybe"', 'Column donotemail holds 0 or 1, so "maybe" is not a valid value.'],
-			['attribute="industrycode" operator="eq" value="one"', 'Column industrycode holds option numbers, so "one" is not a valid value.'],
+			['attribute="revenue" operator="gt" value="lots"', '"lots" is not a valid value. Column revenue holds numbers.'],
+			['attribute="numberofemployees" operator="eq" value="1.5"', '"1.5" is not a valid value. Column numberofemployees holds whole numbers.'],
+			['attribute="primarycontactid" operator="eq" value="pat"', '"pat" is not a valid value. Column primarycontactid holds GUIDs.'],
+			['attribute="ownerid" operator="ne" value="12"', '"12" is not a valid value. Column ownerid holds GUIDs.'],
+			['attribute="createdon" operator="last-x-days" value="three"', '"three" is not a whole number. Operator last-x-days takes a whole number.'],
+			['attribute="createdon" operator="on" value="yesterday"', '"yesterday" is not a valid value. Column createdon holds dates.'],
+			['attribute="donotemail" operator="eq" value="maybe"', '"maybe" is not a valid value. Column donotemail holds 0 or 1.'],
+			['attribute="industrycode" operator="eq" value="one"', '"one" is not a valid value. Column industrycode holds option numbers.'],
 		];
 		for (const [attributes, message] of cases) {
 			const diagnostics = check(condition(attributes));
@@ -368,7 +366,7 @@ describe("validate: operators", () => {
 	it("choice-option: an option number the Choice Column does not have is a warning", () => {
 		const diagnostics = check(condition('attribute="industrycode" operator="in"', "<value>1</value><value>9</value>"));
 		expect(diagnostics.map((entry) => [entry.rule, entry.severity, entry.message])).toEqual([
-			["choice-option", "warning", "Column industrycode has no option with the value 9."],
+			["choice-option", "warning", "Column industrycode has no option 9."],
 		]);
 		expect(rulesOf(condition('attribute="industrycode" operator="eq" value="2"'))).toEqual([]);
 	});
@@ -382,7 +380,7 @@ describe("validate: aliases", () => {
 			)
 		);
 		expect(diagnostics.map((entry) => [entry.rule, entry.path, entry.message])).toEqual([
-			["duplicate-alias", [0, 1], "The alias c is already defined by another link-entity."],
+			["duplicate-alias", [0, 1], "Another link-entity has the alias c. Use a different alias."],
 		]);
 		expect(
 			rulesOf(inAccount('<attribute name="name" alias="c" /><link-entity name="contact" from="contactid" to="primarycontactid" alias="c" />'))
@@ -403,7 +401,7 @@ describe("validate: aliases", () => {
 		expect(rulesOf(inAccount('<attribute name="name" alias="_first1" />'))).toEqual([]);
 	});
 
-	it("undefined-alias: entityname, valueof and order alias that nothing defines, including aliases in switched-off rows", () => {
+	it("undefined-alias: entityname, valueof and order alias that nothing defines, including aliases in Excluded rows", () => {
 		const diagnostics = check(
 			[
 				'<fetch aggregate="true"><entity name="account">',
@@ -416,9 +414,9 @@ describe("validate: aliases", () => {
 			].join("")
 		);
 		expect(diagnostics.map((entry) => [entry.rule, entry.attribute, entry.message])).toEqual([
-			["undefined-alias", "alias", "order alias total does not match the alias of any attribute."],
-			["undefined-alias", "entityname", "entityname pc does not match the alias or name of any link-entity."],
-			["undefined-alias", "valueof", "valueof pc.fullname uses pc, which is not the alias or name of any link-entity."],
+			["undefined-alias", "alias", "No attribute has the alias total."],
+			["undefined-alias", "entityname", "entityname pc does not refer to a link-entity. Use the alias or name of a link-entity."],
+			["undefined-alias", "valueof", "valueof pc.fullname refers to pc. No link-entity has this alias or name."],
 		]);
 		expect(check(VALID)).toEqual([]);
 	});
@@ -428,9 +426,9 @@ describe("validate: aggregates", () => {
 	it("aggregate-attribute: every attribute needs aggregate or groupby, and an alias", () => {
 		const diagnostics = check(inAccount('<attribute name="name" /><attribute name="revenue" aggregate="sum" />', ' aggregate="true"'));
 		expect(diagnostics.map((entry) => [entry.rule, entry.path, entry.message])).toEqual([
-			["aggregate-attribute", [0, 0], "In an aggregate query, attribute name needs aggregate or groupby."],
-			["aggregate-attribute", [0, 0], "In an aggregate query, attribute name needs an alias."],
-			["aggregate-attribute", [0, 1], "In an aggregate query, attribute revenue needs an alias."],
+			["aggregate-attribute", [0, 0], "In an aggregate Query, attribute name must have aggregate or groupby."],
+			["aggregate-attribute", [0, 0], "In an aggregate Query, attribute name must have an alias."],
+			["aggregate-attribute", [0, 1], "In an aggregate Query, attribute revenue must have an alias."],
 		]);
 		expect(rulesOf(VALID_AGGREGATE)).toEqual([]);
 	});
@@ -443,7 +441,7 @@ describe("validate: aggregates", () => {
 	it("aggregate-order: an order must use an alias", () => {
 		const diagnostics = check(inAccount('<attribute name="name" groupby="true" alias="n" /><order attribute="name" />', ' aggregate="true"'));
 		expect(diagnostics.map((entry) => [entry.rule, entry.attribute, entry.message])).toEqual([
-			["aggregate-order", "attribute", "In an aggregate query, order must use an alias, not attribute."],
+			["aggregate-order", "attribute", "In an aggregate Query, order cannot use attribute. Use alias."],
 		]);
 		expect(rulesOf(inAccount('<attribute name="name" groupby="true" alias="n" /><order alias="n" />', ' aggregate="true"'))).toEqual([]);
 	});
@@ -451,8 +449,8 @@ describe("validate: aggregates", () => {
 	it("aggregate-not-set: aggregate or groupby without aggregate on fetch", () => {
 		const diagnostics = check(inAccount('<attribute name="revenue" aggregate="sum" alias="t" /><attribute name="name" groupby="true" />'));
 		expect(diagnostics.map((entry) => [entry.rule, entry.attribute, entry.message])).toEqual([
-			["aggregate-not-set", "aggregate", 'attribute revenue uses aggregate, but fetch does not set aggregate="true".'],
-			["aggregate-not-set", "groupby", 'attribute name uses groupby, but fetch does not set aggregate="true".'],
+			["aggregate-not-set", "aggregate", 'fetch does not have aggregate="true". Set it to use aggregate on attribute revenue.'],
+			["aggregate-not-set", "groupby", 'fetch does not have aggregate="true". Set it to use groupby on attribute name.'],
 		]);
 		expect(rulesOf(inAccount('<attribute name="name" groupby="false" />'))).toEqual([]);
 	});
@@ -461,14 +459,14 @@ describe("validate: aggregates", () => {
 describe("validate: paging", () => {
 	it("top-with-paging: top together with page or count", () => {
 		expect(check(inAccount("", ' top="10" page="2" count="5"')).map((entry) => [entry.rule, entry.attribute, entry.message])).toEqual([
-			["top-with-paging", "top", "top cannot be used together with page or count."],
+			["top-with-paging", "top", "top does not work with page or count. Remove one of them."],
 		]);
 		expect(rulesOf(inAccount("", ' top="10" distinct="true"'))).toEqual([]);
 	});
 });
 
-describe("validate: switched-off rows, ranges and order", () => {
-	it("does not validate switched-off rows", () => {
+describe("validate: Excluded rows, ranges and order", () => {
+	it("does not validate Excluded rows", () => {
 		expect(
 			rulesOf(inAccount('<!-- <attribute name="nme" alias="1x" /> --><filter><!-- <condition attribute="name" operator="eq" /> --></filter>'))
 		).toEqual([]);

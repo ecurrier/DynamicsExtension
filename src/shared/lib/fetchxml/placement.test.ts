@@ -38,7 +38,7 @@ const labels = (nodes: readonly XmlNode[]): string[] =>
 			return `"${node.value}"`;
 		}
 		const name = node.attributes.find((attribute) => ["name", "attribute", "alias"].includes(attribute.name))?.value;
-		return `${node.switchedOff ? "~" : ""}${node.name}${name ? `:${name}` : ""}`;
+		return `${node.excluded ? "~" : ""}${node.name}${name ? `:${name}` : ""}`;
 	});
 
 describe("standardChildOrder", () => {
@@ -81,7 +81,7 @@ describe("insertionIndex", () => {
 		expect(insertionIndex(entity, "order")).toBe(5);
 	});
 
-	it("counts switched-off children as their element's kind", () => {
+	it("counts Excluded children as their element's kind", () => {
 		const entity = entityOf('<entity name="a"><attribute name="x"/><!-- <attribute name="y"/> --><order attribute="x"/></entity>');
 		expect(insertionIndex(entity, "attribute")).toBe(2);
 	});

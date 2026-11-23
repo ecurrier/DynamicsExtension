@@ -12,13 +12,13 @@ import {
 	type XmlNode,
 } from "./types";
 
-export type XmlParseOptions = { readonly acceptSwitchedOff?: (parent: string, element: XmlElement) => boolean };
+export type XmlParseOptions = { readonly acceptExcluded?: (parent: string, element: XmlElement) => boolean };
 
 type Context = {
 	readonly source: string;
 	readonly offset: number;
 	readonly allowDeclaration: boolean;
-	readonly acceptSwitchedOff: (parent: string, element: XmlElement) => boolean;
+	readonly acceptExcluded: (parent: string, element: XmlElement) => boolean;
 	readonly errors: FetchXmlParseError[];
 };
 
@@ -53,7 +53,7 @@ const decodeReference = (context: Context, body: string, from: number, to: numbe
 	if (!body.startsWith("#")) {
 		const value = PREDEFINED_ENTITIES[body];
 		if (value === undefined) {
-			report(context, `Unknown entity &${body};`, from, to);
+			report(context, `&${body}; is not a known XML entity`, from, to);
 		}
 		return value;
 	}
@@ -78,9 +78,9 @@ const describeError = (context: Context, node: SyntaxNode): string => {
 		return "Attribute values must be in quotes";
 	}
 	if (node.from >= context.source.length) {
-		return "Unexpected end of input";
+		return "The text ends too early";
 	}
-	return `Unexpected "${context.source.charAt(node.from)}"`;
+	return `"${context.source.charAt(node.from)}" is not permitted here`;
 };
 
 const readAttributes = (context: Context, tag: SyntaxNode): XmlAttribute[] => {
@@ -121,19 +121,19 @@ const readElement = (context: Context, node: SyntaxNode): XmlElement => {
 	const attributes = tag ? readAttributes(context, tag) : [];
 	const range = rangeOf(context, node.from, node.to);
 	if (!tag || tag.name !== "OpenTag") {
-		return { kind: "element", name, attributes, children: [], switchedOff: false, range };
+		return { kind: "element", name, attributes, children: [], excluded: false, range };
 	}
 	if (node.lastChild?.name !== "CloseTag") {
 		report(context, `<${name}> is not closed`, tag.from, tag.to);
 	}
 	const children = arrangeChildren(readEntities(context, tag.nextSibling, name));
-	return { kind: "element", name, attributes, children, switchedOff: false, range };
+	return { kind: "element", name, attributes, children, excluded: false, range };
 };
 
 const acceptAny = (): boolean => true;
 
-const parseFragment = (source: string, offset: number, allowDeclaration: boolean, acceptSwitchedOff: Context["acceptSwitchedOff"]): Fragment => {
-	const context: Context = { source, offset, allowDeclaration, acceptSwitchedOff, errors: [] };
+const parseFragment = (source: string, offset: number, allowDeclaration: boolean, acceptExcluded: Context["acceptExcluded"]): Fragment => {
+	const context: Context = { source, offset, allowDeclaration, acceptExcluded, errors: [] };
 	const tree = parser.parse(source);
 	tree.iterate({
 		enter: (cursor) => {
@@ -146,7 +146,7 @@ const parseFragment = (source: string, offset: number, allowDeclaration: boolean
 	return { nodes, errors: context.errors };
 };
 
-const switchedOffElement = (content: string, offset: number): XmlElement | undefined => {
+const excludedElement = (content: string, offset: number): XmlElement | undefined => {
 	const fragment = parseFragment(content, offset, false, acceptAny);
 	if (fragment.errors.length > 0) {
 		return undefined;
@@ -160,20 +160,20 @@ const readComment = (context: Context, node: SyntaxNode, parent: string | undefi
 	const raw = sliceOf(context, node);
 	const closed = raw.length >= 7 && raw.endsWith("-->");
 	if (!closed) {
-		report(context, "Comment is not closed", node.from, node.to);
+		report(context, "The comment is not closed", node.from, node.to);
 	}
 	const content = context.source.slice(node.from + 4, closed ? node.to - 3 : node.to);
 	const range = rangeOf(context, node.from, node.to);
-	const candidate = closed && parent !== undefined ? switchedOffElement(content, context.offset + node.from + 4) : undefined;
-	const element = candidate && parent !== undefined && context.acceptSwitchedOff(parent, candidate) ? candidate : undefined;
-	return element ? { ...element, switchedOff: true, range } : { kind: "comment", content, range };
+	const candidate = closed && parent !== undefined ? excludedElement(content, context.offset + node.from + 4) : undefined;
+	const element = candidate && parent !== undefined && context.acceptExcluded(parent, candidate) ? candidate : undefined;
+	return element ? { ...element, excluded: true, range } : { kind: "comment", content, range };
 };
 
 const readCdata = (context: Context, node: SyntaxNode): string => {
 	const raw = sliceOf(context, node);
 	const closed = raw.endsWith("]]>") && raw.length >= 12;
 	if (!closed) {
-		report(context, "CDATA section is not closed", node.from, node.to);
+		report(context, "The CDATA section is not closed", node.from, node.to);
 	}
 	return raw.slice(9, closed ? -3 : undefined).replace(/\r\n?/g, "\n");
 };
@@ -182,7 +182,7 @@ const readProcessingInstruction = (context: Context, node: SyntaxNode): void => 
 	const raw = sliceOf(context, node);
 	const atStart = context.source.slice(0, node.from).trim() === "";
 	if (!(context.allowDeclaration && atStart && XML_DECLARATION.test(raw))) {
-		report(context, "Processing instructions are not supported", node.from, node.to);
+		report(context, "Fetch XML cannot contain processing instructions", node.from, node.to);
 	}
 };
 
@@ -226,10 +226,10 @@ const readEntities = (context: Context, first: SyntaxNode | null, parent: string
 				break;
 			}
 			case "StartCloseTag":
-				report(context, "Incomplete closing tag", node.from, node.to);
+				report(context, "The closing tag is not complete", node.from, node.to);
 				break;
 			case "DoctypeDecl":
-				report(context, "DOCTYPE declarations are not supported", node.from, node.to);
+				report(context, "Fetch XML cannot contain a DOCTYPE declaration", node.from, node.to);
 				break;
 		}
 	}
@@ -244,7 +244,7 @@ const uniqueErrors = (errors: readonly FetchXmlParseError[]): FetchXmlParseError
 	);
 
 export const parseXml = (text: string, options: XmlParseOptions = {}): FetchXmlParseResult => {
-	const fragment = parseFragment(text, 0, true, options.acceptSwitchedOff ?? acceptAny);
+	const fragment = parseFragment(text, 0, true, options.acceptExcluded ?? acceptAny);
 	const errors = [...fragment.errors];
 	const leading: XmlComment[] = [];
 	const trailing: XmlComment[] = [];
@@ -252,12 +252,12 @@ export const parseXml = (text: string, options: XmlParseOptions = {}): FetchXmlP
 	for (const node of fragment.nodes) {
 		if (node.kind === "text") {
 			if (node.value.trim() !== "" && node.range) {
-				errors.push({ message: "Text is not allowed outside the root element", range: node.range });
+				errors.push({ message: "Text cannot be outside the root element", range: node.range });
 			}
 		} else if (node.kind === "comment") {
 			(root ? trailing : leading).push(node);
 		} else if (root) {
-			errors.push({ message: "Only one root element is allowed", range: node.range ?? { from: 0, to: text.length } });
+			errors.push({ message: "The Fetch XML can have only one root element", range: node.range ?? { from: 0, to: text.length } });
 		} else {
 			root = node;
 		}
@@ -271,5 +271,4 @@ export const parseXml = (text: string, options: XmlParseOptions = {}): FetchXmlP
 	return { ok: true, document: { root, leading, trailing } };
 };
 
-export const parseFetchXml = (text: string): FetchXmlParseResult =>
-	parseXml(text, { acceptSwitchedOff: (parent, element) => isValidChild(parent, element.name) });
+export const parseFetchXml = (text: string): FetchXmlParseResult => parseXml(text, { acceptExcluded: (parent, element) => isValidChild(parent, element.name) });

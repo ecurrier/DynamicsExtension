@@ -85,7 +85,7 @@ const RunProblems = () => {
 	}
 	const severity = counts.errors > 0 ? "error" : "warning";
 	return (
-		<Tooltip content={`The Query has ${text}. Run still sends it; Dataverse has the final say.`} relationship="label">
+		<Tooltip content={`The Query has ${text}. Run still sends it. Dataverse makes the final check.`} relationship="label">
 			<Badge
 				role="status"
 				tabIndex={0}
@@ -141,8 +141,8 @@ export const QueryBuilderHeader = ({
 			<Tooltip
 				content={
 					namesLead === "display"
-						? "The tree leads with display names. Switch to lead with logical names"
-						: "The tree leads with logical names. Switch to lead with display names"
+						? "The tree shows display names first. Select to show logical names first."
+						: "The tree shows logical names first. Select to show display names first."
 				}
 				relationship="description">
 				<ToggleButton

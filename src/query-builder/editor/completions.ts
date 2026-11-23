@@ -171,7 +171,7 @@ const attributeNameCompletions = (context: AttributeNameContext): CompletionResu
 			value: definition.name,
 			kind: "attribute",
 			description: definition.description,
-			common: definition.common || definition.required,
+			common: definition.group === "main" || definition.required,
 			...(definition.required ? { detail: "required" } : {}),
 			...(context.hasValue ? {} : { apply: { insert: `${definition.name}=""`, cursorOffset: definition.name.length + 2 } }),
 		}));

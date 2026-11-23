@@ -51,28 +51,28 @@ describe("buildTreeRows", () => {
 	});
 
 	it("disables the switch with the reason the edit operation gives", () => {
-		expect(row("").switch).toEqual({ on: true, disabledReason: "fetch cannot be switched off" });
-		expect(row("0").switch).toEqual({ on: true, disabledReason: "entity cannot be switched off" });
-		expect(row("0.4.1").switch).toEqual({ on: false, disabledReason: "A comment cannot be switched off" });
-		expect(row("0.4").switch.disabledReason).toBe("Remove the comments inside it first");
-		expect(row("0.5").switch.disabledReason).toBe("Switch on or remove the switched-off nodes inside it first");
-		expect(row("0.6").switch.disabledReason).toBe("condition is not valid inside entity, so switched off it would come back as a plain comment");
-		expect(row("0.0").switch).toEqual({ on: true, disabledReason: null });
-		expect(row("0.2").switch).toEqual({ on: false, disabledReason: null });
+		expect(row("").exclusion).toEqual({ included: true, disabledReason: "You cannot Exclude fetch" });
+		expect(row("0").exclusion).toEqual({ included: true, disabledReason: "You cannot Exclude entity" });
+		expect(row("0.4.1").exclusion).toEqual({ included: false, disabledReason: "You cannot Exclude a comment" });
+		expect(row("0.4").exclusion.disabledReason).toBe("First, delete the comments inside this row");
+		expect(row("0.5").exclusion.disabledReason).toBe("First, Include or delete the Excluded rows inside this row");
+		expect(row("0.6").exclusion.disabledReason).toBe("condition is not valid inside entity. If you Exclude it, it becomes a plain comment");
+		expect(row("0.0").exclusion).toEqual({ included: true, disabledReason: null });
+		expect(row("0.2").exclusion).toEqual({ included: false, disabledReason: null });
 	});
 
-	it("marks switched-off rows and everything under them inactive", () => {
-		expect(row("0.2").switchedOff).toBe(true);
+	it("marks Excluded rows and everything under them inactive", () => {
+		expect(row("0.2").excluded).toBe(true);
 		expect(row("0.2").inactive).toBe(true);
-		const off = buildTreeRows(
+		const excludedTree = buildTreeRows(
 			parse('<fetch><entity name="a"><!-- <filter><condition attribute="x" operator="null" /></filter> --></entity></fetch>'),
 			PENDING,
 			"logical"
 		);
-		const child = findRow(off, "0.0.0");
+		const child = findRow(excludedTree, "0.0.0");
 		expect(child?.inactive).toBe(true);
-		expect(child?.switch.disabledReason).toBe("A node inside a switched-off node cannot be switched off");
-		expect(child?.switch.on).toBe(false);
+		expect(child?.exclusion.disabledReason).toBe("You cannot Exclude a row inside an Excluded row");
+		expect(child?.exclusion.included).toBe(false);
 	});
 
 	it("numbers the active order rows when there is more than one", () => {

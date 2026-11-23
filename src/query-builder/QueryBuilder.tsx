@@ -92,7 +92,7 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 	const gateway = useQueryGateway(connection);
 	const connectionName = connectionLabel(connection, byId);
 	const { run: runQuery, nextPage, loadAll, keepLoading, stop } = useQueryRun(gateway, connectionName);
-	const connect = useAsyncAction("Could not switch connection");
+	const connect = useAsyncAction("Cannot change the Connection");
 	const running = run.status === "running" || run.paging !== "idle";
 	const canRun = gateway.ready && text.trim() !== "" && errors.length === 0 && !running;
 	const { collapsed, resultsMaximised: maximised } = layout;
@@ -103,10 +103,10 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 			if (target.kind === "environment") {
 				const environment = byId[target.environmentId];
 				if (!environment) {
-					throw new Error("The selected environment no longer exists");
+					throw new Error("The selected Environment does not exist");
 				}
 				if (!(await requestEnvironmentAccess(environment))) {
-					throw new Error("Power Tools needs permission to contact the environment and the Microsoft login service");
+					throw new Error("Power Tools does not have permission to connect to the Environment and the Microsoft sign-in service");
 				}
 			}
 			setConnection(target);

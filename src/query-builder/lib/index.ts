@@ -4,6 +4,7 @@ export * from "./conditionEditing";
 export * from "./connectionLabel";
 export * from "./controlSize";
 export * from "./detailsEntries";
+export * from "./detailsGroups";
 export * from "./paneSize";
 export * from "./pickerOptions";
 export * from "./pickerSearch";

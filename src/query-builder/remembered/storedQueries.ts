@@ -16,14 +16,14 @@ export interface NewStoredQuery {
 	now: number;
 }
 
-const EMPTY_NAME: StoredQueryRefusal = { ok: false, refusal: "empty-name", reason: "Give the query a name" };
+const EMPTY_NAME: StoredQueryRefusal = { ok: false, refusal: "empty-name", reason: "Type a name for the Query" };
 
-const notFound = (): StoredQueryRefusal => ({ ok: false, refusal: "not-found", reason: "That Stored Query no longer exists" });
+const notFound = (): StoredQueryRefusal => ({ ok: false, refusal: "not-found", reason: "This Stored Query does not exist" });
 
 const nameTaken = (existing: StoredQuery): StoredQueryRefusal => ({
 	ok: false,
 	refusal: "name-taken",
-	reason: `There is already a Stored Query named "${existing.name}"`,
+	reason: `A Stored Query with the name "${existing.name}" already exists`,
 	existing,
 });
 

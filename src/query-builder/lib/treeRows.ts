@@ -6,7 +6,7 @@ import { isRowChild, pathKey } from "./treePaths";
 
 export type RowKind = "fetch" | "entity" | "attribute" | "all-attributes" | "order" | "filter" | "condition" | "link-entity" | "comment" | "unknown";
 
-export type RowSwitch = { readonly on: boolean; readonly disabledReason: string | null };
+export type RowExclusion = { readonly included: boolean; readonly disabledReason: string | null };
 
 export interface TreeRow {
 	readonly path: NodePath;
@@ -14,9 +14,9 @@ export interface TreeRow {
 	readonly kind: RowKind;
 	readonly tag: string | null;
 	readonly summary: RowSummary;
-	readonly switchedOff: boolean;
+	readonly excluded: boolean;
 	readonly inactive: boolean;
-	readonly switch: RowSwitch;
+	readonly exclusion: RowExclusion;
 	readonly fixed: boolean;
 	readonly canMoveUp: boolean;
 	readonly canMoveDown: boolean;
@@ -35,17 +35,17 @@ const kindOf = (node: XmlNode): RowKind => {
 	return known !== undefined && isKnownElement(node.name) ? known : "unknown";
 };
 
-const switchFor = (document: FetchXmlDocument, path: NodePath, node: XmlNode, insideOff: boolean): RowSwitch => {
+const exclusionFor = (document: FetchXmlDocument, path: NodePath, node: XmlNode, insideExcluded: boolean): RowExclusion => {
 	const result = toggleRow(document, path);
-	const on = node.kind === "element" && !node.switchedOff && !insideOff;
-	return { on, disabledReason: result.ok ? null : result.reason };
+	const included = node.kind === "element" && !node.excluded && !insideExcluded;
+	return { included, disabledReason: result.ok ? null : result.reason };
 };
 
 const precedenceOf = (parent: XmlElement | null, node: XmlNode): number | null => {
-	if (!parent || node.kind !== "element" || node.name !== "order" || node.switchedOff) {
+	if (!parent || node.kind !== "element" || node.name !== "order" || node.excluded) {
 		return null;
 	}
-	const orders = parent.children.filter((child) => child.kind === "element" && child.name === "order" && !child.switchedOff);
+	const orders = parent.children.filter((child) => child.kind === "element" && child.name === "order" && !child.excluded);
 	return orders.length > 1 ? orders.indexOf(node) + 1 : null;
 };
 
@@ -55,12 +55,12 @@ interface BuildContext {
 	readonly lead: NamesLead;
 }
 
-const buildRow = (context: BuildContext, node: XmlNode, path: NodePath, parent: XmlElement | null, insideOff: boolean): TreeRow => {
+const buildRow = (context: BuildContext, node: XmlNode, path: NodePath, parent: XmlElement | null, insideExcluded: boolean): TreeRow => {
 	const fixed = isFixedPath(context.document, path);
 	const index = path.at(-1) ?? 0;
 	const siblings = parent?.children.length ?? 1;
-	const switchedOff = node.kind === "element" && node.switchedOff;
-	const inactive = insideOff || switchedOff;
+	const excluded = node.kind === "element" && node.excluded;
+	const inactive = insideExcluded || excluded;
 	const children =
 		node.kind === "element"
 			? node.children.flatMap((child, childIndex) => (isRowChild(node, child) ? [buildRow(context, child, [...path, childIndex], node, inactive)] : []))
@@ -71,9 +71,9 @@ const buildRow = (context: BuildContext, node: XmlNode, path: NodePath, parent: 
 		kind: kindOf(node),
 		tag: node.kind === "element" ? node.name : null,
 		summary: rowSummary(context.document, path, context.metadata, context.lead),
-		switchedOff,
+		excluded,
 		inactive,
-		switch: switchFor(context.document, path, node, insideOff),
+		exclusion: exclusionFor(context.document, path, node, insideExcluded),
 		fixed,
 		canMoveUp: !fixed && index > 0,
 		canMoveDown: !fixed && index < siblings - 1,

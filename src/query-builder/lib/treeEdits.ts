@@ -3,9 +3,13 @@ import {
 	childrenOf,
 	columnTableAt,
 	createElement,
+	deleteExcluded,
 	elementDefinition,
+	exclude,
 	type FetchXmlDocument,
 	type FetchXmlEditResult,
+	include,
+	includeAll,
 	insertChild,
 	insertionIndex,
 	isValidChild,
@@ -14,8 +18,6 @@ import {
 	nodeAtPath,
 	type QueryMetadata,
 	removeNode,
-	switchOff,
-	switchOn,
 	tidy,
 	type XmlAttribute,
 	type XmlElement,
@@ -32,7 +34,7 @@ export interface QueryChange {
 
 export type ChangeResult = { readonly ok: true; readonly change: QueryChange } | { readonly ok: false; readonly reason: string };
 
-export const ALREADY_TIDY = "The Query is already in order";
+export const ALREADY_TIDY = "The rows are already in the standard order";
 
 export const addableKinds = (element: XmlElement): readonly string[] => {
 	const definition = elementDefinition(element.name);
@@ -150,11 +152,11 @@ export const addChild = (document: FetchXmlDocument, parentPath: NodePath, kind:
 		return refuse("There is no element at that path");
 	}
 	if (!addableKinds(parent).includes(kind)) {
-		return refuse(`${kind} cannot be added inside ${parent.name}`);
+		return refuse(isValidChild(parent.name, kind) ? `${parent.name} cannot hold another ${kind}` : `${parent.name} cannot hold ${kind}`);
 	}
 	const child = newChild(document, parentPath, kind, metadata);
 	if (!child) {
-		return refuse(`${kind} cannot be added inside ${parent.name}`);
+		return refuse(`${parent.name} cannot hold ${kind}`);
 	}
 	const index = insertionIndex(parent, kind);
 	return changed(insertChild(document, parentPath, index, child), { kind: "insert", parent: parentPath, index }, [...parentPath, index]);
@@ -167,7 +169,7 @@ export const isFixedPath = (document: FetchXmlDocument, path: NodePath): boolean
 
 export const removeRow = (document: FetchXmlDocument, path: NodePath): ChangeResult => {
 	if (isFixedPath(document, path)) {
-		return refuse("fetch and entity cannot be removed");
+		return refuse("You cannot delete fetch or entity");
 	}
 	const parentPath = path.slice(0, -1);
 	const parent = elementAt(document, parentPath);
@@ -179,7 +181,7 @@ export const removeRow = (document: FetchXmlDocument, path: NodePath): ChangeRes
 
 export const moveRow = (document: FetchXmlDocument, path: NodePath, direction: -1 | 1): ChangeResult => {
 	if (isFixedPath(document, path)) {
-		return refuse("fetch and entity cannot be moved");
+		return refuse("You cannot move fetch or entity");
 	}
 	const parentPath = path.slice(0, -1);
 	const to = (path.at(-1) ?? 0) + direction;
@@ -189,18 +191,18 @@ export const moveRow = (document: FetchXmlDocument, path: NodePath, direction: -
 export const toggleRow = (document: FetchXmlDocument, path: NodePath): ChangeResult => {
 	const node = nodeAtPath(document, path);
 	if (node?.kind !== "element") {
-		return refuse("A comment cannot be switched off");
+		return refuse("You cannot Exclude a comment");
 	}
-	if (node.switchedOff) {
-		return changed(switchOn(document, path), { kind: "none" }, path);
+	if (node.excluded) {
+		return changed(include(document, path), { kind: "none" }, path);
 	}
 	if (isFixedPath(document, path)) {
-		return refuse(`${node.name} cannot be switched off`);
+		return refuse(`You cannot Exclude ${node.name}`);
 	}
-	const result = switchOff(document, path);
+	const result = exclude(document, path);
 	const parent = elementAt(document, path.slice(0, -1));
 	if (result.ok && parent && !isValidChild(parent.name, node.name)) {
-		return refuse(`${node.name} is not valid inside ${parent.name}, so switched off it would come back as a plain comment`);
+		return refuse(`${node.name} is not valid inside ${parent.name}. If you Exclude it, it becomes a plain comment`);
 	}
 	return changed(result, { kind: "none" }, path);
 };
@@ -211,4 +213,13 @@ export const tidyQuery = (document: FetchXmlDocument): ChangeResult => {
 		return refuse(ALREADY_TIDY);
 	}
 	return { ok: true, change: { document: tidied, shift: { kind: "map", mapping: pathMapping(document, tidied) }, select: null } };
+};
+
+export const includeAllRows = (document: FetchXmlDocument): ChangeResult => changed(includeAll(document), { kind: "none" }, null);
+
+export const deleteExcludedRows = (document: FetchXmlDocument): ChangeResult => {
+	const result = deleteExcluded(document);
+	return result.ok
+		? { ok: true, change: { document: result.document, shift: { kind: "map", mapping: pathMapping(document, result.document) }, select: null } }
+		: refuse(result.reason);
 };

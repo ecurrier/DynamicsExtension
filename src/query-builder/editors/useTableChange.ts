@@ -26,7 +26,7 @@ export const useTableChange = (path: NodePath): ((logicalName: string | null) =>
 		if (current !== "") {
 			const agreed = await confirm({
 				title: "Change the root Table?",
-				content: `The Query will read ${logicalName} instead of ${current}. Columns, conditions, orders and link-entities that do not exist on ${logicalName} are removed; everything else is kept.`,
+				content: `The Query will read ${logicalName}, not ${current}. This change removes the Columns, conditions, orders and link-entities that ${logicalName} does not have.`,
 				confirmLabel: "Change Table",
 			});
 			if (!agreed) {

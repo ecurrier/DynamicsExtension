@@ -40,7 +40,7 @@ const cannotSitInComment = (node: XmlNode): boolean =>
 	[node, ...descendantsOf(node)].some(
 		(each) =>
 			each.kind === "comment" ||
-			(each.kind === "element" && (each.switchedOff || each.name.includes("--") || each.attributes.some((attribute) => attribute.name.includes("--"))))
+			(each.kind === "element" && (each.excluded || each.name.includes("--") || each.attributes.some((attribute) => attribute.name.includes("--"))))
 	);
 
 export const createElement = (name: string, attributes: readonly XmlAttribute[] = [], children: readonly XmlNode[] = []): XmlElement => ({
@@ -48,7 +48,7 @@ export const createElement = (name: string, attributes: readonly XmlAttribute[] 
 	name,
 	attributes,
 	children,
-	switchedOff: false,
+	excluded: false,
 });
 
 export const setAttribute = (document: FetchXmlDocument, path: NodePath, name: string, value: string): FetchXmlEditResult => {
@@ -82,9 +82,9 @@ export const insertChild = (document: FetchXmlDocument, parentPath: NodePath, in
 	if (!Number.isInteger(index) || index < 0 || index > parent.children.length) {
 		return refuse("The index is outside the parent's children");
 	}
-	const insideSwitchedOff = parent.switchedOff || ancestorsOf(document, parentPath).some((ancestor) => ancestor.switchedOff);
-	if (insideSwitchedOff && cannotSitInComment(node)) {
-		return refuse("A comment or switched-off node cannot go inside a switched-off node");
+	const insideExcluded = parent.excluded || ancestorsOf(document, parentPath).some((ancestor) => ancestor.excluded);
+	if (insideExcluded && cannotSitInComment(node)) {
+		return refuse("A comment or an Excluded row cannot go inside an Excluded row");
 	}
 	const children = [...parent.children.slice(0, index), node, ...parent.children.slice(index)];
 	return replaceAt(document, parentPath, withoutRange({ ...parent, children }));
@@ -95,7 +95,7 @@ export const removeNode = (document: FetchXmlDocument, path: NodePath): FetchXml
 	const parentPath = path.slice(0, -1);
 	const parent = elementAt(document, parentPath);
 	if (index === undefined) {
-		return refuse("The root element cannot be removed");
+		return refuse("You cannot delete the root element");
 	}
 	if (!parent || index < 0 || index >= parent.children.length) {
 		return refuse("There is no node at that path");
@@ -108,7 +108,7 @@ export const moveNode = (document: FetchXmlDocument, path: NodePath, toIndex: nu
 	const parentPath = path.slice(0, -1);
 	const parent = elementAt(document, parentPath);
 	if (index === undefined) {
-		return refuse("The root element cannot be moved");
+		return refuse("You cannot move the root element");
 	}
 	const node = parent?.children[index];
 	if (!parent || !node) {
@@ -122,40 +122,69 @@ export const moveNode = (document: FetchXmlDocument, path: NodePath, toIndex: nu
 	return replaceAt(document, parentPath, withoutRange({ ...parent, children }));
 };
 
-export const switchOff = (document: FetchXmlDocument, path: NodePath): FetchXmlEditResult => {
+export const exclude = (document: FetchXmlDocument, path: NodePath): FetchXmlEditResult => {
 	const element = elementAt(document, path);
 	if (path.length === 0) {
-		return refuse("The root element cannot be switched off");
+		return refuse("You cannot Exclude the root element");
 	}
 	if (!element) {
-		return refuse("Only an element can be switched off");
+		return refuse("You can Exclude only an element");
 	}
-	if (element.switchedOff) {
+	if (element.excluded) {
 		return { ok: true, document };
 	}
-	if (ancestorsOf(document, path).some((ancestor) => ancestor.switchedOff)) {
-		return refuse("A node inside a switched-off node cannot be switched off");
+	if (ancestorsOf(document, path).some((ancestor) => ancestor.excluded)) {
+		return refuse("You cannot Exclude a row inside an Excluded row");
 	}
 	const descendants = descendantsOf(element);
-	if (descendants.some((node) => node.kind === "element" && node.switchedOff)) {
-		return refuse("Switch on or remove the switched-off nodes inside it first");
+	if (descendants.some((node) => node.kind === "element" && node.excluded)) {
+		return refuse("First, Include or delete the Excluded rows inside this row");
 	}
 	if (descendants.some((node) => node.kind === "comment")) {
-		return refuse("Remove the comments inside it first");
+		return refuse("First, delete the comments inside this row");
 	}
 	if (cannotSitInComment(element)) {
-		return refuse("A name containing -- cannot be written inside a comment");
+		return refuse("A name with -- cannot go inside a comment");
 	}
-	return replaceAt(document, path, withoutRange({ ...element, switchedOff: true }));
+	return replaceAt(document, path, withoutRange({ ...element, excluded: true }));
 };
 
-export const switchOn = (document: FetchXmlDocument, path: NodePath): FetchXmlEditResult => {
+export const include = (document: FetchXmlDocument, path: NodePath): FetchXmlEditResult => {
 	const element = elementAt(document, path);
 	if (!element) {
-		return refuse("Only an element can be switched on");
+		return refuse("You can Include only an element");
 	}
-	if (!element.switchedOff) {
+	if (!element.excluded) {
 		return { ok: true, document };
 	}
-	return replaceAt(document, path, withoutRange({ ...element, switchedOff: false }));
+	return replaceAt(document, path, withoutRange({ ...element, excluded: false }));
 };
+
+const replaceExcluded = (element: XmlElement, replace: (excluded: XmlElement) => XmlNode | undefined): XmlElement => {
+	const children = element.children.flatMap((child): XmlNode[] => {
+		if (child.kind !== "element") {
+			return [child];
+		}
+		const next = child.excluded ? replace(child) : replaceExcluded(child, replace);
+		return next ? [next] : [];
+	});
+	const same = children.length === element.children.length && children.every((child, index) => child === element.children[index]);
+	return same ? element : withoutRange({ ...element, children });
+};
+
+const excludedOf = (node: XmlNode): XmlElement[] =>
+	node.kind !== "element" ? [] : node.excluded ? [node] : node.children.flatMap((child) => excludedOf(child));
+
+export const countExcluded = (document: FetchXmlDocument): number => excludedOf(document.root).length;
+
+const editExcluded = (document: FetchXmlDocument, replace: (excluded: XmlElement) => XmlNode | undefined): FetchXmlEditResult => {
+	if (countExcluded(document) === 0) {
+		return refuse("The Query has no Excluded rows");
+	}
+	return { ok: true, document: { ...document, root: replaceExcluded(document.root, replace) } };
+};
+
+export const includeAll = (document: FetchXmlDocument): FetchXmlEditResult =>
+	editExcluded(document, (element) => withoutRange({ ...element, excluded: false }));
+
+export const deleteExcluded = (document: FetchXmlDocument): FetchXmlEditResult => editExcluded(document, () => undefined);

@@ -34,7 +34,7 @@ export const useQueryRun = (gateway: QueryGateway, connectionName: string) => {
 		try {
 			const tableName = rootTableName(query);
 			if (!tableName) {
-				store.getState().failRun(id, "The Query does not name a Table. Give its <entity> element a name attribute.");
+				store.getState().failRun(id, "The Query has no Table. Add a name attribute to the entity element.");
 				return;
 			}
 			const list = await queryClient.fetchQuery({
@@ -45,7 +45,7 @@ export const useQueryRun = (gateway: QueryGateway, connectionName: string) => {
 			});
 			const table = findTable(list, tableName);
 			if (!table) {
-				store.getState().failRun(id, `There is no Table named "${tableName}" in this Connection (${connectionName}).`);
+				store.getState().failRun(id, `Table "${tableName}" is not in this Connection (${connectionName}).`);
 				return;
 			}
 			const page = pagedFetchXml(query, { page: 1, pagingCookie: null, pageSize: DEFAULT_PAGE_SIZE });

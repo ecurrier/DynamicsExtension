@@ -99,7 +99,7 @@ const pairs = (element: XmlElement, names: readonly string[]): SummaryGroup[] =>
 const valueTexts = (element: XmlElement): string[] => {
 	const single = attributeValue(element, "value");
 	const listed = element.children.flatMap((child) =>
-		child.kind === "element" && child.name === "value" && !child.switchedOff
+		child.kind === "element" && child.name === "value" && !child.excluded
 			? [child.children.map((each) => (each.kind === "text" ? each.value : "")).join("")]
 			: []
 	);

@@ -93,7 +93,7 @@ const present = (element: XmlElement, name: string): string | undefined => {
 const isTrue = (value: string | undefined): boolean => value !== undefined && ["true", "1"].includes(value.trim().toLowerCase());
 
 const childElements = (at: Located): readonly Located[] =>
-	at.element.children.flatMap((child, index) => (child.kind === "element" && !child.switchedOff ? [{ element: child, path: [...at.path, index] }] : []));
+	at.element.children.flatMap((child, index) => (child.kind === "element" && !child.excluded ? [{ element: child, path: [...at.path, index] }] : []));
 
 const childrenNamed = (at: Located, name: string): readonly Located[] => childElements(at).filter((child) => child.element.name === name);
 
@@ -148,19 +148,19 @@ const negate = (expression: Expression): Expression => ({
 const resolveColumn = (scope: Scope, name: string): ColumnInfo => {
 	const tableName = scope.tableName;
 	if (scope.lookup === null || tableName === null) {
-		return { column: null, reason: "the Table that owns it is not known" };
+		return { column: null, reason: "the Table of the Column is not known" };
 	}
 	if (scope.lookup.state === "pending") {
-		return { column: null, reason: `the metadata for Table ${tableName} has not loaded yet` };
+		return { column: null, reason: `the metadata for Table ${tableName} is not loaded yet` };
 	}
 	if (scope.lookup.state === "missing") {
-		return { column: null, reason: `Table ${tableName} does not exist in this Environment` };
+		return { column: null, reason: `Table ${tableName} is not in this Environment` };
 	}
 	const column = columnOf(scope.lookup.table, name);
 	if (!column) {
-		return { column: null, reason: `Table ${tableName} has no Column ${name}` };
+		return { column: null, reason: `Column ${name} is not in Table ${tableName}` };
 	}
-	return column.columnType === null ? { column, reason: `the type of Column ${name} is not one the converter knows` } : { column, reason: null };
+	return column.columnType === null ? { column, reason: `the converter does not know the type of Column ${name}` } : { column, reason: null };
 };
 
 const propertyOf = (column: QueryColumn | null, name: string): string =>
@@ -188,23 +188,21 @@ const typedLiteral = (raw: string, column: QueryColumn): Literal => {
 		case "decimalOrMoney":
 		case "choice":
 		case "stateOrStatus":
-			return NUMBER.test(value) ? { text: value, problem: null } : { text: quoted(raw), problem: "is not a number" };
+			return NUMBER.test(value) ? { text: value, problem: null } : { text: quoted(raw), problem: "a number" };
 		case "yesNo":
 			if (["1", "true"].includes(value.toLowerCase())) {
 				return { text: "true", problem: null };
 			}
-			return ["0", "false"].includes(value.toLowerCase())
-				? { text: "false", problem: null }
-				: { text: quoted(raw), problem: "is not 0, 1, true or false" };
+			return ["0", "false"].includes(value.toLowerCase()) ? { text: "false", problem: null } : { text: quoted(raw), problem: "0, 1, true or false" };
 		case "dateTime":
 			return DATE.test(value)
 				? { text: value.replace(" ", "T"), problem: null }
-				: { text: quoted(raw), problem: "is not an ISO date such as 2024-01-31 or 2024-01-31T09:00:00Z" };
+				: { text: quoted(raw), problem: "an ISO date, such as 2024-01-31 or 2024-01-31T09:00:00Z" };
 		case "lookup":
 		case "owner":
 		case "uniqueIdentifier": {
 			const guid = GUID.exec(value)?.[1];
-			return guid ? { text: guid, problem: null } : { text: quoted(raw), problem: "is not a GUID" };
+			return guid ? { text: guid, problem: null } : { text: quoted(raw), problem: "a GUID" };
 		}
 		case "multiChoice":
 			return { text: quoted(value), problem: null };
@@ -219,7 +217,7 @@ const valuesOf = (element: XmlElement): readonly string[] => {
 		return [value];
 	}
 	return element.children.flatMap((child) =>
-		child.kind === "element" && !child.switchedOff && child.name === "value"
+		child.kind === "element" && !child.excluded && child.name === "value"
 			? [
 					child.children
 						.map((text) => (text.kind === "text" ? text.value : ""))
@@ -264,7 +262,7 @@ const linkTypeOf = (context: Context, at: Located): string | null => {
 	if (LINK_TYPES.includes(type)) {
 		return type;
 	}
-	warn(context, `${linkLabel(at.element)} has link-type ${type}, which has no Web API equivalent, so it is left out.`, at.path, "link-type");
+	warn(context, `The Web API has no equivalent for link-type ${type} on ${linkLabel(at.element)}. The URL leaves it out.`, at.path, "link-type");
 	return null;
 };
 
@@ -272,31 +270,27 @@ const planOf = (context: Context, at: Located): LinkPlan => {
 	const label = linkLabel(at.element);
 	const name = present(at.element, "name");
 	if (name === undefined) {
-		warn(context, `${label} has no name, so it is left out.`, at.path, "name");
+		warn(context, `${label} has no name. The URL leaves it out.`, at.path, "name");
 		return { kind: "unmatched" };
 	}
 	const parent = columnTableAt(context.document, at.path, "to");
 	if (parent.kind !== "table") {
-		warn(context, `The Table that ${label} joins from is not named, so it is left out.`, at.path);
+		warn(context, `The parent of ${label} has no Table name. The URL leaves it out.`, at.path);
 		return { kind: "unmatched" };
 	}
 	const lookup = context.metadata(parent.tableLogicalName);
 	if (lookup.state === "pending") {
-		warn(
-			context,
-			`The relationships of Table ${parent.tableLogicalName} have not loaded yet, so ${label} cannot be matched to a navigation property and is left out.`,
-			at.path
-		);
+		warn(context, `The relationships of Table ${parent.tableLogicalName} are not loaded yet. The URL leaves out ${label}.`, at.path);
 		return { kind: "unmatched" };
 	}
 	if (lookup.state === "missing") {
-		warn(context, `Table ${parent.tableLogicalName} does not exist in this Environment, so ${label} is left out.`, at.path);
+		warn(context, `Table ${parent.tableLogicalName} is not in this Environment. The URL leaves out ${label}.`, at.path);
 		return { kind: "unmatched" };
 	}
 	const from = present(at.element, "from");
 	const to = present(at.element, "to");
 	if (from === undefined || to === undefined) {
-		warn(context, `${label} does not set both from and to, so it cannot be matched to a relationship and is left out; name both Columns.`, at.path);
+		warn(context, `${label} does not have both from and to. The URL leaves it out. Set both Columns.`, at.path);
 		return { kind: "unmatched" };
 	}
 	const table = lookup.table;
@@ -312,7 +306,7 @@ const planOf = (context: Context, at: Located): LinkPlan => {
 	);
 	const relationship = manyToOne ?? oneToMany;
 	if (relationship && !relationship.navigationProperty) {
-		warn(context, `The relationship ${relationship.schemaName} has no navigation property, so ${label} is left out.`, at.path);
+		warn(context, `Relationship ${relationship.schemaName} has no navigation property. The URL leaves out ${label}.`, at.path);
 		return { kind: "unmatched" };
 	}
 	if (manyToOne?.navigationProperty) {
@@ -324,14 +318,14 @@ const planOf = (context: Context, at: Located): LinkPlan => {
 	if (table.manyToMany.some((candidate) => key(candidate.intersectTable) === key(name))) {
 		warn(
 			context,
-			`${label} joins ${name}, the intersect Table of a many-to-many relationship; the converter does not produce many-to-many joins, so it and the link-entity elements inside it are left out.`,
+			`${label} joins ${name}, the intersect Table of a many-to-many relationship. The converter cannot make many-to-many joins. The URL leaves out ${label} and the link-entity elements in it.`,
 			at.path
 		);
 		return { kind: "unmatched" };
 	}
 	warn(
 		context,
-		`${label} (from ${from} to ${to}) matches no relationship of Table ${parent.tableLogicalName}, so it is a custom join the Web API cannot express and is left out.`,
+		`${label} (from ${from} to ${to}) matches no relationship of Table ${parent.tableLogicalName}. The Web API cannot make a custom join. The URL leaves it out.`,
 		at.path
 	);
 	return { kind: "unmatched" };
@@ -339,19 +333,24 @@ const planOf = (context: Context, at: Located): LinkPlan => {
 
 const entityNameScope = (context: Context, at: Located, scope: Scope, entityName: string): Scope | null => {
 	if (!scope.root) {
-		warn(context, `entityname is only converted on conditions in the entity's own filter, so this condition is left out.`, at.path, "entityname");
+		warn(
+			context,
+			`The converter uses entityname only on conditions in the filter of the entity. The URL leaves out this condition.`,
+			at.path,
+			"entityname"
+		);
 		return null;
 	}
 	const link = linkEntityFor(context.document, entityName);
 	if (!link) {
-		warn(context, `The entityname ${entityName} does not name a link-entity, so this condition is left out.`, at.path, "entityname");
+		warn(context, `entityname ${entityName} does not refer to a link-entity. The URL leaves out this condition.`, at.path, "entityname");
 		return null;
 	}
 	const navigations: string[] = [];
 	for (let depth = 1; depth <= link.path.length; depth += 1) {
 		const located = elementAt(context.document, link.path.slice(0, depth));
 		if (!located || located.element.name === "filter") {
-			warn(context, `The entityname ${entityName} names a link-entity inside a filter, so this condition is left out.`, at.path, "entityname");
+			warn(context, `entityname ${entityName} refers to a link-entity inside a filter. The URL leaves out this condition.`, at.path, "entityname");
 			return null;
 		}
 		if (located.element.name !== "link-entity") {
@@ -364,7 +363,7 @@ const entityNameScope = (context: Context, at: Located, scope: Scope, entityName
 		if (plan.kind === "one-to-many") {
 			warn(
 				context,
-				`The entityname ${entityName} reaches a one-to-many link-entity; the Web API cannot test its Columns from the entity's filter, so this condition is left out. Use a link-entity with link-type any or not any inside the filter instead.`,
+				`entityname ${entityName} refers to a one-to-many link-entity. The Web API cannot test its Columns from the filter of the entity. The URL leaves out this condition. Use a link-entity with link-type any or not any inside the filter.`,
 				at.path,
 				"entityname"
 			);
@@ -385,17 +384,17 @@ const elementAt = (document: FetchXmlDocument, path: NodePath): Located | null =
 
 const literalFor = (context: Context, at: Located, raw: string, info: ColumnInfo, attribute: string): string => {
 	if (info.column === null || info.reason !== null) {
-		warn(
-			context,
-			`The value of this condition could not be typed because ${info.reason ?? "its Column is not known"}, so it is written as a best guess.`,
-			at.path,
-			"value"
-		);
+		warn(context, `The type of this value is not known, because ${info.reason ?? "the Column is not known"}. The URL uses a best guess.`, at.path, "value");
 		return guessedLiteral(raw);
 	}
 	const literal = typedLiteral(raw, info.column);
 	if (literal.problem !== null) {
-		warn(context, `The value "${raw}" ${literal.problem}, which ${attribute} expects, so it is written as a quoted string.`, at.path, "value");
+		warn(
+			context,
+			`Column ${attribute} expects ${literal.problem}. The value "${raw}" is not correct. The URL writes it as a quoted string.`,
+			at.path,
+			"value"
+		);
 	}
 	return literal.text;
 };
@@ -418,7 +417,7 @@ const queryFunctionExpression = (
 		case "value": {
 			const value = values[0];
 			if (value === undefined) {
-				warn(context, `The operator ${operator} needs a value, so this condition is left out.`, at.path, "value");
+				warn(context, `Operator ${operator} needs a value. The URL leaves out this condition.`, at.path, "value");
 				return null;
 			}
 			return call(`,PropertyValue=${quoted(GUID.test(value.trim()) ? bareGuid(value) : value.trim())}`);
@@ -428,7 +427,7 @@ const queryFunctionExpression = (
 			if (value === undefined || !INTEGER.test(value)) {
 				warn(
 					context,
-					`The operator ${operator} takes a whole number, and "${value ?? ""}" is not one, so this condition is left out.`,
+					`Operator ${operator} takes a whole number. "${value ?? ""}" is not a whole number. The URL leaves out this condition.`,
 					at.path,
 					"value"
 				);
@@ -440,7 +439,7 @@ const queryFunctionExpression = (
 			if (values.length === 0 || (["between", "not-between"].includes(operator) && values.length !== 2)) {
 				warn(
 					context,
-					`The operator ${operator} needs ${["between", "not-between"].includes(operator) ? "two value elements" : "at least one value"}, so this condition is left out.`,
+					`Operator ${operator} needs ${["between", "not-between"].includes(operator) ? "two value elements" : "one or more values"}. The URL leaves out this condition.`,
 					at.path
 				);
 				return null;
@@ -450,7 +449,11 @@ const queryFunctionExpression = (
 		case "integer-pair": {
 			const [first, second] = values.map((value) => value.trim());
 			if (values.length !== 2 || first === undefined || second === undefined || !INTEGER.test(first) || !INTEGER.test(second)) {
-				warn(context, `The operator ${operator} needs two whole-number value elements, a period and a year, so this condition is left out.`, at.path);
+				warn(
+					context,
+					`Operator ${operator} needs two value elements with whole numbers: a period and a year. The URL leaves out this condition.`,
+					at.path
+				);
 				return null;
 			}
 			return call(`,PropertyValue1=${first},PropertyValue2=${second}`);
@@ -461,22 +464,22 @@ const queryFunctionExpression = (
 const conditionExpression = (context: Context, at: Located, scope: Scope): Expression | null => {
 	const operator = present(at.element, "operator");
 	if (operator === undefined) {
-		warn(context, "This condition has no operator, so it is left out.", at.path, "operator");
+		warn(context, "This condition has no operator. The URL leaves it out.", at.path, "operator");
 		return null;
 	}
 	const unsupported = webApiUnsupportedReason(operator);
 	if (unsupported !== undefined) {
-		warn(context, `The operator ${operator} has no Web API equivalent (${unsupported}), so this condition is left out.`, at.path, "operator");
+		warn(context, `The Web API has no equivalent for operator ${operator} (${unsupported}). The URL leaves out this condition.`, at.path, "operator");
 		return null;
 	}
 	const mapping = webApiOperator(operator);
 	if (!mapping) {
-		warn(context, `The operator ${operator} is not recognised, so this condition is left out.`, at.path, "operator");
+		warn(context, `Operator ${operator} is not a Fetch XML operator. The URL leaves out this condition.`, at.path, "operator");
 		return null;
 	}
 	const attribute = present(at.element, "attribute");
 	if (attribute === undefined) {
-		warn(context, "This condition has no attribute, so it is left out.", at.path, "attribute");
+		warn(context, "This condition has no attribute. The URL leaves it out.", at.path, "attribute");
 		return null;
 	}
 	const entityName = present(at.element, "entityname");
@@ -489,13 +492,18 @@ const conditionExpression = (context: Context, at: Located, scope: Scope): Expre
 	const valueof = present(at.element, "valueof");
 	if (valueof !== undefined) {
 		if (mapping.kind !== "comparison") {
-			warn(context, `valueof is only converted with eq, ne, gt, ge, lt and le; with ${operator} this condition is left out.`, at.path, "valueof");
+			warn(
+				context,
+				`The converter uses valueof only with eq, ne, gt, ge, lt and le, not with ${operator}. The URL leaves out this condition.`,
+				at.path,
+				"valueof"
+			);
 			return null;
 		}
 		if (valueof.includes(".")) {
 			warn(
 				context,
-				`valueof ${valueof} names a Column of a link-entity; the Web API only compares Columns of the same row, so this condition is left out.`,
+				`valueof ${valueof} refers to a Column of a link-entity. The Web API compares only Columns of the same Record. The URL leaves out this condition.`,
 				at.path,
 				"valueof"
 			);
@@ -511,26 +519,26 @@ const conditionExpression = (context: Context, at: Located, scope: Scope): Expre
 			return { text: `${property} ${mapping.operator} null`, compound: false };
 		case "comparison":
 			if (first === undefined) {
-				warn(context, `The operator ${operator} needs a value, so this condition is left out.`, at.path, "value");
+				warn(context, `Operator ${operator} needs a value. The URL leaves out this condition.`, at.path, "value");
 				return null;
 			}
 			return { text: `${property} ${mapping.operator} ${literalFor(context, at, first, info, attribute)}`, compound: false };
 		case "string-function":
 			if (first === undefined) {
-				warn(context, `The operator ${operator} needs a value, so this condition is left out.`, at.path, "value");
+				warn(context, `Operator ${operator} needs a value. The URL leaves out this condition.`, at.path, "value");
 				return null;
 			}
 			return { text: `${mapping.negated ? "not " : ""}${mapping.name}(${property},${quoted(first)})`, compound: false };
 		case "like": {
 			if (first === undefined) {
-				warn(context, `The operator ${operator} needs a value, so this condition is left out.`, at.path, "value");
+				warn(context, `Operator ${operator} needs a value. The URL leaves out this condition.`, at.path, "value");
 				return null;
 			}
 			const expression = likeExpression(property, first, mapping.negated);
 			if (!expression) {
 				warn(
 					context,
-					`The ${operator} pattern "${first}" has a wildcard that is not a single leading or trailing %, which contains, startswith and endswith cannot express, so this condition is left out.`,
+					`The ${operator} pattern "${first}" has a wildcard that is not one % at the start or end. contains, startswith and endswith cannot express it. The URL leaves out this condition.`,
 					at.path,
 					"value"
 				);
@@ -541,7 +549,7 @@ const conditionExpression = (context: Context, at: Located, scope: Scope): Expre
 			if (target.prefix !== "") {
 				warn(
 					context,
-					`The operator ${operator} becomes the query function Microsoft.Dynamics.CRM.${mapping.name}, which the Web API documentation only shows on a Column of the Table being filtered, not through a navigation property or lambda, so this condition is left out.`,
+					`Operator ${operator} becomes the query function Microsoft.Dynamics.CRM.${mapping.name}. The Web API documentation shows this function only on a Column of the filtered Table. The URL leaves out this condition.`,
 					at.path,
 					"operator"
 				);
@@ -563,7 +571,7 @@ const filterExpression = (context: Context, at: Located, scope: Scope): Expressi
 				case "link-entity":
 					return linkRestriction(context, child, scope, true);
 				default:
-					warn(context, `The element ${child.element.name} inside a filter is not recognised, so it is left out.`, child.path);
+					warn(context, `Element ${child.element.name} inside a filter is not in the Fetch XML reference. The URL leaves it out.`, child.path);
 					return null;
 			}
 		})();
@@ -594,7 +602,7 @@ const linkRestriction = (context: Context, at: Located, scope: Scope, inFilter: 
 		if (inFilter) {
 			warn(
 				context,
-				`${linkLabel(at.element)} has link-type outer inside a filter, which does not restrict the rows, so it is left out.`,
+				`${linkLabel(at.element)} has link-type outer inside a filter. This does not limit the Records. The URL leaves it out.`,
 				at.path,
 				"link-type"
 			);
@@ -623,7 +631,7 @@ const linkRestriction = (context: Context, at: Located, scope: Scope, inFilter: 
 	if (scope.inPath) {
 		warn(
 			context,
-			`${linkLabel(at.element)} is a one-to-many link-entity under a many-to-one link-entity; the Web API cannot filter on a collection reached through a lookup, so it does not restrict the rows.`,
+			`${linkLabel(at.element)} is a one-to-many link-entity under a many-to-one link-entity. The Web API cannot filter on a collection through a lookup. It does not limit the Records.`,
 			at.path
 		);
 		return null;
@@ -644,14 +652,14 @@ const selectOf = (context: Context, holder: Located, scope: Scope): readonly str
 	if (attributes.length > 0 && scope.lookup?.state === "pending") {
 		warn(
 			context,
-			`The metadata for Table ${scope.tableName ?? ""} has not loaded yet, so its attribute elements are selected as written; a lookup Column needs the _name_value form.`,
+			`The metadata for Table ${scope.tableName ?? ""} is not loaded yet. The URL selects its attribute elements as written. A lookup Column needs the _name_value form.`,
 			holder.path
 		);
 	}
 	const selected = attributes.flatMap((at): string[] => {
 		const name = present(at.element, "name");
 		if (name === undefined) {
-			warn(context, "This attribute has no name, so it is left out.", at.path, "name");
+			warn(context, "This attribute has no name. The URL leaves it out.", at.path, "name");
 			return [];
 		}
 		const info = resolveColumn(scope, name);
@@ -661,7 +669,7 @@ const selectOf = (context: Context, holder: Located, scope: Scope): readonly str
 		if (alias !== undefined) {
 			warn(
 				context,
-				`The attribute ${name} has alias ${alias}; the Web API has no column alias outside $apply, so it is returned as ${property}.`,
+				`attribute ${name} has alias ${alias}. The Web API has no Column alias outside $apply. The URL returns it as ${property}.`,
 				at.path,
 				"alias"
 			);
@@ -669,13 +677,13 @@ const selectOf = (context: Context, holder: Located, scope: Scope): readonly str
 		if (base) {
 			warn(
 				context,
-				`The attribute ${name} belongs to Column ${info.column?.attributeOf ?? ""} and is not a Web API property, so ${property} is selected instead; request the formatted value annotation to read it.`,
+				`attribute ${name} is part of Column ${info.column?.attributeOf ?? ""} and is not a Web API property. The URL selects ${property}. Request the formatted value annotation to read it.`,
 				at.path,
 				"name"
 			);
 		}
 		if (scope.lookup?.state === "loaded" && !info.column) {
-			warn(context, `Table ${scope.tableName ?? ""} has no Column ${name}, so it is selected as written.`, at.path, "name");
+			warn(context, `Column ${name} is not in Table ${scope.tableName ?? ""}. The URL selects it as written.`, at.path, "name");
 		}
 		return [property];
 	});
@@ -688,7 +696,7 @@ const orderOf = (context: Context, holder: Located, scope: Scope): readonly stri
 		if (entityName !== undefined) {
 			warn(
 				context,
-				`This order sorts by a Column of link-entity ${entityName}; the Web API documentation does not describe sorting by a related Table's Column, so it is left out.`,
+				`This order sorts by a Column of link-entity ${entityName}. The Web API documentation does not show how to sort by a Column of a related Table. The URL leaves it out.`,
 				at.path,
 				"entityname"
 			);
@@ -696,14 +704,14 @@ const orderOf = (context: Context, holder: Located, scope: Scope): readonly stri
 		}
 		const attribute = present(at.element, "attribute");
 		if (attribute === undefined) {
-			warn(context, "This order has no attribute (alias only applies to aggregate queries), so it is left out.", at.path, "attribute");
+			warn(context, "This order has no attribute. alias applies only to aggregate Queries. The URL leaves it out.", at.path, "attribute");
 			return [];
 		}
 		const info = resolveColumn(scope, attribute);
 		if (!context.rawOrder && info.column?.columnType && CHOICE_TYPES.includes(info.column.columnType)) {
 			warn(
 				context,
-				`${attribute} is a Choice Column: Fetch XML sorts it by label but the Web API sorts it by number, so rows can come back in a different order.`,
+				`${attribute} is a Choice Column. Fetch XML sorts it by label, but the Web API sorts it by number. The Records can come back in a different order.`,
 				at.path,
 				"attribute"
 			);
@@ -743,12 +751,16 @@ const expandOf = (context: Context, at: Located): ExpandNode | null => {
 	const select = selected !== null && selected.length === 0 ? (primaryId ? [primaryId] : null) : selected;
 	if (plan.kind === "many-to-one") {
 		childrenNamed(at, "order").forEach((order) =>
-			warn(context, `${label} is a many-to-one link-entity; the Web API cannot sort the rows by its Columns, so this order is left out.`, order.path)
+			warn(
+				context,
+				`${label} is a many-to-one link-entity. The Web API cannot sort the Records by its Columns. The URL leaves out this order.`,
+				order.path
+			)
 		);
 		if (type === "outer" && hasRestrictions(at)) {
 			warn(
 				context,
-				`${label} is an outer many-to-one link-entity with a filter or inner link-entity; the Web API cannot filter a single-valued navigation property inside $expand, so they are left out.`,
+				`${label} is an outer many-to-one link-entity with a filter or an inner link-entity. The Web API cannot filter a single-valued navigation property inside $expand. The URL leaves them out.`,
 				at.path
 			);
 		}
@@ -757,7 +769,7 @@ const expandOf = (context: Context, at: Located): ExpandNode | null => {
 	if (type === "matchfirstrowusingcrossapply") {
 		warn(
 			context,
-			`${label} has link-type matchfirstrowusingcrossapply; the Web API $expand returns every matching row, not only the first.`,
+			`${label} has link-type matchfirstrowusingcrossapply. The Web API $expand returns all matching Records, not only the first.`,
 			at.path,
 			"link-type"
 		);
@@ -796,13 +808,13 @@ const expandText = (context: Context, nodes: readonly ExpandNode[], entityPath: 
 		all.filter((node) => node.collection && node.orderby.length > 0).forEach((node) =>
 			warn(
 				context,
-				`The order elements of ${node.label} are left out because the Web API does not allow $orderby inside $expand when the query also has a nested $expand.`,
+				`If a Query has a nested $expand, the Web API does not allow $orderby inside $expand. The URL leaves out the order elements of ${node.label}.`,
 				node.path
 			)
 		);
 	}
 	if (all.length > MAX_EXPANDS) {
-		warn(context, `The query needs ${all.length} $expand options, more than the ${MAX_EXPANDS} the Web API allows.`, entityPath);
+		warn(context, `The Query needs ${all.length} $expand options. The Web API allows no more than ${MAX_EXPANDS}.`, entityPath);
 	}
 	return nodes.map((node) => renderExpand(node, nested)).join(",");
 };
@@ -813,7 +825,7 @@ const fetchAttributeWarnings = (context: Context, aggregate: boolean): void => {
 	if (paging) {
 		warn(
 			context,
-			`The ${paging.name} attribute controls Fetch XML paging; the Web API pages with the Prefer: odata.maxpagesize header and @odata.nextLink instead, so page, count and paging-cookie are left out.`,
+			`${paging.name} controls Fetch XML paging. The Web API uses the Prefer: odata.maxpagesize header and @odata.nextLink for pages. The URL leaves out page, count and paging-cookie.`,
 			[],
 			paging.name
 		);
@@ -824,7 +836,7 @@ const fetchAttributeWarnings = (context: Context, aggregate: boolean): void => {
 			case "top":
 			case "returntotalrecordcount":
 				if (aggregate && (name === "top" || isTrue(attribute.value))) {
-					warn(context, `The ${name} attribute has no documented Web API equivalent in an aggregate query, so it is left out.`, [], name);
+					warn(context, `In an aggregate Query, the Web API documentation shows no equivalent for ${name}. The URL leaves it out.`, [], name);
 				}
 				return;
 			case "aggregate":
@@ -839,7 +851,7 @@ const fetchAttributeWarnings = (context: Context, aggregate: boolean): void => {
 				if (isTrue(attribute.value) && !aggregate) {
 					warn(
 						context,
-						"The distinct attribute has no Web API equivalent and is left out; the Web API returns each row of the Table once, with linked rows nested under $expand.",
+						"The Web API has no equivalent for distinct. The URL leaves it out. The Web API returns each Record of the Table one time, with linked Records under $expand.",
 						[],
 						name
 					);
@@ -848,25 +860,25 @@ const fetchAttributeWarnings = (context: Context, aggregate: boolean): void => {
 			case "no-lock":
 			case "latematerialize":
 				if (isTrue(attribute.value)) {
-					warn(context, `The ${name} attribute has no Web API equivalent and is left out.`, [], name);
+					warn(context, `The Web API has no equivalent for ${name}. The URL leaves it out.`, [], name);
 				}
 				return;
 			case "datasource":
-				warn(context, `The datasource attribute (${attribute.value}) has no Web API query option, so the URL reads live rows instead.`, [], name);
+				warn(context, `The Web API has no query option for datasource (${attribute.value}). The URL reads live Records.`, [], name);
 				return;
 			case "options":
-				warn(context, `The options attribute (${attribute.value}) has no Web API equivalent and is left out.`, [], name);
+				warn(context, `The Web API has no equivalent for options (${attribute.value}). The URL leaves it out.`, [], name);
 				return;
 			case "aggregatelimit":
 				warn(
 					context,
-					"The aggregatelimit attribute has no Web API equivalent and is left out; the Web API always applies the 50,000-row limit.",
+					"The Web API has no equivalent for aggregatelimit. The URL leaves it out. The Web API always applies the limit of 50,000 Records.",
 					[],
 					name
 				);
 				return;
 			default:
-				warn(context, `The ${name} attribute on fetch is not recognised and is left out.`, [], name);
+				warn(context, `Attribute ${name} on fetch is not in the Fetch XML reference. The URL leaves it out.`, [], name);
 		}
 	});
 };
@@ -877,7 +889,7 @@ const topOf = (context: Context): number | null => {
 		return null;
 	}
 	if (!/^\d+$/.test(top) || Number.parseInt(top, 10) < 1) {
-		warn(context, `The top attribute "${top}" is not a positive whole number, so it is left out.`, [], "top");
+		warn(context, `top "${top}" is not a positive whole number. The URL leaves it out.`, [], "top");
 		return null;
 	}
 	return Number.parseInt(top, 10);
@@ -908,7 +920,7 @@ const rowConversion = (context: Context, entity: Located, table: QueryTable): We
 	const scope: Scope = { tableName: table.logicalName, lookup: { state: "loaded", table }, prefix: "", inPath: false, variables: [], root: true };
 	childElements(entity)
 		.filter((child) => !ENTITY_CHILDREN.includes(child.element.name))
-		.forEach((child) => warn(context, `The element ${child.element.name} inside entity is not recognised, so it is left out.`, child.path));
+		.forEach((child) => warn(context, `Element ${child.element.name} inside entity is not in the Fetch XML reference. The URL leaves it out.`, child.path));
 	const selected = selectOf(context, entity, scope);
 	const select = selected === null ? null : selected.length > 0 ? selected : [table.primaryIdAttribute];
 	const filter = holderCriteria(context, entity, scope);
@@ -929,7 +941,7 @@ const rowConversion = (context: Context, entity: Located, table: QueryTable): We
 	return { path: webApiPath(table.entitySetName, options), entitySetName: table.entitySetName, options, warnings: [] };
 };
 
-const NO_EQUIVALENT = "This aggregate query has no Web API equivalent:";
+const NO_EQUIVALENT = "The Web API has no equivalent for this aggregate Query:";
 
 const aggregateConversion = (context: Context, entity: Located, table: QueryTable): WebApiConversion => {
 	const scope: Scope = { tableName: table.logicalName, lookup: { state: "loaded", table }, prefix: "", inPath: false, variables: [], root: true };
@@ -947,15 +959,11 @@ const aggregateConversion = (context: Context, entity: Located, table: QueryTabl
 			const property = propertyOf(info.column, name);
 			const aggregate = key(present(element, "aggregate") ?? "");
 			if (present(element, "rowaggregate") !== undefined) {
-				return fail(`rowaggregate on attribute ${name} cannot be expressed.`, child.path, "rowaggregate");
+				return fail(`the Web API cannot express rowaggregate on attribute ${name}.`, child.path, "rowaggregate");
 			}
 			if (isTrue(attributeValue(element, "groupby"))) {
 				if (present(element, "dategrouping") !== undefined) {
-					return fail(
-						`grouping attribute ${name} by dategrouping is not covered by the Web API aggregate documentation.`,
-						child.path,
-						"dategrouping"
-					);
+					return fail(`the Web API aggregate documentation does not show dategrouping on attribute ${name}.`, child.path, "dategrouping");
 				}
 				if (info.column?.columnType === "dateTime") {
 					return fail(`the Web API cannot groupby a date and time Column such as ${name}.`, child.path, "groupby");
@@ -974,19 +982,22 @@ const aggregateConversion = (context: Context, entity: Located, table: QueryTabl
 			}
 			if (aggregate === "countcolumn") {
 				return fail(
-					`aggregate countcolumn${isTrue(attributeValue(element, "distinct")) ? " with distinct" : ""} on attribute ${name} cannot be expressed with $apply.`,
+					`aggregate countcolumn${isTrue(attributeValue(element, "distinct")) ? " with distinct" : ""} on attribute ${name} is not possible with $apply.`,
 					child.path,
 					"aggregate"
 				);
 			}
-			return fail(`attribute ${name} has neither aggregate nor groupby.`, child.path);
+			return fail(`attribute ${name} has no aggregate and no groupby.`, child.path);
 		}
 		if (element.name === "filter") {
 			const usesLinks = elementsBelow(child).some(
 				(below) => below.element.name === "link-entity" || (below.element.name === "condition" && present(below.element, "entityname") !== undefined)
 			);
 			if (usesLinks) {
-				return fail("the filter uses a link-entity or entityname, and $apply's filter() is only documented on the Table's own Columns.", child.path);
+				return fail(
+					"the filter uses a link-entity or entityname. The documentation shows filter() in $apply only on Columns of the Table.",
+					child.path
+				);
 			}
 			const expression = filterExpression(context, child, scope);
 			if (expression) {
@@ -997,7 +1008,7 @@ const aggregateConversion = (context: Context, entity: Located, table: QueryTabl
 		if (element.name === "order") {
 			warn(
 				context,
-				"Sorting an aggregate query has no documented Web API equivalent ($orderby cannot use aggregate values), so this order is left out.",
+				"The Web API documentation shows no way to sort an aggregate Query. $orderby cannot use aggregate values. The URL leaves out this order.",
 				child.path
 			);
 			continue;
@@ -1029,10 +1040,10 @@ const aggregateConversion = (context: Context, entity: Located, table: QueryTabl
 			}
 			continue;
 		}
-		return fail(`the element ${element.name} cannot be used in an aggregate query.`, child.path);
+		return fail(`an aggregate Query cannot use element ${element.name}.`, child.path);
 	}
 	if (groups.length === 0 && aggregates.length === 0) {
-		return fail("it has no attribute with aggregate or groupby.", entity.path);
+		return fail("no attribute has aggregate or groupby.", entity.path);
 	}
 	const aggregation = aggregates.length > 0 ? `aggregate(${aggregates.join(",")})` : null;
 	const transformation = groups.length > 0 ? `groupby((${groups.join(",")})${aggregation ? `,${aggregation}` : ""})` : (aggregation ?? "");
@@ -1046,31 +1057,31 @@ const elementsBelow = (at: Located): readonly Located[] => childElements(at).fla
 const convert = (context: Context): WebApiConversion => {
 	const root = context.document.root;
 	if (root.name !== "fetch") {
-		return failed(context, `The root element is ${root.name}, not fetch, so no Web API URL can be produced.`, []);
+		return failed(context, `The root element is ${root.name}, not fetch. The converter cannot make a Web API URL.`, []);
 	}
 	const entity = childrenNamed({ element: root, path: [] }, "entity")[0];
 	if (!entity) {
-		return failed(context, "The fetch element has no entity, so no Web API URL can be produced.", []);
+		return failed(context, "fetch has no entity. The converter cannot make a Web API URL.", []);
 	}
 	const tableName = present(entity.element, "name");
 	if (tableName === undefined) {
-		return failed(context, "The entity has no name, so no Web API URL can be produced.", entity.path, null, "name");
+		return failed(context, "entity has no name. The converter cannot make a Web API URL.", entity.path, null, "name");
 	}
 	const lookup = context.metadata(tableName);
 	if (lookup.state === "missing") {
-		return failed(context, `Table ${tableName} does not exist in this Environment, so no Web API URL can be produced.`, entity.path, null, "name");
+		return failed(context, `Table ${tableName} is not in this Environment. The converter cannot make a Web API URL.`, entity.path, null, "name");
 	}
 	if (lookup.state === "pending") {
 		return failed(
 			context,
-			`The metadata for Table ${tableName} has not loaded yet, so its entity set name is unknown and no Web API URL can be produced.`,
+			`The metadata for Table ${tableName} is not loaded yet. The converter cannot make a Web API URL without the entity set name.`,
 			entity.path,
 			null,
 			"name"
 		);
 	}
 	if (lookup.table.entitySetName.trim() === "") {
-		return failed(context, `Table ${tableName} has no entity set name, so it cannot be queried through the Web API.`, entity.path, null, "name");
+		return failed(context, `Table ${tableName} has no entity set name. The Web API cannot query it.`, entity.path, null, "name");
 	}
 	const aggregate = isTrue(attributeValue(root, "aggregate"));
 	fetchAttributeWarnings(context, aggregate);
@@ -1088,7 +1099,7 @@ export const toWebApi = (document: FetchXmlDocument, metadata: QueryMetadata): W
 			path: null,
 			entitySetName: null,
 			options: NO_OPTIONS,
-			warnings: [...unique(context.warnings), { message: `The Web API conversion failed unexpectedly: ${message}`, path: [] }],
+			warnings: [...unique(context.warnings), { message: `The Web API conversion failed: ${message}`, path: [] }],
 		};
 	}
 };

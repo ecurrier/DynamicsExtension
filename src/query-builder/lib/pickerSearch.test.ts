@@ -56,7 +56,7 @@ describe("searchPicker", () => {
 		expect(search.visible).toHaveLength(50);
 		expect(search.more).toBe(70);
 		expect(search.matches).toBe(120);
-		expect(moreOptionsText(search.more)).toBe("70 more, keep typing");
+		expect(moreOptionsText(search.more)).toBe("70 more. Type more to find them.");
 	});
 
 	it("keeps the current value visible when it is past the cap and nothing is typed", () => {

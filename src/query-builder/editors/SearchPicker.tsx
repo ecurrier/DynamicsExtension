@@ -79,7 +79,7 @@ export interface SearchPickerProps {
 	onPick: (value: string) => void;
 }
 
-export const SearchPicker = ({ label, value, options, kind, text, placeholder = "(choose)", disabled = false, onPick }: SearchPickerProps) => {
+export const SearchPicker = ({ label, value, options, kind, text, placeholder = "(select)", disabled = false, onPick }: SearchPickerProps) => {
 	const styles = useStyles();
 	const inPane = useInPane();
 	const [open, setOpen] = useState(false);

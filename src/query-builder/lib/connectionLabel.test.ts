@@ -14,6 +14,6 @@ describe("connectionLabel", () => {
 	});
 
 	it("says when the Environment has been removed", () => {
-		expect(connectionLabel({ kind: "environment", environmentId: "gone" }, names)).toBe("Removed environment");
+		expect(connectionLabel({ kind: "environment", environmentId: "gone" }, names)).toBe("Removed Environment");
 	});
 });

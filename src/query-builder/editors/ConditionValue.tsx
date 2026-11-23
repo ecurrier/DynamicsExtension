@@ -176,7 +176,7 @@ export const ConditionValue = ({ document, path, element, scope, column, edit }:
 						aria-label="value"
 						targets={targets}
 						value={selection}
-						placeholder="Search Records..."
+						placeholder="Search Records"
 						search={lookup.search}
 						getEntityInfo={lookup.getEntityInfo}
 						onChange={(next) =>
@@ -199,7 +199,7 @@ export const ConditionValue = ({ document, path, element, scope, column, edit }:
 				kind="value"
 				multiline={inPane}
 				value={values.join(inPane ? "\n" : ", ")}
-				placeholder={inPane ? "One value per line" : "a, b, c"}
+				placeholder={inPane ? "One value on each line" : "a, b, c"}
 				onCommit={(text) => write(parseListValues(text))}
 			/>
 		);

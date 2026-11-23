@@ -62,4 +62,4 @@ export const matchRange = (text: string, query: string): MatchRange | null => {
 	return start < 0 ? null : { start, end: start + needle.length };
 };
 
-export const moreOptionsText = (more: number): string => `${more} more, keep typing`;
+export const moreOptionsText = (more: number): string => `${more} more. Type more to find them.`;

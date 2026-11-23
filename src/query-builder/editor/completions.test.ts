@@ -136,7 +136,7 @@ describe("element names", () => {
 
 	it("ranks names starting with what was typed first and describes each element", () => {
 		const result = complete(`${ENTITY}<li|`);
-		expect(result.items[0]).toMatchObject({ value: "link-entity", rank: 0, description: "A join to a related table." });
+		expect(result.items[0]).toMatchObject({ value: "link-entity", rank: 0, description: "Joins a related Table." });
 		expect(result.typed).toBe("li");
 	});
 });
@@ -158,11 +158,11 @@ describe("attribute names", () => {
 	it("offers the attributes not yet present, common ones first, with descriptions", () => {
 		const result = complete(`${ENTITY}<link-entity name="contact" |`);
 		expect(values(result)).toEqual(["from", "to", "alias", "link-type", "intersect", "visible"]);
-		expect(result.items[0]).toMatchObject({
-			kind: "attribute",
-			description: "Column of the joined table that matches the to column.",
-			apply: { insert: 'from=""', cursorOffset: 6 },
-		});
+		expect(result.items[0]).toMatchObject({ kind: "attribute", apply: { insert: 'from=""', cursorOffset: 6 } });
+		expect(result.items[0]?.description).toBeUndefined();
+		expect(result.items.find((item) => item.value === "intersect")?.description).toBe(
+			"Marks a join that returns no Columns, such as a many-to-many intersect Table."
+		);
 	});
 
 	it("marks required attributes", () => {
@@ -183,7 +183,7 @@ describe("attribute values", () => {
 	it("offers enumerations with their descriptions", () => {
 		const result = complete(`${ENTITY}<link-entity link-type="|"/>`);
 		expect(values(result)).toEqual(["inner", "outer", "any", "not any", "all", "not all", "exists", "in", "matchfirstrowusingcrossapply"]);
-		expect(result.items[0]).toMatchObject({ kind: "value", detail: "Only rows with a match in both tables; the default." });
+		expect(result.items[0]).toMatchObject({ kind: "value", detail: "Returns only Records with a match in both Tables. This is the default." });
 	});
 
 	it("offers booleans", () => {
@@ -307,7 +307,7 @@ describe("operators", () => {
 	it("shows the meaning as detail", () => {
 		expect(operatorsAfter("name").items.find((item) => item.value === "like")).toMatchObject({
 			kind: "operator",
-			detail: "Matches the pattern, where % stands for any run of characters.",
+			detail: "Matches the pattern. % matches any characters.",
 		});
 	});
 

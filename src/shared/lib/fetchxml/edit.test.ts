@@ -1,6 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { createElement, insertChild, moveNode, removeAttribute, removeNode, setAttribute, switchOff, switchOn } from "./edit";
+import {
+	countExcluded,
+	createElement,
+	deleteExcluded,
+	exclude,
+	include,
+	includeAll,
+	insertChild,
+	moveNode,
+	removeAttribute,
+	removeNode,
+	setAttribute,
+} from "./edit";
 import { parseFetchXml } from "./parse";
 import { nodeAtPath } from "./paths";
 import { serializeFetchXml } from "./serialize";
@@ -109,10 +121,10 @@ describe("insertChild", () => {
 		expect(refusal(insertChild(parsed(SOURCE), [0, 1], 0, createElement("x")))).toBe("There is no element at that path");
 	});
 
-	it("refuses a comment or switched-off node inside a switched-off node", () => {
-		const document = applied(switchOff(parsed(SOURCE), [0, 2]));
+	it("refuses a comment or Excluded node inside an Excluded node", () => {
+		const document = applied(exclude(parsed(SOURCE), [0, 2]));
 		expect(refusal(insertChild(document, [0, 2], 0, { kind: "comment", content: "x" }))).toBe(
-			"A comment or switched-off node cannot go inside a switched-off node"
+			"A comment or an Excluded row cannot go inside an Excluded row"
 		);
 		expect(applied(insertChild(document, [0, 2], 0, createElement("condition"))).root).toBeDefined();
 	});
@@ -127,7 +139,7 @@ describe("removeNode", () => {
 	});
 
 	it("refuses the root and a missing node", () => {
-		expect(refusal(removeNode(parsed(SOURCE), []))).toBe("The root element cannot be removed");
+		expect(refusal(removeNode(parsed(SOURCE), []))).toBe("You cannot delete the root element");
 		expect(refusal(removeNode(parsed(SOURCE), [0, 7]))).toBe("There is no node at that path");
 	});
 });
@@ -146,59 +158,100 @@ describe("moveNode", () => {
 	});
 
 	it("refuses the root and an index out of range", () => {
-		expect(refusal(moveNode(parsed(SOURCE), [], 0))).toBe("The root element cannot be moved");
+		expect(refusal(moveNode(parsed(SOURCE), [], 0))).toBe("You cannot move the root element");
 		expect(refusal(moveNode(parsed(SOURCE), [0, 0], 3))).toBe("The index is outside the parent's children");
 	});
 });
 
-describe("switchOff and switchOn", () => {
-	it("switches a node off and on and leaves the input untouched", () => {
+describe("exclude and include", () => {
+	it("excludes and includes a node and leaves the input untouched", () => {
 		const document = parsed(SOURCE);
-		const off = applied(unchanged(document, (input) => switchOff(input, [0, 2, 0])));
-		expect(elementAt(off, [0, 2, 0]).switchedOff).toBe(true);
-		expect(serializeFetchXml(off)).toContain('<!-- <condition attribute="statecode" operator="eq" value="0" /> -->');
-		const on = applied(unchanged(off, (input) => switchOn(input, [0, 2, 0])));
-		expect(serializeFetchXml(on)).toBe(serializeFetchXml(document));
+		const excludedDocument = applied(unchanged(document, (input) => exclude(input, [0, 2, 0])));
+		expect(elementAt(excludedDocument, [0, 2, 0]).excluded).toBe(true);
+		expect(serializeFetchXml(excludedDocument)).toContain('<!-- <condition attribute="statecode" operator="eq" value="0" /> -->');
+		const includedDocument = applied(unchanged(excludedDocument, (input) => include(input, [0, 2, 0])));
+		expect(serializeFetchXml(includedDocument)).toBe(serializeFetchXml(document));
 	});
 
-	it('keeps a value with &, <, " and -- through switching off and on again', () => {
+	it('keeps a value with &, <, " and -- through Exclude and Include', () => {
 		const value = `a & b < c "d" -- e --- f-`;
 		const withValue = applied(setAttribute(parsed(SOURCE), [0, 2, 1], "value", value));
-		const off = parsed(serializeFetchXml(applied(switchOff(withValue, [0, 2, 1]))));
-		expect(elementAt(off, [0, 2, 1]).switchedOff).toBe(true);
-		expect(elementAt(off, [0, 2, 1]).attributes[2]?.value).toBe(value);
-		const on = parsed(serializeFetchXml(applied(switchOn(off, [0, 2, 1]))));
-		expect(elementAt(on, [0, 2, 1]).switchedOff).toBe(false);
-		expect(elementAt(on, [0, 2, 1]).attributes[2]?.value).toBe(value);
+		const excludedDocument = parsed(serializeFetchXml(applied(exclude(withValue, [0, 2, 1]))));
+		expect(elementAt(excludedDocument, [0, 2, 1]).excluded).toBe(true);
+		expect(elementAt(excludedDocument, [0, 2, 1]).attributes[2]?.value).toBe(value);
+		const includedDocument = parsed(serializeFetchXml(applied(include(excludedDocument, [0, 2, 1]))));
+		expect(elementAt(includedDocument, [0, 2, 1]).excluded).toBe(false);
+		expect(elementAt(includedDocument, [0, 2, 1]).attributes[2]?.value).toBe(value);
 	});
 
-	it("keeps a subtree with value text through switching off and on again", () => {
+	it("keeps a subtree with value text through Exclude and Include", () => {
 		const document = parsed(`<entity><filter><condition attribute="x" operator="in"><value>a--b &amp; &lt;c&gt;</value></condition></filter></entity>`);
-		const off = parsed(serializeFetchXml(applied(switchOff(document, [0]))));
-		expect(elementAt(off, [0]).switchedOff).toBe(true);
-		const on = parsed(serializeFetchXml(applied(switchOn(off, [0]))));
-		expect(serializeFetchXml(on)).toBe(serializeFetchXml(document));
+		const excludedDocument = parsed(serializeFetchXml(applied(exclude(document, [0]))));
+		expect(elementAt(excludedDocument, [0]).excluded).toBe(true);
+		const includedDocument = parsed(serializeFetchXml(applied(include(excludedDocument, [0]))));
+		expect(serializeFetchXml(includedDocument)).toBe(serializeFetchXml(document));
 	});
 
-	it("refuses to switch off a node that has switched-off descendants", () => {
-		const document = applied(switchOff(parsed(SOURCE), [0, 2, 0]));
-		expect(refusal(switchOff(document, [0, 2]))).toBe("Switch on or remove the switched-off nodes inside it first");
-		expect(refusal(switchOff(document, [0]))).toBe("Switch on or remove the switched-off nodes inside it first");
+	it("refuses to exclude a node that has Excluded descendants", () => {
+		const document = applied(exclude(parsed(SOURCE), [0, 2, 0]));
+		expect(refusal(exclude(document, [0, 2]))).toBe("First, Include or delete the Excluded rows inside this row");
+		expect(refusal(exclude(document, [0]))).toBe("First, Include or delete the Excluded rows inside this row");
 	});
 
-	it("refuses to switch off a node inside a switched-off node, one holding comments, the root, or a non-element", () => {
-		const off = applied(switchOff(parsed(SOURCE), [0, 2]));
-		expect(refusal(switchOff(off, [0, 2, 0]))).toBe("A node inside a switched-off node cannot be switched off");
-		expect(refusal(switchOff(parsed(SOURCE), [0]))).toBe("Remove the comments inside it first");
-		expect(refusal(switchOff(parsed(SOURCE), []))).toBe("The root element cannot be switched off");
-		expect(refusal(switchOff(parsed(SOURCE), [0, 1]))).toBe("Only an element can be switched off");
-		expect(refusal(switchOn(parsed(SOURCE), [0, 1]))).toBe("Only an element can be switched on");
+	it("refuses to exclude a node inside an Excluded node, one holding comments, the root, or a non-element", () => {
+		const excludedDocument = applied(exclude(parsed(SOURCE), [0, 2]));
+		expect(refusal(exclude(excludedDocument, [0, 2, 0]))).toBe("You cannot Exclude a row inside an Excluded row");
+		expect(refusal(exclude(parsed(SOURCE), [0]))).toBe("First, delete the comments inside this row");
+		expect(refusal(exclude(parsed(SOURCE), []))).toBe("You cannot Exclude the root element");
+		expect(refusal(exclude(parsed(SOURCE), [0, 1]))).toBe("You can Exclude only an element");
+		expect(refusal(include(parsed(SOURCE), [0, 1]))).toBe("You can Include only an element");
 	});
 
-	it("treats switching an already switched node as a no-op", () => {
+	it("treats excluding an Excluded node or including an Included node as a no-op", () => {
 		const document = parsed(SOURCE);
-		expect(applied(switchOn(document, [0, 2]))).toBe(document);
-		const off = applied(switchOff(document, [0, 2]));
-		expect(applied(switchOff(off, [0, 2]))).toBe(off);
+		expect(applied(include(document, [0, 2]))).toBe(document);
+		const excludedDocument = applied(exclude(document, [0, 2]));
+		expect(applied(exclude(excludedDocument, [0, 2]))).toBe(excludedDocument);
+	});
+});
+
+describe("Include all and Delete excluded", () => {
+	const EXCLUDED = `<fetch><entity name="account"><!-- <attribute name="x" /> --><attribute name="name" /><!-- note --><filter type="and"><!-- <condition attribute="statecode" operator="eq" value="0" /> --><condition attribute="name" operator="like" value="a%" /></filter></entity></fetch>`;
+
+	it("counts the Excluded rows", () => {
+		expect(countExcluded(parsed(EXCLUDED))).toBe(2);
+		expect(countExcluded(parsed(SOURCE))).toBe(0);
+	});
+
+	it("includes every Excluded row in one edit and leaves the input untouched", () => {
+		const document = parsed(EXCLUDED);
+		const result = applied(includeAll(document));
+		expect(countExcluded(result)).toBe(0);
+		expect(elementAt(result, [0, 0]).excluded).toBe(false);
+		expect(elementAt(result, [0, 3, 0]).excluded).toBe(false);
+		expect(serializeFetchXml(result)).toContain("<!-- note -->");
+		expect(countExcluded(document)).toBe(2);
+	});
+
+	it("deletes every Excluded row in one edit and keeps ordinary comments", () => {
+		const result = applied(deleteExcluded(parsed(EXCLUDED)));
+		expect(serializeFetchXml(result, { omitExcluded: false })).toBe(
+			[
+				"<fetch>",
+				'  <entity name="account">',
+				'    <attribute name="name" />',
+				"    <!-- note -->",
+				'    <filter type="and">',
+				'      <condition attribute="name" operator="like" value="a%" />',
+				"    </filter>",
+				"  </entity>",
+				"</fetch>",
+			].join("\n")
+		);
+	});
+
+	it("refuses both when the Query has no Excluded rows", () => {
+		expect(refusal(includeAll(parsed(SOURCE)))).toBe("The Query has no Excluded rows");
+		expect(refusal(deleteExcluded(parsed(SOURCE)))).toBe("The Query has no Excluded rows");
 	});
 });

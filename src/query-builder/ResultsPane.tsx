@@ -194,11 +194,11 @@ export const ResultsPane = ({
 					{run.status === "idle" ? (
 						<Text size={200} className={styles.hint}>
 							{ready
-								? "Run the Query with the Run button or Ctrl+Enter to see the first page of Records."
-								: "This Connection is not available. Open a model-driven app in the tab Power Tools is reading, or choose a saved environment."}
+								? "Select Run or press Ctrl+Enter to see the first page of Records."
+								: "This Connection is not available. Open a model-driven app in the tab that Power Tools reads, or select a saved Environment."}
 						</Text>
 					) : null}
-					{run.status === "running" ? <Spinner size="small" label="Running the Query" /> : null}
+					{run.status === "running" ? <Spinner size="small" label="The Query is running" /> : null}
 					{run.status === "failed" ? (
 						<MessageBar intent="error" layout="multiline" className={styles.failure}>
 							<MessageBarBody>
@@ -245,8 +245,8 @@ export const ResultsPane = ({
 							{run.awaitingLimitConfirmation ? (
 								<MessageBar intent="warning" layout="multiline" className={styles.banner}>
 									<MessageBarBody>
-										<MessageBarTitle>{`${recordCount(run.rows.length, "loaded")}, and more exist`}</MessageBarTitle>
-										{`Loading past ${LOAD_ALL_CONFIRM_AT.toLocaleString()} Records can make this tab slow.`}
+										<MessageBarTitle>{`${recordCount(run.rows.length, "loaded")}. More Records exist.`}</MessageBarTitle>
+										{`If you load more than ${LOAD_ALL_CONFIRM_AT.toLocaleString()} Records, this tab can become slow.`}
 									</MessageBarBody>
 									<MessageBarActions>
 										<Button size="small" onClick={onKeepLoading}>
@@ -261,7 +261,7 @@ export const ResultsPane = ({
 							{run.pageError ? (
 								<MessageBar intent="error" layout="multiline" className={styles.banner}>
 									<MessageBarBody>
-										<MessageBarTitle>The next page could not be loaded</MessageBarTitle>
+										<MessageBarTitle>Cannot load the next page</MessageBarTitle>
 										<span className={styles.message}>{run.pageError}</span>
 									</MessageBarBody>
 								</MessageBar>

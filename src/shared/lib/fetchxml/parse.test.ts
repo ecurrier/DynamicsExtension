@@ -35,7 +35,7 @@ describe("parseFetchXml", () => {
 		expect(entity.name).toBe("entity");
 		expect(text.slice(entity.range?.from, entity.range?.to)).toBe('<entity name="account"><attribute name="name" /></entity>');
 		expect(element(entity.children[0]).name).toBe("attribute");
-		expect(root.switchedOff).toBe(false);
+		expect(root.excluded).toBe(false);
 	});
 
 	it("keeps attribute order and reads single-quoted values", () => {
@@ -79,29 +79,29 @@ describe("parseFetchXml", () => {
 		expect(document.root.children[0]).toEqual({ kind: "comment", content: " inside ", range: { from: 22, to: 37 } });
 	});
 
-	it("reads a comment holding exactly one element as a switched-off element with its subtree", () => {
+	it("reads a comment holding exactly one element as an Excluded element with its subtree", () => {
 		const text = '<entity name="a"><!-- <filter type="or"><condition attribute="x" operator="eq" value="1" /></filter> --></entity>';
 		const { root } = parsed(text);
 		const filter = element(root.children[0]);
-		expect(filter.switchedOff).toBe(true);
+		expect(filter.excluded).toBe(true);
 		expect(filter.name).toBe("filter");
 		expect(filter.attributes[0]?.value).toBe("or");
 		expect(text.slice(filter.range?.from, filter.range?.to)).toMatch(/^<!--.*-->$/);
 		const condition = element(filter.children[0]);
-		expect(condition.switchedOff).toBe(false);
+		expect(condition.excluded).toBe(false);
 		expect(text.slice(condition.range?.from, condition.range?.to)).toBe('<condition attribute="x" operator="eq" value="1" />');
 	});
 
-	it("decodes -&#45; inside a switched-off element", () => {
+	it("decodes -&#45; inside an Excluded element", () => {
 		const { root } = parsed('<filter><!--<condition value="x-&#45;y" />--></filter>');
 		expect(element(root.children[0]).attributes[0]?.value).toBe("x--y");
 	});
 
-	it("reads a comment as a switched-off row only when its element is valid under the comment's parent", () => {
+	it("reads a comment as an Excluded row only when its element is valid under the comment's parent", () => {
 		const condition = '<condition attribute="name" operator="eq" value="a" />';
 		const underFilter = parsed(`<fetch><entity name="a"><filter><!-- ${condition} --></filter></entity></fetch>`);
 		const filter = element(element(underFilter.root.children[0]).children[0]);
-		expect(element(filter.children[0]).switchedOff).toBe(true);
+		expect(element(filter.children[0]).excluded).toBe(true);
 		const underFetch = parsed(`<fetch><!-- ${condition} --><entity name="a" /></fetch>`);
 		expect(underFetch.root.children[0]).toEqual({ kind: "comment", content: ` ${condition} `, range: { from: 7, to: 7 + condition.length + 9 } });
 	});
@@ -115,11 +115,11 @@ describe("parseFetchXml", () => {
 		expect(element(entity.children[2]).children[0]).toMatchObject({ kind: "comment", content: " <entity name='b' /> " });
 	});
 
-	it("parseXml reads any single well-formed element in a comment as switched off unless told otherwise", () => {
+	it("parseXml reads any single well-formed element in a comment as Excluded unless told otherwise", () => {
 		const text = '<a><!--<b v="x-&#45;y" />--></a>';
 		const loose = parseXml(text);
-		expect(loose.ok && element(loose.document.root.children[0]).switchedOff).toBe(true);
-		const strict = parseXml(text, { acceptSwitchedOff: (parent, candidate) => parent === "a" && candidate.name === "c" });
+		expect(loose.ok && element(loose.document.root.children[0]).excluded).toBe(true);
+		const strict = parseXml(text, { acceptExcluded: (parent, candidate) => parent === "a" && candidate.name === "c" });
 		expect(strict.ok && strict.document.root.children[0]?.kind).toBe("comment");
 	});
 
@@ -128,7 +128,7 @@ describe("parseFetchXml", () => {
 		expect(root.children.map((child) => child.kind)).toEqual(["comment", "comment", "comment", "comment", "comment"]);
 	});
 
-	it("does not treat a comment outside the root as switched off", () => {
+	it("does not treat a comment outside the root as Excluded", () => {
 		expect(parsed("<!-- <fetch /> --><fetch />").leading).toEqual([{ kind: "comment", content: " <fetch /> ", range: { from: 0, to: 18 } }]);
 	});
 
@@ -137,8 +137,8 @@ describe("parseFetchXml", () => {
 	});
 
 	it("rejects other processing instructions and doctypes", () => {
-		expect(errorsOf("<fetch><?pi data?></fetch>")[0]?.message).toBe("Processing instructions are not supported");
-		expect(errorsOf("<!DOCTYPE fetch><fetch />")[0]?.message).toBe("DOCTYPE declarations are not supported");
+		expect(errorsOf("<fetch><?pi data?></fetch>")[0]?.message).toBe("Fetch XML cannot contain processing instructions");
+		expect(errorsOf("<!DOCTYPE fetch><fetch />")[0]?.message).toBe("Fetch XML cannot contain a DOCTYPE declaration");
 	});
 
 	it("reports an unclosed tag with its range", () => {
@@ -171,13 +171,13 @@ describe("parseFetchXml", () => {
 	});
 
 	it("reports an unknown entity and an invalid character reference", () => {
-		expect(errorsOf('<a v="&nbsp;" />')).toEqual([{ message: "Unknown entity &nbsp;", range: { from: 6, to: 12 } }]);
+		expect(errorsOf('<a v="&nbsp;" />')).toEqual([{ message: "&nbsp; is not a known XML entity", range: { from: 6, to: 12 } }]);
 		expect(errorsOf('<a v="&#0;" />')[0]?.message).toBe("&#0; is not a valid character");
 	});
 
 	it("reports text outside the root, a second root and a missing root", () => {
-		expect(errorsOf("hello <fetch />")[0]?.message).toBe("Text is not allowed outside the root element");
-		expect(errorsOf("<fetch /><fetch />")).toEqual([{ message: "Only one root element is allowed", range: { from: 9, to: 18 } }]);
+		expect(errorsOf("hello <fetch />")[0]?.message).toBe("Text cannot be outside the root element");
+		expect(errorsOf("<fetch /><fetch />")).toEqual([{ message: "The Fetch XML can have only one root element", range: { from: 9, to: 18 } }]);
 		expect(errorsOf("   ")).toEqual([{ message: "There is no root element", range: { from: 0, to: 3 } }]);
 	});
 

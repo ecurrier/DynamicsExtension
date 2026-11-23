@@ -34,10 +34,10 @@ const unpagedReason = (document: FetchXmlDocument): string | null => {
 		return "The root element is not fetch";
 	}
 	if (attributeOf(document, "top") !== undefined) {
-		return "A Query with top returns a single page";
+		return "A Query with top returns one page";
 	}
 	if (isTrue(attributeOf(document, "aggregate"))) {
-		return "An aggregate Query returns a single page";
+		return "An aggregate Query returns one page";
 	}
 	return null;
 };

@@ -1,18 +1,20 @@
 import { OPERATORS } from "./operators";
 
-export type EnumerationValue = { readonly value: string; readonly description: string };
+export type EnumerationValue = { readonly value: string; readonly description?: string };
 
 export type AttributeValueKind =
 	| { readonly kind: "enumeration"; readonly values: readonly EnumerationValue[]; readonly multiple: boolean }
 	| { readonly kind: "number"; readonly minimum?: number; readonly maximum?: number }
 	| { readonly kind: "boolean" | "text" | "table" | "column" | "alias" };
 
+export type AttributeGroup = "main" | "more" | "legacy";
+
 export type AttributeDefinition = {
 	readonly name: string;
 	readonly value: AttributeValueKind;
 	readonly required: boolean;
-	readonly description: string;
-	readonly common: boolean;
+	readonly description?: string;
+	readonly group: AttributeGroup;
 	readonly documented: boolean;
 };
 
@@ -27,14 +29,19 @@ export type ElementDefinition = {
 	readonly text: boolean;
 };
 
-type AttributeOptions = { readonly required?: boolean; readonly common?: boolean; readonly documented?: boolean };
+type AttributeOptions = {
+	readonly description?: string;
+	readonly required?: boolean;
+	readonly group?: AttributeGroup;
+	readonly documented?: boolean;
+};
 
-const attribute = (name: string, value: AttributeValueKind, description: string, options: AttributeOptions = {}): AttributeDefinition => ({
+const attribute = (name: string, value: AttributeValueKind, options: AttributeOptions = {}): AttributeDefinition => ({
 	name,
 	value,
 	required: options.required ?? false,
-	description,
-	common: options.common ?? false,
+	...(options.description === undefined ? {} : { description: options.description }),
+	group: options.group ?? (options.documented === false ? "legacy" : "more"),
 	documented: options.documented ?? true,
 });
 
@@ -44,36 +51,36 @@ const TABLE: AttributeValueKind = { kind: "table" };
 const COLUMN: AttributeValueKind = { kind: "column" };
 const ALIAS: AttributeValueKind = { kind: "alias" };
 
-const enumeration = (values: readonly (readonly [string, string])[], multiple = false): AttributeValueKind => ({
+const enumeration = (values: readonly (readonly [string, string?])[], multiple = false): AttributeValueKind => ({
 	kind: "enumeration",
-	values: values.map(([value, description]) => ({ value, description })),
+	values: values.map(([value, description]) => (description === undefined ? { value } : { value, description })),
 	multiple,
 });
 
 const QUERY_OPTIONS = enumeration(
 	[
-		["ForceOrder", "SQL Server FORCE ORDER hint: join tables in the order written."],
-		["DisableRowGoal", "SQL Server DISABLE_OPTIMIZER_ROWGOAL hint."],
-		["EnableOptimizerHotfixes", "SQL Server ENABLE_QUERY_OPTIMIZER_HOTFIXES hint."],
-		["LoopJoin", "SQL Server LOOP JOIN hint."],
-		["MergeJoin", "SQL Server MERGE JOIN hint."],
-		["HashJoin", "SQL Server HASH JOIN hint."],
-		["NO_PERFORMANCE_SPOOL", "SQL Server NO_PERFORMANCE_SPOOL hint."],
-		["ENABLE_HIST_AMENDMENT_FOR_ASC_KEYS", "SQL Server ENABLE_HIST_AMENDMENT_FOR_ASC_KEYS hint."],
+		["ForceOrder", "Adds the SQL Server hint FORCE ORDER. Tables join in the written order."],
+		["DisableRowGoal", "Adds the SQL Server hint DISABLE_OPTIMIZER_ROWGOAL."],
+		["EnableOptimizerHotfixes", "Adds the SQL Server hint ENABLE_QUERY_OPTIMIZER_HOTFIXES."],
+		["LoopJoin", "Adds the SQL Server hint LOOP JOIN."],
+		["MergeJoin", "Adds the SQL Server hint MERGE JOIN."],
+		["HashJoin", "Adds the SQL Server hint HASH JOIN."],
+		["NO_PERFORMANCE_SPOOL"],
+		["ENABLE_HIST_AMENDMENT_FOR_ASC_KEYS"],
 	],
 	true
 );
 
 const LINK_TYPES = enumeration([
-	["inner", "Only rows with a match in both tables; the default."],
-	["outer", "Also parent rows with no match in the joined table."],
-	["any", "Inside a filter: parent rows with at least one matching row."],
-	["not any", "Inside a filter: parent rows with no matching row."],
-	["all", "Inside a filter: parent rows that have matching rows, none of which meet this link-entity's filter."],
-	["not all", "Inside a filter: parent rows with at least one matching row, the same as any."],
-	["exists", "Like inner, written as EXISTS, so parent rows are not repeated."],
-	["in", "Like inner, written as IN, so parent rows are not repeated."],
-	["matchfirstrowusingcrossapply", "Like inner, joining only the first matching row, so parent rows are not repeated."],
+	["inner", "Returns only Records with a match in both Tables. This is the default."],
+	["outer", "Also returns parent Records that have no match."],
+	["any", "In a filter: parent Records with one or more matches."],
+	["not any", "In a filter: parent Records with no match."],
+	["all", "In a filter: parent Records that have matches, and no match passes the link-entity filter."],
+	["not all", "In a filter: the same as any."],
+	["exists", "Same as inner, but uses EXISTS. Parent Records do not repeat."],
+	["in", "Same as inner, but uses IN. Parent Records do not repeat."],
+	["matchfirstrowusingcrossapply", "Same as inner, but joins only the first match. Parent Records do not repeat."],
 ]);
 
 const ENTITY_CHILDREN: readonly ChildRule[] = [
@@ -89,178 +96,167 @@ type ElementSource = Omit<ElementDefinition, "parents">;
 const SOURCES: readonly ElementSource[] = [
 	{
 		name: "fetch",
-		description: "The root of a query, holding its paging, aggregate and option settings.",
+		description: "The root element of a Query.",
 		text: false,
 		children: [{ name: "entity", max: 1 }],
 		attributes: [
+			attribute("top", { kind: "number", minimum: 1, maximum: 5000 }, { group: "main" }),
+			attribute("count", { kind: "number", minimum: 1 }),
+			attribute("page", { kind: "number", minimum: 1 }),
+			attribute("paging-cookie", TEXT, { description: "The paging cookie from the previous page. It makes the next page faster." }),
+			attribute("distinct", BOOLEAN, { group: "main" }),
+			attribute("aggregate", BOOLEAN, { group: "main" }),
 			attribute(
-				"top",
-				{ kind: "number", minimum: 1, maximum: 5000 },
-				"Returns at most this many rows; not used with page, count or returntotalrecordcount.",
-				{
-					common: true,
-				}
+				"aggregatelimit",
+				{ kind: "number", minimum: 1, maximum: 50000 },
+				{ description: "Sets a Record limit for an aggregate Query that is lower than 50,000." }
 			),
-			attribute("count", { kind: "number", minimum: 1 }, "Number of rows in each page."),
-			attribute("page", { kind: "number", minimum: 1 }, "Page number to return, starting at 1."),
-			attribute("paging-cookie", TEXT, "Cookie returned with the previous page, which makes fetching the next page faster."),
-			attribute("distinct", BOOLEAN, "Leaves duplicate rows out of the results.", { common: true }),
-			attribute("aggregate", BOOLEAN, "Returns aggregate values instead of rows.", { common: true }),
-			attribute("aggregatelimit", { kind: "number", minimum: 1, maximum: 50000 }, "Lowers the 50,000-row limit for an aggregate query."),
-			attribute("returntotalrecordcount", BOOLEAN, "Also returns the total number of rows that match the query."),
+			attribute("returntotalrecordcount", BOOLEAN, { group: "main", description: "Also returns the total number of matching Records." }),
 			attribute(
 				"datasource",
 				enumeration([
-					["retained", "Only rows moved to long-term data retention."],
-					["bin", "Only deleted rows that can still be restored."],
+					["retained", "Records in long-term retention."],
+					["bin", "Deleted Records that you can restore."],
 				]),
-				"Reads retained or deleted rows instead of live ones."
+				{ description: "Reads retained or deleted Records. Does not read live data." }
 			),
-			attribute("latematerialize", BOOLEAN, "Splits the query into smaller parts and reassembles the results, which can speed up some slow queries."),
-			attribute("no-lock", BOOLEAN, "Legacy setting that avoided shared locks; no longer needed."),
-			attribute("options", QUERY_OPTIONS, "Comma-separated SQL Server hints, to use only when Microsoft support recommends them."),
-			attribute("useraworderby", BOOLEAN, "Sorts Choice columns by their stored number instead of their label."),
-			attribute("version", TEXT, "Schema version written by saved views, usually 1.0.", { documented: false }),
-			attribute("mapping", enumeration([["logical", "Names are logical names."]]), "Name mapping written by saved views, always logical.", {
-				documented: false,
-			}),
+			attribute("latematerialize", BOOLEAN, { description: "Runs the Query in smaller parts to make some slow Queries faster." }),
+			attribute("no-lock", BOOLEAN, { group: "legacy", description: "Legacy. It is not necessary now." }),
+			attribute("options", QUERY_OPTIONS, { description: "SQL Server hints. Use them only if Microsoft Support tells you to." }),
+			attribute("useraworderby", BOOLEAN, { description: "Sorts Choice Columns by their number, not by their label." }),
+			attribute("version", TEXT, { documented: false }),
+			attribute("mapping", enumeration([["logical", "Names are logical names."]]), { documented: false }),
 		],
 	},
 	{
 		name: "entity",
-		description: "The table the query returns rows from.",
+		description: "The Table that the Query reads Records from.",
 		text: false,
 		children: ENTITY_CHILDREN,
-		attributes: [attribute("name", TABLE, "Logical name of the table the query returns rows from.", { required: true, common: true })],
+		attributes: [attribute("name", TABLE, { required: true, group: "main" })],
 	},
 	{
 		name: "all-attributes",
-		description: "Returns every column of the table.",
+		description: "Returns all Columns of the Table.",
 		text: false,
 		children: [],
 		attributes: [],
 	},
 	{
 		name: "attribute",
-		description: "A column to return.",
+		description: "A Column to return.",
 		text: false,
 		children: [],
 		attributes: [
-			attribute("name", COLUMN, "Logical name of the column to return.", { required: true, common: true }),
-			attribute("alias", TEXT, "Name the column is returned under; aggregate values need one.", { common: true }),
+			attribute("name", COLUMN, { required: true, group: "main" }),
+			attribute("alias", TEXT, { group: "main" }),
 			attribute(
 				"aggregate",
 				enumeration([
-					["avg", "Average of the values that have data."],
-					["count", "Number of rows."],
-					["countcolumn", "Number of rows with a value in this column."],
-					["max", "Largest value in the column."],
-					["min", "Smallest value in the column."],
-					["sum", "Total of the values that have data."],
-				]),
-				"Aggregate function to apply in an aggregate query.",
-				{ common: true }
+					["avg", "The average of the values that are not empty."],
+					["count", "The number of Records."],
+					["countcolumn", "The number of Records with a value in this Column."],
+					["max", "The largest value."],
+					["min", "The smallest value."],
+					["sum", "The total of the values that are not empty."],
+				])
 			),
-			attribute("groupby", BOOLEAN, "Groups the aggregate results by this column.", { common: true }),
-			attribute("distinct", BOOLEAN, "With countcolumn, counts each distinct value once."),
+			attribute("groupby", BOOLEAN),
+			attribute("distinct", BOOLEAN, { description: "With countcolumn, counts each value one time." }),
 			attribute(
 				"dategrouping",
 				enumeration([
-					["day", "Day of the month."],
-					["week", "Week of the year."],
-					["month", "Month of the year."],
-					["quarter", "Quarter of the fiscal year."],
-					["year", "Year."],
-					["fiscal-period", "Period of the fiscal year."],
-					["fiscal-year", "Fiscal year."],
-				]),
-				"Part of the date to group by when grouping on a date column."
+					["day", "The day of the month."],
+					["week", "The week of the year."],
+					["month", "The month of the year."],
+					["quarter", "The quarter of the fiscal year."],
+					["year"],
+					["fiscal-period", "The period of the fiscal year."],
+					["fiscal-year"],
+				])
 			),
-			attribute("usertimezone", BOOLEAN, "Set to false to group dates by their UTC value instead of the user's time zone."),
-			attribute(
-				"rowaggregate",
-				enumeration([["CountChildren", "Number of rows below this one in its hierarchy."]]),
-				"Adds the number of hierarchical child rows to each row."
-			),
+			attribute("usertimezone", BOOLEAN, { description: "If false, groups dates by UTC, not by the time zone of the user." }),
+			attribute("rowaggregate", enumeration([["CountChildren"]]), { description: "Adds the number of child Records in the hierarchy to each Record." }),
 		],
 	},
 	{
 		name: "order",
-		description: "A sort; with several, rows sort by the first, then the next.",
+		description: "Sorts the Records by a Column.",
 		text: false,
 		children: [],
 		attributes: [
-			attribute("attribute", COLUMN, "Column to sort by; aggregate queries sort by alias instead.", { common: true }),
-			attribute("alias", ALIAS, "Alias of an attribute to sort by, used in aggregate queries.", { common: true }),
-			attribute("descending", BOOLEAN, "Sorts from highest to lowest.", { common: true }),
-			attribute("entityname", ALIAS, "Alias of a link-entity whose column this entity-level order sorts by, so it is not applied last."),
+			attribute("attribute", COLUMN, { group: "main" }),
+			attribute("alias", ALIAS, { description: "Sorts by the attribute that has this alias." }),
+			attribute("descending", BOOLEAN, { group: "main" }),
+			attribute("entityname", ALIAS, { description: "Sorts by a Column of the link-entity that has this alias." }),
 		],
 	},
 	{
 		name: "filter",
-		description: "A group of conditions combined with and or or.",
+		description: "Joins conditions with AND or OR.",
 		text: false,
 		children: [{ name: "condition", max: 500 }, { name: "filter" }, { name: "link-entity" }],
 		attributes: [
 			attribute(
 				"type",
 				enumeration([
-					["and", "Every condition must match."],
-					["or", "At least one condition must match."],
+					["and", "All conditions are true."],
+					["or", "One or more conditions are true."],
 				]),
-				"Whether all or any of the conditions must match; and when left out.",
-				{ common: true }
+				{ group: "main" }
 			),
-			attribute(
-				"hint",
-				enumeration([["union", "Run the filter as a union of separate queries."]]),
-				"Set to union to speed up an or filter over columns of different tables."
-			),
-			attribute("isquickfindfields", BOOLEAN, "Runs the filter as a quick find query."),
-			attribute("overridequickfindrecordlimitenabled", BOOLEAN, "Applies the quick find record limit even when the environment has it turned off."),
-			attribute("overridequickfindrecordlimitdisabled", BOOLEAN, "Bypasses the quick find record limit even when the environment has it turned on."),
+			attribute("hint", enumeration([["union", "Runs the filter as a UNION of separate Queries."]]), {
+				description: "Set to union to make an OR filter on Columns of different Tables faster.",
+			}),
+			attribute("isquickfindfields", BOOLEAN, { group: "legacy", description: "Runs the filter as a quick find search." }),
+			attribute("overridequickfindrecordlimitenabled", BOOLEAN, {
+				group: "legacy",
+				description: "Applies the quick find Record limit, also if the Environment turns the limit off.",
+			}),
+			attribute("overridequickfindrecordlimitdisabled", BOOLEAN, {
+				group: "legacy",
+				description: "Ignores the quick find Record limit, also if the Environment turns the limit on.",
+			}),
 		],
 	},
 	{
 		name: "condition",
-		description: "A test on one column's value.",
+		description: "Tests the value of one Column.",
 		text: false,
 		children: [{ name: "value" }],
 		attributes: [
-			attribute("attribute", COLUMN, "Column whose value is tested.", { common: true }),
-			attribute(
-				"operator",
-				enumeration(OPERATORS.map((definition) => [definition.name, definition.meaning] as const)),
-				"How the column is compared with the value.",
-				{ required: true, common: true }
-			),
-			attribute("value", TEXT, "Value to compare with, for operators that take one value.", { common: true }),
-			attribute("valueof", COLUMN, "Column of the same row to compare with instead of a fixed value.", { common: true }),
-			attribute("entityname", ALIAS, "Name or alias of the link-entity the condition tests, applied after an outer join."),
-			attribute("uiname", TEXT, "Display name of the record in value, written by saved views for lookup conditions.", { documented: false }),
-			attribute("uitype", TABLE, "Table of the record in value, written by saved views for lookup conditions.", { documented: false }),
+			attribute("attribute", COLUMN, { group: "main" }),
+			attribute("operator", enumeration(OPERATORS.map((definition) => [definition.name, definition.meaning] as const)), {
+				required: true,
+				group: "main",
+			}),
+			attribute("value", TEXT, { group: "main" }),
+			attribute("valueof", COLUMN, { group: "main", description: "Compares with another Column of the same Record." }),
+			attribute("entityname", ALIAS, { description: "Tests a Column of the link-entity that has this name or alias." }),
+			attribute("uiname", TEXT, { documented: false, description: "The name of the Record in value. Saved views write it." }),
+			attribute("uitype", TABLE, { documented: false, description: "The Table of the Record in value. Saved views write it." }),
 		],
 	},
 	{
 		name: "value",
-		description: "One value of a condition whose operator takes several, such as in or between.",
+		description: "One value for an operator that takes more than one value, such as in.",
 		text: true,
 		children: [],
 		attributes: [],
 	},
 	{
 		name: "link-entity",
-		description: "A join to a related table.",
+		description: "Joins a related Table.",
 		text: false,
 		children: ENTITY_CHILDREN,
 		attributes: [
-			attribute("name", TABLE, "Logical name of the table to join.", { required: true, common: true }),
-			attribute("from", COLUMN, "Column of the joined table that matches the to column.", { common: true }),
-			attribute("to", COLUMN, "Column of the parent entity or link-entity that matches the from column.", { common: true }),
-			attribute("alias", TEXT, "Name for the join, used to refer to it and to prefix its columns in the results.", { common: true }),
-			attribute("link-type", LINK_TYPES, "How the join limits the rows returned; inner when left out.", { common: true }),
-			attribute("intersect", BOOLEAN, "Marks a join that returns no columns, such as the intersect table of a many-to-many relationship."),
-			attribute("visible", BOOLEAN, "Legacy flag written by saved views; not in the current reference.", { documented: false }),
+			attribute("name", TABLE, { required: true, group: "main" }),
+			attribute("from", COLUMN, { group: "main" }),
+			attribute("to", COLUMN, { group: "main" }),
+			attribute("alias", TEXT, { group: "main" }),
+			attribute("link-type", LINK_TYPES, { group: "main" }),
+			attribute("intersect", BOOLEAN, { description: "Marks a join that returns no Columns, such as a many-to-many intersect Table." }),
+			attribute("visible", BOOLEAN, { documented: false }),
 		],
 	},
 ];

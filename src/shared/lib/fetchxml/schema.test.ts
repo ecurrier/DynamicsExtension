@@ -103,18 +103,31 @@ describe("element catalogue", () => {
 		expect(required.sort()).toEqual(["attribute.name", "condition.operator", "entity.name", "link-entity.name"]);
 	});
 
-	it("gives every element and attribute a one-sentence description and every enumeration value a description", () => {
-		for (const element of ELEMENTS) {
-			expect(element.description).toMatch(/^[A-Z].*\.$/);
-			for (const attribute of element.attributes) {
-				expect(attribute.description).toMatch(/^[A-Z].*\.$/);
-				if (attribute.value.kind === "enumeration") {
-					for (const value of attribute.value.values) {
-						expect(value.description).toMatch(/^[A-Z].*\.$/);
-					}
-				}
+	it("writes every description as short sentences of 25 words or fewer", () => {
+		const descriptions = ELEMENTS.flatMap((element) => [
+			element.description,
+			...element.attributes.flatMap((attribute) => [
+				attribute.description,
+				...(attribute.value.kind === "enumeration" ? attribute.value.values.map((value) => value.description) : []),
+			]),
+		]).filter((description): description is string => description !== undefined);
+		for (const description of descriptions) {
+			expect(description).toMatch(/^[A-Z].*\.$/);
+			for (const sentence of description.split(/(?<=\.) /)) {
+				expect(sentence.split(" ").length).toBeLessThanOrEqual(25);
 			}
+			expect(description).not.toMatch(/\b(should|may|e\.g\.|etc\.|via)\b|n't|;/);
 		}
+	});
+
+	it("describes an attribute only where its name is not enough", () => {
+		const described = (element: string, name: string): string | undefined => attributeDefinition(element, name)?.description;
+		expect(described("entity", "name")).toBeUndefined();
+		expect(described("link-entity", "alias")).toBeUndefined();
+		expect(described("fetch", "top")).toBeUndefined();
+		expect(described("filter", "type")).toBeUndefined();
+		expect(described("fetch", "latematerialize")?.split(". ")).toHaveLength(1);
+		expect(described("link-entity", "intersect")?.split(". ")).toHaveLength(1);
 	});
 
 	it("uses the value kinds the editors need", () => {
@@ -127,14 +140,37 @@ describe("element catalogue", () => {
 		expect(attributeDefinition("condition", "value")?.value.kind).toBe("text");
 	});
 
-	it("marks the attributes that belong on the tree row", () => {
-		const common = (element: string): string[] =>
-			attributesOf(element)
-				.filter((attribute) => attribute.common)
-				.map((attribute) => attribute.name);
-		expect(common("condition")).toEqual(["attribute", "operator", "value", "valueof"]);
-		expect(common("link-entity")).toEqual(["name", "from", "to", "alias", "link-type"]);
-		expect(common("filter")).toEqual(["type"]);
+	it("puts every attribute of every element in one details group", () => {
+		const groups = (element: string): Record<string, string[]> =>
+			attributesOf(element).reduce<Record<string, string[]>>(
+				(into, attribute) => ({ ...into, [attribute.group]: [...(into[attribute.group] ?? []), attribute.name] }),
+				{}
+			);
+		expect(groups("fetch")).toEqual({
+			main: ["top", "distinct", "aggregate", "returntotalrecordcount"],
+			more: ["count", "page", "paging-cookie", "aggregatelimit", "datasource", "latematerialize", "options", "useraworderby"],
+			legacy: ["no-lock", "version", "mapping"],
+		});
+		expect(groups("entity")).toEqual({ main: ["name"] });
+		expect(groups("all-attributes")).toEqual({});
+		expect(groups("attribute")).toEqual({
+			main: ["name", "alias"],
+			more: ["aggregate", "groupby", "distinct", "dategrouping", "usertimezone", "rowaggregate"],
+		});
+		expect(groups("order")).toEqual({ main: ["attribute", "descending"], more: ["alias", "entityname"] });
+		expect(groups("filter")).toEqual({
+			main: ["type"],
+			more: ["hint"],
+			legacy: ["isquickfindfields", "overridequickfindrecordlimitenabled", "overridequickfindrecordlimitdisabled"],
+		});
+		expect(groups("condition")).toEqual({ main: ["attribute", "operator", "value", "valueof"], more: ["entityname"], legacy: ["uiname", "uitype"] });
+		expect(groups("value")).toEqual({});
+		expect(groups("link-entity")).toEqual({ main: ["name", "from", "to", "alias", "link-type"], more: ["intersect"], legacy: ["visible"] });
+	});
+
+	it("keeps attributes that only saved views write in the legacy group", () => {
+		const undocumented = ELEMENTS.flatMap((element) => element.attributes).filter((attribute) => !attribute.documented);
+		expect(undocumented.every((attribute) => attribute.group === "legacy")).toBe(true);
 	});
 });
 

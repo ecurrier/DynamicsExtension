@@ -38,6 +38,11 @@ const useStyles = makeStyles({
 		fontWeight: tokens.fontWeightSemibold,
 		overflowWrap: "anywhere",
 	},
+	optional: {
+		fontFamily: tokens.fontFamilyBase,
+		fontWeight: tokens.fontWeightRegular,
+		color: tokens.colorNeutralForeground3,
+	},
 	written: {
 		fontFamily: tokens.fontFamilyMonospace,
 		fontSize: tokens.fontSizeBase200,
@@ -47,19 +52,30 @@ const useStyles = makeStyles({
 
 interface DetailsFieldProps {
 	name: string;
-	hint: string;
+	hint?: string;
+	optional?: boolean;
 	problems?: readonly Diagnostic[];
 	children: ReactNode;
 }
 
 const NO_PROBLEMS: readonly Diagnostic[] = [];
 
-export const DetailsField = ({ name, hint, problems = NO_PROBLEMS, children }: DetailsFieldProps) => {
+export const DetailsField = ({ name, hint, optional = false, problems = NO_PROBLEMS, children }: DetailsFieldProps) => {
 	const styles = useStyles();
 	const severity = worstSeverity(problems);
 	return (
 		<Field
-			label={{ children: name, className: styles.label }}
+			label={{
+				children: optional ? (
+					<>
+						{name}
+						<span className={styles.optional}> (optional)</span>
+					</>
+				) : (
+					name
+				),
+				className: styles.label,
+			}}
 			hint={hint}
 			validationState={severity === "error" ? "error" : severity === "warning" ? "warning" : "none"}
 			validationMessage={severity === null ? undefined : problems.map((problem) => problem.message).join(" ")}
@@ -177,7 +193,7 @@ export const AttributeControl = (props: AttributeControlProps) => {
 };
 
 export const RelationshipField = (props: ElementEditorProps) => (
-	<DetailsField name="relationship" hint="A relationship of the parent Table; picking one sets name, from and to together. A custom join matches none.">
+	<DetailsField name="relationship" hint="Sets name, from and to together. A custom join uses no relationship.">
 		<RelationshipPicker {...props} />
 	</DetailsField>
 );

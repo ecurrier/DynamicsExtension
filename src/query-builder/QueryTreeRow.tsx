@@ -44,9 +44,9 @@ import { useQueryDiagnostics } from "./QueryDiagnostics";
 import { RowContent } from "./RowContent";
 import { useQueryBuilder } from "./store";
 
-export const SWITCH_GUTTER_WIDTH = 32;
+export const EXCLUDE_GUTTER_WIDTH = 32;
 
-const GUTTER_ATTRIBUTE = "data-switch-gutter";
+const GUTTER_ATTRIBUTE = "data-exclude-gutter";
 
 export const treeValue = (key: string): string => `row:${key}`;
 
@@ -72,10 +72,10 @@ const useStyles = makeStyles({
 		borderRadius: tokens.borderRadiusMedium,
 	},
 	branch: {
-		paddingLeft: `calc(${SWITCH_GUTTER_WIDTH}px + (var(--fluent-TreeItem--level, 1) - 1) * ${tokens.spacingHorizontalXXL})`,
+		paddingLeft: `calc(${EXCLUDE_GUTTER_WIDTH}px + (var(--fluent-TreeItem--level, 1) - 1) * ${tokens.spacingHorizontalXXL})`,
 	},
 	leaf: {
-		paddingLeft: `calc(${SWITCH_GUTTER_WIDTH}px + var(--fluent-TreeItem--level, 1) * ${tokens.spacingHorizontalXXL})`,
+		paddingLeft: `calc(${EXCLUDE_GUTTER_WIDTH}px + var(--fluent-TreeItem--level, 1) * ${tokens.spacingHorizontalXXL})`,
 	},
 	selected: {
 		backgroundColor: tokens.colorNeutralBackground1Selected,
@@ -95,7 +95,7 @@ const useStyles = makeStyles({
 		left: 0,
 		top: 0,
 		bottom: 0,
-		width: `${SWITCH_GUTTER_WIDTH}px`,
+		width: `${EXCLUDE_GUTTER_WIDTH}px`,
 		display: "flex",
 		alignItems: "center",
 		justifyContent: "center",
@@ -147,28 +147,30 @@ const ActionButton = ({ label, icon, disabled = false, onClick }: ActionButtonPr
 	</Tooltip>
 );
 
-interface SwitchCellProps {
+interface ExcludeCellProps {
 	row: TreeRow;
-	label: string;
 	selected: boolean;
 	onToggle: () => void;
 }
 
-const SwitchCell = ({ row, label, selected, onToggle }: SwitchCellProps) => {
+const ExcludeCell = ({ row, selected, onToggle }: ExcludeCellProps) => {
 	const styles = useStyles();
-	const reason = row.switch.disabledReason;
+	const reason = row.exclusion.disabledReason;
 	const checkbox = (
 		<Checkbox
 			className={styles.checkbox}
-			checked={row.switch.on}
+			checked={row.exclusion.included}
 			disabled={reason !== null}
-			aria-label={row.switch.on ? `Switch off ${label}` : `Switch on ${label}`}
+			aria-label={row.exclusion.included ? "Exclude from the Query" : "Include in the Query"}
 			onChange={onToggle}
 		/>
 	);
 	return (
 		<span {...{ [GUTTER_ATTRIBUTE]: "" }} className={mergeClasses(styles.gutter, selected && styles.selectedGutter)}>
-			<Tooltip content={reason ?? (row.switch.on ? "Switch off (Ctrl+/)" : "Switch on (Ctrl+/)")} relationship="description" positioning="after">
+			<Tooltip
+				content={reason ?? (row.exclusion.included ? "Exclude from the Query (Ctrl+/)" : "Include in the Query (Ctrl+/)")}
+				relationship="description"
+				positioning="after">
 				{reason === null ? checkbox : <span>{checkbox}</span>}
 			</Tooltip>
 		</span>
@@ -199,7 +201,7 @@ export const QueryTreeRow = ({ row, actions }: QueryTreeRowProps) => {
 	const [menuOpen, setMenuOpen] = useState(false);
 	const label = summaryText(row.summary);
 	const branch = row.children.length > 0;
-	const canToggle = row.switch.disabledReason === null;
+	const canToggle = row.exclusion.disabledReason === null;
 
 	const onClick = (event: MouseEvent<HTMLDivElement>) => {
 		if (!isFromGutter(event.target)) {
@@ -288,7 +290,7 @@ export const QueryTreeRow = ({ row, actions }: QueryTreeRowProps) => {
 			itemType={branch ? "branch" : "leaf"}
 			value={treeValue(row.key)}
 			aria-selected={selected}
-			aria-label={row.switchedOff ? `${label}, switched off` : label}
+			aria-label={row.excluded ? `${label}, excluded` : label}
 			data-tree-key={row.key}
 			onClick={onClick}
 			onFocus={(event) => {
@@ -307,7 +309,7 @@ export const QueryTreeRow = ({ row, actions }: QueryTreeRowProps) => {
 					className: styles.actions,
 					children: rowActions,
 				}}>
-				<SwitchCell row={row} label={label} selected={selected} onToggle={() => actions.toggle(row.path, false)} />
+				<ExcludeCell row={row} selected={selected} onToggle={() => actions.toggle(row.path, false)} />
 				<span className={mergeClasses(styles.content, row.inactive && styles.dim)}>
 					{row.precedence === null ? null : (
 						<Tooltip content={`Sorts ${row.precedence === 1 ? "first" : `after order ${row.precedence - 1}`}`} relationship="description">
@@ -323,13 +325,13 @@ export const QueryTreeRow = ({ row, actions }: QueryTreeRowProps) => {
 					/>
 					{row.kind === "unknown" ? (
 						<Badge size="small" appearance="outline" color="informative">
-							edit in XML
+							edit in the XML
 						</Badge>
 					) : null}
 				</span>
-				{row.switchedOff ? (
+				{row.excluded ? (
 					<Badge size="small" appearance="outline" color="subtle" className={styles.struck}>
-						off
+						excluded
 					</Badge>
 				) : null}
 			</TreeItemLayout>

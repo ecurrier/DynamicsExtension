@@ -281,7 +281,7 @@ describe("scope", () => {
 		});
 	});
 
-	it("leaves switched-off link-entities out of the aliases", () => {
+	it("leaves Excluded link-entities out of the aliases", () => {
 		const marked = `${ENTITY}<!--<link-entity name="contact" alias="gone"/>--><filter><condition entityname="|"/></filter></entity></fetch>`;
 		expect(contextOf(marked)).toMatchObject({ scope: { links: [], aliases: [] } });
 	});
@@ -330,7 +330,7 @@ describe("nothing to complete", () => {
 	it.each([
 		["inside a comment", `${ENTITY}<!-- <condition attribute="| --></entity></fetch>`],
 		["inside an unclosed comment", `${ENTITY}<!-- <condition |`],
-		["inside a switched-off row", `${ENTITY}<!--<attribute name="na|me"/>--></entity></fetch>`],
+		["inside an Excluded row", `${ENTITY}<!--<attribute name="na|me"/>--></entity></fetch>`],
 		["in text content", `${ENTITY}some te|xt</entity></fetch>`],
 		["between elements", `${ENTITY}<attribute name="name"/>|</entity></fetch>`],
 		["after the root", `<fetch></fetch>|`],

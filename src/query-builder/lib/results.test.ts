@@ -151,7 +151,7 @@ describe("deriveResultColumns", () => {
 		expect(pick(deriveResultColumns(query, [{ title: "x" }], TABLES), "key", "label", "type")).toEqual([{ key: "title", label: "title", type: "text" }]);
 	});
 
-	it("skips switched-off rows and reads Columns from every Table without a Query", () => {
+	it("skips Excluded rows and reads Columns from every Table without a Query", () => {
 		const query = parse('<fetch><entity name="account"><!--<attribute name="revenue" />--><attribute name="name" /></entity></fetch>');
 		expect(deriveResultColumns(query, [], TABLES).map((result) => result.key)).toEqual(["name"]);
 		expect(deriveResultColumns(null, [{ b: 1 }, { a: 2, b: 3 }], {}).map((result) => result.key)).toEqual(["b", "a"]);

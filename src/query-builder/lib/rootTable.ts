@@ -5,7 +5,7 @@ export const rootTableName = (document: FetchXmlDocument): string | null => {
 	if (document.root.name !== "fetch") {
 		return null;
 	}
-	const entity = document.root.children.find((child): child is XmlElement => child.kind === "element" && child.name === "entity" && !child.switchedOff);
+	const entity = document.root.children.find((child): child is XmlElement => child.kind === "element" && child.name === "entity" && !child.excluded);
 	const name = entity?.attributes.find((attribute) => attribute.name === "name")?.value.trim() ?? "";
 	return name.length > 0 ? name : null;
 };

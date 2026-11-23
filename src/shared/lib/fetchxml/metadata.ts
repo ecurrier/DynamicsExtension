@@ -75,7 +75,7 @@ export const columnOf = (table: QueryTable, columnLogicalName: string): QueryCol
 	table.columns.find((column) => key(column.logicalName) === key(columnLogicalName));
 
 const collect = (element: XmlElement, path: NodePath, active: boolean, into: QueryElement[]): void => {
-	const isActive = active && !element.switchedOff;
+	const isActive = active && !element.excluded;
 	into.push({ element, path, active: isActive });
 	element.children.forEach((child, index) => {
 		if (child.kind === "element") {
@@ -91,14 +91,14 @@ export const elementsIn = (document: FetchXmlDocument): readonly QueryElement[] 
 };
 
 const lineage = (document: FetchXmlDocument, path: NodePath): readonly QueryElement[] | undefined => {
-	const chain: QueryElement[] = [{ element: document.root, path: [], active: !document.root.switchedOff }];
+	const chain: QueryElement[] = [{ element: document.root, path: [], active: !document.root.excluded }];
 	for (const [depth, index] of path.entries()) {
 		const parent = chain[chain.length - 1];
 		const child = parent?.element.children[index];
 		if (!parent || child?.kind !== "element") {
 			return undefined;
 		}
-		chain.push({ element: child, path: path.slice(0, depth + 1), active: parent.active && !child.switchedOff });
+		chain.push({ element: child, path: path.slice(0, depth + 1), active: parent.active && !child.excluded });
 	}
 	return chain;
 };

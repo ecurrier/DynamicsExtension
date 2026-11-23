@@ -3,7 +3,19 @@ import { describe, expect, it } from "vitest";
 import { type FetchXmlDocument, nodeAtPath, serializeFetchXml } from "@/shared/lib/fetchxml";
 import { LOADED, parse, PENDING } from "@/test/queryTree";
 
-import { addChild, ALREADY_TIDY, type ChangeResult, moveRow, type QueryChange, removeRow, tidyQuery, toggleRow, uniqueAlias } from "./treeEdits";
+import {
+	addChild,
+	ALREADY_TIDY,
+	type ChangeResult,
+	deleteExcludedRows,
+	includeAllRows,
+	moveRow,
+	type QueryChange,
+	removeRow,
+	tidyQuery,
+	toggleRow,
+	uniqueAlias,
+} from "./treeEdits";
 
 const ok = (result: ChangeResult): QueryChange => {
 	if (!result.ok) {
@@ -66,7 +78,7 @@ describe("addChild", () => {
 	});
 
 	it("refuses a kind that is over its limit", () => {
-		expect(addChild(parse(ENTITY), [0], "filter", PENDING)).toEqual({ ok: false, reason: "filter cannot be added inside entity" });
+		expect(addChild(parse(ENTITY), [0], "filter", PENDING)).toEqual({ ok: false, reason: "entity cannot hold another filter" });
 	});
 });
 
@@ -105,18 +117,18 @@ describe("moveRow", () => {
 });
 
 describe("toggleRow", () => {
-	it("switches a row off and back on", () => {
-		const off = ok(toggleRow(parse(ENTITY), [0, 0]));
-		expect(xml(off.document)).toContain('<!-- <attribute name="name" /> -->');
-		const on = ok(toggleRow(parse(xml(off.document)), [0, 0]));
-		expect(xml(on.document)).toContain('    <attribute name="name" />');
+	it("excludes a row and includes it again", () => {
+		const excludedDocument = ok(toggleRow(parse(ENTITY), [0, 0]));
+		expect(xml(excludedDocument.document)).toContain('<!-- <attribute name="name" /> -->');
+		const includedDocument = ok(toggleRow(parse(xml(excludedDocument.document)), [0, 0]));
+		expect(xml(includedDocument.document)).toContain('    <attribute name="name" />');
 	});
 
 	it("refuses a row that would come back as a plain comment", () => {
 		const document = parse('<fetch><entity name="a"><condition attribute="x" operator="null" /></entity></fetch>');
 		expect(toggleRow(document, [0, 0])).toEqual({
 			ok: false,
-			reason: "condition is not valid inside entity, so switched off it would come back as a plain comment",
+			reason: "condition is not valid inside entity. If you Exclude it, it becomes a plain comment",
 		});
 	});
 });
@@ -132,5 +144,31 @@ describe("tidyQuery", () => {
 
 	it("says so when the Query is already in order", () => {
 		expect(tidyQuery(parse(ENTITY))).toEqual({ ok: false, reason: ALREADY_TIDY });
+	});
+});
+
+describe("includeAllRows and deleteExcludedRows", () => {
+	const EXCLUDED =
+		'<fetch><entity name="account"><!-- <attribute name="x" /> --><attribute name="name" /><!-- note --><filter><!-- <condition attribute="y" operator="null" /> --></filter></entity></fetch>';
+
+	it("includes every Excluded row as one change that keeps paths", () => {
+		const change = ok(includeAllRows(parse(EXCLUDED)));
+		expect(change.shift).toEqual({ kind: "none" });
+		expect(xml(change.document)).not.toContain("<!-- <");
+		expect(xml(change.document)).toContain("<!-- note -->");
+	});
+
+	it("deletes every Excluded row as one change, keeps the comment and maps the paths that remain", () => {
+		const change = ok(deleteExcludedRows(parse(EXCLUDED)));
+		expect(xml(change.document)).not.toContain('name="x"');
+		expect(xml(change.document)).not.toContain('attribute="y"');
+		expect(xml(change.document)).toContain("<!-- note -->");
+		expect(change.shift.kind === "map" && change.shift.mapping.get("0.1")).toEqual([0, 0]);
+		expect(change.shift.kind === "map" && change.shift.mapping.has("0.0")).toBe(false);
+	});
+
+	it("refuses both when nothing is Excluded", () => {
+		expect(includeAllRows(parse(ENTITY))).toEqual({ ok: false, reason: "The Query has no Excluded rows" });
+		expect(deleteExcludedRows(parse(ENTITY))).toEqual({ ok: false, reason: "The Query has no Excluded rows" });
 	});
 });

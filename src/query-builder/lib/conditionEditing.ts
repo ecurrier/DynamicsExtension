@@ -109,7 +109,7 @@ const valueChildren = (element: XmlElement): number[] =>
 	element.children.flatMap((child, index) => (child.kind === "element" && child.name === "value" ? [index] : []));
 
 export const conditionValues = (element: XmlElement): readonly string[] => {
-	const listed = element.children.flatMap((child) => (child.kind === "element" && child.name === "value" && !child.switchedOff ? [valueTextOf(child)] : []));
+	const listed = element.children.flatMap((child) => (child.kind === "element" && child.name === "value" && !child.excluded ? [valueTextOf(child)] : []));
 	if (listed.length > 0) {
 		return listed;
 	}

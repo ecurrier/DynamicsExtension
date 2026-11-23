@@ -36,7 +36,7 @@ interface QueryPlan {
 	columns: PlannedColumn[];
 }
 
-const isActiveElement = (node: XmlNode): node is XmlElement => node.kind === "element" && !node.switchedOff;
+const isActiveElement = (node: XmlNode): node is XmlElement => node.kind === "element" && !node.excluded;
 
 const attributeValue = (element: XmlElement, name: string): string | null => {
 	const value = element.attributes.find((attribute) => attribute.name === name)?.value.trim() ?? "";

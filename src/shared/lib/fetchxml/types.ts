@@ -7,7 +7,7 @@ export type XmlElement = {
 	readonly name: string;
 	readonly attributes: readonly XmlAttribute[];
 	readonly children: readonly XmlNode[];
-	readonly switchedOff: boolean;
+	readonly excluded: boolean;
 	readonly range?: SourceRange;
 };
 

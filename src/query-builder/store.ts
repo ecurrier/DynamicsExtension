@@ -8,6 +8,7 @@ import { type QueryRow, type QueryRunResult } from "@/shared/types";
 import {
 	ancestorKeys,
 	type ChangeResult,
+	type CollapsibleGroup,
 	type NamesLead,
 	pathKey,
 	type QueryChange,
@@ -66,6 +67,7 @@ export interface PaneLayout {
 	collapsed: Record<PaneId, boolean>;
 	detailsForced: boolean;
 	resultsMaximised: boolean;
+	detailsGroups: Record<CollapsibleGroup, boolean>;
 }
 
 export interface ParsedQuery {
@@ -131,6 +133,7 @@ export interface QueryBuilderState extends ParsedQuery {
 	togglePane: (pane: PaneId) => void;
 	showDetails: (force: boolean) => void;
 	releaseDetails: () => void;
+	setDetailsGroupOpen: (group: CollapsibleGroup, open: boolean) => void;
 	registerDraft: (commit: () => void) => () => void;
 	flushDraft: () => void;
 	dispose: () => void;
@@ -150,6 +153,7 @@ export const DEFAULT_LAYOUT: PaneLayout = {
 	collapsed: { tree: false, details: false, xml: false, results: false },
 	detailsForced: false,
 	resultsMaximised: false,
+	detailsGroups: { more: false, legacy: false },
 };
 
 const idleRun = (id: number): QueryRunState => ({
@@ -465,6 +469,12 @@ export const createQueryBuilderStore = ({ connection, fetchXml }: QueryBuilderIn
 						: { layout: { ...state.layout, collapsed: { ...state.layout.collapsed, details: false }, detailsForced: force } }
 				),
 			releaseDetails: () => set((state) => (state.layout.detailsForced ? { layout: { ...state.layout, detailsForced: false } } : state)),
+			setDetailsGroupOpen: (group, open) =>
+				set((state) =>
+					state.layout.detailsGroups[group] === open
+						? state
+						: { layout: { ...state.layout, detailsGroups: { ...state.layout.detailsGroups, [group]: open } } }
+				),
 			registerDraft: (commit) => {
 				draft = commit;
 				return () => {

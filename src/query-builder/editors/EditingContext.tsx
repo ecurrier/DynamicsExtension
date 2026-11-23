@@ -64,7 +64,7 @@ export const QueryEditingProvider = ({ gateway, openDetails, children }: QueryEd
 			});
 			const table = findTable(list, logicalName);
 			if (!table) {
-				throw new Error(`There is no Table named "${logicalName}"`);
+				throw new Error(`Table "${logicalName}" does not exist`);
 			}
 			return table;
 		};

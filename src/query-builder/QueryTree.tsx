@@ -1,12 +1,39 @@
-import { Button, comboboxClassNames, makeStyles, mergeClasses, tokens, Tooltip, Tree, type TreeProps } from "@fluentui/react-components";
-import { Broom20Regular, PanelLeftContract20Regular } from "@fluentui/react-icons";
+import {
+	Button,
+	comboboxClassNames,
+	makeStyles,
+	Menu,
+	MenuItem,
+	MenuList,
+	MenuPopover,
+	MenuTrigger,
+	mergeClasses,
+	tokens,
+	Tooltip,
+	Tree,
+	type TreeProps,
+} from "@fluentui/react-components";
+import { Broom20Regular, CheckboxChecked20Regular, CheckboxUnchecked20Regular, Delete20Regular, PanelLeftContract20Regular } from "@fluentui/react-icons";
 import { type KeyboardEvent, useEffect, useMemo, useRef } from "react";
 
-import { type FetchXmlDocument, type NodePath, type QueryMetadata, tablesNamedIn, tidy } from "@/shared/lib/fetchxml";
+import { countExcluded, type FetchXmlDocument, type NodePath, type QueryMetadata, tablesNamedIn, tidy } from "@/shared/lib/fetchxml";
 
 import { BlankStart } from "./editors";
 import { useQueryGateway, useQueryTables } from "./hooks";
-import { addChild, ALREADY_TIDY, branchKeys, buildTreeRows, type ChangeResult, moveRow, pathKey, removeRow, tidyQuery, toggleRow } from "./lib";
+import {
+	addChild,
+	ALREADY_TIDY,
+	branchKeys,
+	buildTreeRows,
+	type ChangeResult,
+	deleteExcludedRows,
+	includeAllRows,
+	moveRow,
+	pathKey,
+	removeRow,
+	tidyQuery,
+	toggleRow,
+} from "./lib";
 import { PaneHeader } from "./PaneChrome";
 import { ParseErrorBanner } from "./ParseErrorBanner";
 import { type TreeActions, QueryTreeRow, treeValue } from "./QueryTreeRow";
@@ -61,7 +88,13 @@ const pathOfValue = (value: unknown): NodePath => {
 
 type RowFocus = "keep" | "follow" | "take";
 
-const useTreeActions = (metadata: QueryMetadata, onEdited: (focus: RowFocus) => void): TreeActions & { tidy: () => void } => {
+interface QueryActions {
+	tidy: () => void;
+	includeAll: () => void;
+	deleteExcluded: () => void;
+}
+
+const useTreeActions = (metadata: QueryMetadata, onEdited: (focus: RowFocus) => void): TreeActions & QueryActions => {
 	const edit = useQueryBuilder((state) => state.edit);
 	const perform = (build: (query: FetchXmlDocument) => ChangeResult, focus: RowFocus) => {
 		if (edit(build).ok) {
@@ -74,6 +107,8 @@ const useTreeActions = (metadata: QueryMetadata, onEdited: (focus: RowFocus) => 
 		move: (path, direction) => perform((query) => moveRow(query, path, direction), "follow"),
 		toggle: (path, fromRow) => perform((query) => toggleRow(query, path), fromRow ? "follow" : "keep"),
 		tidy: () => perform(tidyQuery, "keep"),
+		includeAll: () => perform(includeAllRows, "keep"),
+		deleteExcluded: () => perform(deleteExcludedRows, "keep"),
 	};
 };
 
@@ -97,6 +132,7 @@ export const QueryTree = ({ onCollapse }: QueryTreeProps) => {
 	const { metadata } = useQueryTables(gateway, tableNames);
 	const rows = useMemo(() => (query ? buildTreeRows(query, metadata, namesLead) : null), [query, metadata, namesLead]);
 	const tidyNeeded = useMemo(() => query !== null && tidy(query) !== query, [query]);
+	const excludedCount = useMemo(() => (query ? countExcluded(query) : 0), [query]);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const focusPending = useRef(false);
 	const focusInside = () => {
@@ -160,13 +196,34 @@ export const QueryTree = ({ onCollapse }: QueryTreeProps) => {
 				toggleLabel="Collapse the tree"
 				onToggle={onCollapse}
 				actions={
-					<Tooltip
-						content={broken ? "Fix the Fetch XML first" : tidyNeeded ? "Regroup the Query into the standard order" : ALREADY_TIDY}
-						relationship="description">
-						<Button size="small" appearance="subtle" icon={<Broom20Regular />} disabledFocusable={broken || !tidyNeeded} onClick={actions.tidy}>
-							Tidy
-						</Button>
-					</Tooltip>
+					<>
+						{excludedCount > 0 ? (
+							<Menu>
+								<MenuTrigger disableButtonEnhancement>
+									<Button size="small" appearance="subtle" icon={<CheckboxUnchecked20Regular />} disabledFocusable={broken}>
+										{`${excludedCount} excluded`}
+									</Button>
+								</MenuTrigger>
+								<MenuPopover>
+									<MenuList>
+										<MenuItem icon={<CheckboxChecked20Regular />} onClick={actions.includeAll}>
+											Include all
+										</MenuItem>
+										<MenuItem icon={<Delete20Regular />} onClick={actions.deleteExcluded}>
+											Delete excluded
+										</MenuItem>
+									</MenuList>
+								</MenuPopover>
+							</Menu>
+						) : null}
+						<Tooltip
+							content={broken ? "Correct the Fetch XML first" : tidyNeeded ? "Puts the rows in the standard order" : ALREADY_TIDY}
+							relationship="description">
+							<Button size="small" appearance="subtle" icon={<Broom20Regular />} disabledFocusable={broken || !tidyNeeded} onClick={actions.tidy}>
+								Tidy
+							</Button>
+						</Tooltip>
+					</>
 				}
 			/>
 			<ParseErrorBanner />

@@ -70,13 +70,13 @@ describe("resultsStatus", () => {
 	});
 
 	it("shows a running count while loading", () => {
-		expect(resultsStatus({ ...done, loaded: 300, paging: "all" })).toBe("Loading all: 300 Records loaded so far · Contoso Dev");
-		expect(resultsStatus({ ...done, paging: "next" })).toBe("50 Records loaded · loading the next page · Contoso Dev");
+		expect(resultsStatus({ ...done, loaded: 300, paging: "all" })).toBe("All pages: 300 Records loaded · Contoso Dev");
+		expect(resultsStatus({ ...done, paging: "next" })).toBe("50 Records loaded · next page to come · Contoso Dev");
 	});
 
 	it("names the Connection before and around a Query Run", () => {
 		expect(resultsStatus({ ...done, status: "idle" })).toBe("Contoso Dev");
-		expect(resultsStatus({ ...done, status: "running" })).toBe("Running on Contoso Dev");
+		expect(resultsStatus({ ...done, status: "running" })).toBe("The Query is running on Contoso Dev");
 		expect(resultsStatus({ ...done, status: "failed" })).toBe("Query Run failed on Contoso Dev");
 	});
 });

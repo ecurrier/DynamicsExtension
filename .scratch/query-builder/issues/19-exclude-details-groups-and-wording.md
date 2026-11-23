@@ -1,6 +1,6 @@
 # Exclude wording, details pane groups, and a wording pass
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Phase: 1
 Blocked by: 07, 08, 09
@@ -34,7 +34,7 @@ Replace the catalogue's `common` flag with a `group` on every attribute, one of 
 
 Rules:
 
-- A collapsed group's heading shows how many of its attributes are set ("More options · 2 set"). A group with a set attribute opens by itself when the row is selected; a group with nothing in it for this element is not shown.
+- A collapsed group's heading shows how many of its attributes are set ("More options · 2 set"). A group opens by itself only when it holds a problem; set attributes are shown by the count, not by opening, because a pasted view always sets `version` and `mapping` and would otherwise open the legacy group on every `fetch`. A group with nothing in it for this element is not shown.
 - Whether each group is open is remembered for the session per group, not per row, so opening "More options" once keeps it open while moving between rows.
 - An attribute moves to Main when the Query makes it necessary: `aggregate`, `groupby` and `alias` on an `attribute`, and `alias` on an `order`, when `fetch` has `aggregate="true"`; `dategrouping` when the attribute is grouped and its Column is a date. This is a pure function of the element, the Query and the metadata, with tests.
 - Starting classification (the reference's own "legacy" marks win where they differ; record any change in this issue's comments):
@@ -89,3 +89,15 @@ Do the pass as one sweep so the voice is consistent, and list in this issue's co
 - `name`, `alias`, `top` and `type` show no hint; `latematerialize` and `intersect` show one sentence each.
 - Unit tests: the group of each attribute for each element including the Query-dependent moves; the serialiser option; Include all and Delete excluded.
 - `npm run typecheck`, `npm run lint`, `npm test` and `npm run build` pass. Verify in the harness and include screenshots of the details pane for `fetch`, `condition` and `link-entity`.
+
+## Comments
+
+Resolved 2026-11-22. Built by an Opus worker, reviewed and verified (typecheck, lint, 1,446 tests, build; the acceptance grep finds nothing; the details pane for `fetch` and `link-entity` checked from screenshots).
+
+- **Exclude**: every identifier, test title and string uses Exclude and Include. `countExcluded`, `includeAll` and `deleteExcluded` are in the Query core's `edit.ts`, with tree versions in `lib/treeEdits.ts`. The tree toolbar shows "N excluded" with a menu.
+- **Copies**: `serializeFetchXml` takes `omitExcluded`, on by default for the minified form. `toJavaScriptString` and `toCSharpString` now take a document and leave Excluded rows out by default. The key used to compare remembered Queries keeps them. Nothing in the UI uses this until issue 12's Copy button.
+- **Groups**: `common` is now `group` in `schema.ts`. `lib/detailsGroups.ts` moves attributes into Main and decides "(optional)". The store remembers which groups are open, per group, for the session. The final grouping matches the starting classification above. Beyond it: `valueof` is in Main without a field of its own (the value field covers it and shows its messages); a condition's `attribute`, its `value` when the operator takes one value, and an order's `attribute` outside aggregate Queries are treated as required; the aggregate "needs an alias" error shows under `alias`.
+- **Group opening**: the issue said both that a group with a set attribute opens by itself and that the legacy group stays collapsed while it holds `version` and `mapping`. The second reading was built, and the rule above now says so.
+- **Wording**: 33 descriptions deleted (28 attribute, 5 option-value) and about 270 strings rewritten, including the validation messages and the Web API warnings.
+
+Not checked in a browser: the hint text on `latematerialize` and `intersect` (unit-tested only).

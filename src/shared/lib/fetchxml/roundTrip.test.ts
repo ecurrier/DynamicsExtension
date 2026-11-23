@@ -12,7 +12,7 @@ const parsed = (text: string): FetchXmlDocument => {
 	return result.document;
 };
 
-type Shape = { kind: string; name?: string; switchedOff?: boolean; attributes?: [string, string][]; children?: Shape[]; content?: string; value?: string };
+type Shape = { kind: string; name?: string; excluded?: boolean; attributes?: [string, string][]; children?: Shape[]; content?: string; value?: string };
 
 const shapeOf = (node: XmlNode): Shape => {
 	if (node.kind === "text") {
@@ -24,7 +24,7 @@ const shapeOf = (node: XmlNode): Shape => {
 	return {
 		kind: "element",
 		name: node.name,
-		switchedOff: node.switchedOff,
+		excluded: node.excluded,
 		attributes: node.attributes.map((attribute) => [attribute.name, attribute.value]),
 		children: node.children.map(shapeOf),
 	};
@@ -79,7 +79,7 @@ const CORPUS: readonly { readonly title: string; readonly xml: string; readonly 
 		comments: 5,
 	},
 	{
-		title: "switched-off condition and filter",
+		title: "Excluded condition and filter",
 		xml: `<fetch><entity name="account"><filter type="and"><!-- <condition attribute="name" operator="like" value="a-&#45;b" /> --><condition attribute="statecode" operator="eq" value="0" /><!--<filter type="or"><condition attribute="x" operator="null" /><condition attribute="y" operator="in"><value>1</value></condition></filter>--></filter></entity></fetch>`,
 		elements: 9,
 		comments: 0,
@@ -175,7 +175,7 @@ describe("round trip", () => {
 			});
 
 			it("is stable through the minified form", () => {
-				const minified = serializeFetchXml(first, { minify: true });
+				const minified = serializeFetchXml(first, { minify: true, omitExcluded: false });
 				expect(documentShape(parsed(minified))).toEqual(documentShape(first));
 				expect(serializeFetchXml(parsed(minified))).toBe(once);
 			});

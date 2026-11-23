@@ -70,17 +70,17 @@ export const resultsStatus = (input: ResultsStatusInput): string => {
 		case "idle":
 			return connectionName;
 		case "running":
-			return `Running on ${connectionName}`;
+			return `The Query is running on ${connectionName}`;
 		case "failed":
 			return `Query Run failed on ${connectionName}`;
 		case "done":
 			break;
 	}
 	if (paging === "all") {
-		return [`Loading all: ${recordCount(loaded, "loaded so far")}`, connectionName].join(" · ");
+		return [`All pages: ${recordCount(loaded, "loaded")}`, connectionName].join(" · ");
 	}
 	if (paging === "next") {
-		return [recordCount(loaded, "loaded"), "loading the next page", connectionName].join(" · ");
+		return [recordCount(loaded, "loaded"), "next page to come", connectionName].join(" · ");
 	}
 	return [recordCount(loaded, "loaded"), serverState(input), elapsedMs === null ? null : `last request ${Math.round(elapsedMs)} ms`, connectionName]
 		.filter((part) => part !== null)
