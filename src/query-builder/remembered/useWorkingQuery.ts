@@ -12,7 +12,7 @@ export const useWorkingQuery = () => {
 		queryKey: OPENED_KEY,
 		queryFn: () => workingQueryItem.getValue(),
 		staleTime: Infinity,
-		gcTime: Infinity,
+		gcTime: 0,
 		refetchOnWindowFocus: false,
 		refetchOnReconnect: false,
 	});

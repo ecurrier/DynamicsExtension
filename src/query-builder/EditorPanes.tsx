@@ -3,6 +3,7 @@ import { PanelLeftExpand20Regular, PanelRightExpand20Regular } from "@fluentui/r
 import { useCallback, useRef } from "react";
 
 import { DetailsPane, QueryEditingProvider } from "./editors";
+import { EmptyStart } from "./EmptyStart";
 import { type QueryGateway } from "./hooks";
 import { CollapsedPane, STRIP_WIDTH } from "./PaneChrome";
 import { QueryTree } from "./QueryTree";
@@ -75,6 +76,16 @@ const useStyles = makeStyles({
 			display: "flex",
 		},
 	},
+	start: {
+		flexGrow: 3,
+		flexShrink: 1,
+		flexBasis: 0,
+		minWidth: `${TREE_MIN_WIDTH}px`,
+	},
+	xmlBesideStart: {
+		flexGrow: 2,
+		borderLeft: `1px solid ${tokens.colorNeutralStroke2}`,
+	},
 	hidden: {
 		display: "none",
 	},
@@ -94,10 +105,11 @@ export const EditorPanes = ({ gateway, hidden }: EditorPanesProps) => {
 	const togglePane = useQueryBuilder((state) => state.togglePane);
 	const showDetails = useQueryBuilder((state) => state.showDetails);
 	const releaseDetails = useQueryBuilder((state) => state.releaseDetails);
+	const empty = useQueryBuilder((state) => state.text.trim() === "");
 	const containerRef = useRef<HTMLDivElement>(null);
 	const { collapsed, detailsForced } = layout;
-	const showTree = !collapsed.tree;
-	const showDetailsPane = !collapsed.details;
+	const showTree = !empty && !collapsed.tree;
+	const showDetailsPane = !empty && !collapsed.details;
 	const showXml = !collapsed.xml;
 	const crowded = showTree && showDetailsPane && showXml;
 	const detailsYields = crowded && !detailsForced;
@@ -120,7 +132,12 @@ export const EditorPanes = ({ gateway, hidden }: EditorPanesProps) => {
 	return (
 		<QueryEditingProvider gateway={gateway} openDetails={openDetails}>
 			<div ref={containerRef} className={mergeClasses(styles.editors, hidden && styles.hidden)}>
-				{showTree ? (
+				{empty ? (
+					<section aria-label="Start" className={mergeClasses(styles.pane, styles.start)}>
+						<EmptyStart />
+					</section>
+				) : null}
+				{empty ? null : showTree ? (
 					<section
 						id={TREE_PANE_ID}
 						aria-label="Tree"
@@ -152,7 +169,9 @@ export const EditorPanes = ({ gateway, hidden }: EditorPanesProps) => {
 						<DetailsPane onCollapse={() => togglePane("details")} />
 					</section>
 				) : null}
-				{showDetailsPane ? null : <CollapsedPane title="details" icon={PanelLeftExpand20Regular} label="Show the details" onRestore={openDetails} />}
+				{showDetailsPane || empty ? null : (
+					<CollapsedPane title="details" icon={PanelLeftExpand20Regular} label="Show the details" onRestore={openDetails} />
+				)}
 				{detailsYields ? (
 					<CollapsedPane
 						title="details"
@@ -176,7 +195,10 @@ export const EditorPanes = ({ gateway, hidden }: EditorPanesProps) => {
 					/>
 				) : null}
 				{showXml ? (
-					<section id={XML_PANE_ID} aria-label="Fetch XML" className={mergeClasses(styles.pane, styles.xml, xmlYields && styles.hideWhenNarrow)}>
+					<section
+						id={XML_PANE_ID}
+						aria-label="Fetch XML"
+						className={mergeClasses(styles.pane, styles.xml, xmlYields && styles.hideWhenNarrow, empty && styles.xmlBesideStart)}>
 						<XmlPane onCollapse={() => togglePane("xml")} />
 					</section>
 				) : (

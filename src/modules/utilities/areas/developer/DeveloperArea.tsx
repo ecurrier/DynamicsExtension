@@ -16,8 +16,9 @@ import { useWebApiStore } from "@/modules/webapi/store";
 import { TaskCard, TaskGrid } from "@/shared/components";
 import { openUrl } from "@/shared/extension";
 import { useAsyncAction } from "@/shared/hooks";
-import { useNavigationStore } from "@/shared/stores";
+import { useNavigationStore, useSessionStore } from "@/shared/stores";
 import { type CodegenTable, type FormAttributeInfo, type NamedFetchXml, type TableMetadata, type TemplateKind } from "@/shared/types";
+import { useWorkspaceLauncher } from "@/workspaces";
 
 import { TraceLoggingCard } from "./TraceLoggingCard";
 import { ColumnBrowserDialog, FetchXmlDialog, FindColumnDialog, RecordPayloadDialog, type RecordPayloadDialogSource, TableMetadataDialog } from "../../dialogs";
@@ -38,6 +39,8 @@ export const DeveloperArea = () => {
 	const setFetchXml = useWebApiStore((state) => state.setFetchXml);
 	const launchGenerator = useCodegenStore((state) => state.launch);
 	const fetchPage = usePageFetcher();
+	const tabId = useSessionStore((state) => state.tabId);
+	const workspaces = useWorkspaceLauncher();
 	const [queries, setQueries] = useState<NamedFetchXml[] | null>(null);
 	const [metadata, setMetadata] = useState<TableMetadata | null>(null);
 	const [browser, setBrowser] = useState<ColumnBrowserState | null>(null);
@@ -54,12 +57,22 @@ export const DeveloperArea = () => {
 	const columnBrowser = useAsyncAction("Could not read the table columns");
 	const findColumn = useAsyncAction("Could not read the form");
 	const recordPayload = useAsyncAction("Could not build the record payload");
+	const queryBuilder = useAsyncAction("Could not open the Query Builder");
 
 	const retrieveRecords = (fetchXml: string) => {
 		setFetchXml(fetchXml);
 		setQueries(null);
 		navigate("webapi.retrieve-records");
 	};
+
+	const openInQueryBuilder = (fetchXml: string) =>
+		queryBuilder.run(async () => {
+			setQueries(null);
+			await workspaces.open(
+				{ id: "query-builder", launch: { tabId, environmentId: null, fetchXml, launchedAt: new Date().toISOString() } },
+				workspaces.canOpenInWindow ? "window" : "tab"
+			);
+		});
 
 	const loadTable = async () => {
 		const target = await fetchPage("utilities.getPageTarget", undefined, { fresh: true });
@@ -166,7 +179,12 @@ export const DeveloperArea = () => {
 				/>
 				<TraceLoggingCard />
 			</TaskGrid>
-			<FetchXmlDialog queries={queries} onClose={() => setQueries(null)} onRetrieveRecords={retrieveRecords} />
+			<FetchXmlDialog
+				queries={queries}
+				onClose={() => setQueries(null)}
+				onRetrieveRecords={retrieveRecords}
+				onOpenInQueryBuilder={(fetchXml) => void openInQueryBuilder(fetchXml)}
+			/>
 			<TableMetadataDialog metadata={metadata} onClose={() => setMetadata(null)} />
 			<ColumnBrowserDialog
 				open={browserOpen}

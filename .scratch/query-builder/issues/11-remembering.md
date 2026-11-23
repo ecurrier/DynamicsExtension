@@ -1,6 +1,6 @@
 # Working Query, history and Stored Queries
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Phase: 1
 Blocked by: 05, 10
@@ -30,3 +30,13 @@ Acceptance:
 - "The same Fetch XML" compares the minified serialisation of the parsed XML, falling back to trimmed text when it does not parse. The same Connection is the same page host or the same Environment id.
 
 What the UI calls and when: on open, read `useWorkingQuery().opened` once; on each edit, `write(text)` (saves 500 ms after the last change, and on unmount; `flush()` saves at once); on every Query Run, successful or not, `useQueryHistory().record(entry)`; on Save, `useStoredQueries().add(name, xml)` and, when refused with `name-taken`, offer `overwrite(name, xml)`; for the header's changed mark, `matchesStored(storedQuery, text)`.
+
+2026-11-22: the UI is done and the issue is resolved (Opus worker, reviewed and verified as above).
+
+- `src/query-builder/library/`: the side panel with History and My queries, Save and Save as, and the Stored Query name in the header.
+- The working Query is restored by waiting for `useWorkingQuery().opened` (unless the launch carries Fetch XML) and creating the store with that text; each change is written through a store subscription and flushed on `visibilitychange` and `pagehide`.
+- `lib/unsavedWork.ts`: the Query has unsaved work unless its text is empty or matches, after normalising, the text last run, the Stored Query it came from, or the text loaded from a starting point.
+- Header: brand, Connection, a Query group (New, Save, the Stored Query name with "changed"), the names toggle, History, the problem count, and Run at the far right; labels collapse to icons through container queries at 1280, 1100 and 880px.
+- The harness shim keeps the three storage items in `sessionStorage` so a reload restores them.
+
+Decisions made here: a restored working Query counts as unsaved. After a reload the Stored Query name is gone, because the working-Query slot does not record which Stored Query the text came from. Opening a history entry keeps the current Connection.

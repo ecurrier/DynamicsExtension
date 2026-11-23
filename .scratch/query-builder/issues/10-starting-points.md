@@ -1,6 +1,6 @@
 # Starting points
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Phase: 1
 Blocked by: 04
@@ -38,3 +38,11 @@ Harness stubs to add: both routes return `{ value: [...] }`; `savedqueries` rows
 Needs a real org (for issue 14's checklist): the `fetchxml ne null` and parenthesised `or` filter; which Personal Views appear over each Connection; what a privilege error on `userquery` looks like.
 
 2026-11-22: the harness stubs for `query.listViews` are in: System Views and Personal Views for `account`; Personal Views return a 403 over the Environment connection and load over the page Connection. Nothing in the UI uses them yet.
+
+2026-11-22: the UI is done and the issue is resolved (Opus worker, reviewed and verified: typecheck, lint, 1,501 tests, build; the empty state checked in the harness).
+
+- `src/query-builder/start/`: the four starting points, the "New" menu, and the Table, view and open-page pickers. `EmptyStart.tsx` takes the place of the tree and details panes beside the Fetch XML pane, with the step explainer, the four starting points, and the History and My queries lists. The results pane is hidden while there is no Query.
+- Loading any Query goes through `store.loadQuery`, one undoable step. View and open-page Fetch XML is reformatted on load.
+- "Open in Query Builder" in the Utilities dialog goes through `useWorkspaceLauncher`.
+
+Not verified: the real grids from `generateFetchXml` on a real page; Personal Views over either Connection; real Chrome tab opening.

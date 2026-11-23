@@ -141,6 +141,7 @@ export const XmlPane = ({ onCollapse }: XmlPaneProps) => {
 			store.getState().attachEditor({
 				undo: () => (viewRef.current ? undo(viewRef.current) : false),
 				redo: () => (viewRef.current ? redo(viewRef.current) : false),
+				focus: () => viewRef.current?.focus(),
 			}),
 		[store]
 	);

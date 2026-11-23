@@ -1,22 +1,26 @@
 import { makeStyles, mergeClasses, Spinner, tokens } from "@fluentui/react-components";
-import { type KeyboardEvent, useEffect, useState } from "react";
+import { type KeyboardEvent, useCallback, useEffect, useState } from "react";
 
 import { useConnectableEnvironments } from "@/modules/settings";
 import { EmptyState, FailureBanner } from "@/shared/components";
 import { type ConnectionTarget, requestEnvironmentAccess } from "@/shared/connections";
 import { useAsyncAction } from "@/shared/hooks";
+import { useSessionStore } from "@/shared/stores";
 import { type QueryBuilderLaunch } from "@/shared/types";
 
 import { EDITORS_MIN_HEIGHT, EditorPanes } from "./EditorPanes";
 import { useQueryGateway } from "./hooks";
-import { connectionLabel } from "./lib";
+import { connectionLabel, historyConnection, historyConnectionLabel, NO_ORIGIN } from "./lib";
+import { QueryLibraryDrawer } from "./library";
 import { QueryBuilderHeader } from "./QueryBuilderHeader";
 import { QueryDiagnosticsProvider } from "./QueryDiagnostics";
+import { useQueryHistory, useWorkingQuery } from "./remembered";
 import { ResultsPane } from "./ResultsPane";
 import { Splitter, SPLITTER_THICKNESS } from "./Splitter";
+import { StartProvider } from "./start";
 import { createQueryBuilderStore, QueryBuilderStoreContext, useQueryBuilder, useQueryBuilderStoreApi } from "./store";
 import { connectionFor, type QueryBuilderBootstrapStatus } from "./useQueryBuilderBootstrap";
-import { useQueryRun } from "./useQueryRun";
+import { type QueryRunRecord, useQueryRun } from "./useQueryRun";
 
 export const RESULTS_MIN_HEIGHT = 120;
 
@@ -89,14 +93,33 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 	const setResultsMaximised = useQueryBuilder((state) => state.setResultsMaximised);
 	const namesLead = useQueryBuilder((state) => state.namesLead);
 	const setNamesLead = useQueryBuilder((state) => state.setNamesLead);
+	const empty = useQueryBuilder((state) => state.text.trim() === "");
+	const tabUrl = useSessionStore((state) => state.tabUrl);
+	const { record } = useQueryHistory();
+	const [libraryOpen, setLibraryOpen] = useState(false);
 	const gateway = useQueryGateway(connection);
 	const connectionName = connectionLabel(connection, byId);
-	const { run: runQuery, nextPage, loadAll, keepLoading, stop } = useQueryRun(gateway, connectionName);
+	const onQueryRun = useCallback(
+		(queryRun: QueryRunRecord) => {
+			const target = historyConnection(queryRun.connection, tabUrl);
+			void record({
+				fetchXml: queryRun.fetchXml,
+				connection: target,
+				connectionLabel: historyConnectionLabel(target, connectionLabel(queryRun.connection, byId)),
+				ranAt: queryRun.ranAt,
+				outcome: queryRun.outcome,
+				elapsedMs: queryRun.elapsedMs,
+			}).catch(() => undefined);
+		},
+		[byId, record, tabUrl]
+	);
+	const { run: runQuery, nextPage, loadAll, keepLoading, stop } = useQueryRun(gateway, connectionName, onQueryRun);
 	const connect = useAsyncAction("Cannot change the Connection");
 	const running = run.status === "running" || run.paging !== "idle";
 	const canRun = gateway.ready && text.trim() !== "" && errors.length === 0 && !running;
 	const { collapsed, resultsMaximised: maximised } = layout;
 	const resultsCollapsed = collapsed.results && !maximised;
+	const showResults = !empty || run.status !== "idle";
 
 	const onConnectionChange = (target: ConnectionTarget) =>
 		void connect.run(async () => {
@@ -133,57 +156,67 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 
 	return (
 		<QueryDiagnosticsProvider gateway={gateway}>
-			<div className={styles.root} onKeyDownCapture={onKeyDownCapture} onKeyDown={onKeyDown}>
-				<QueryBuilderHeader
-					hosted={hosted}
-					connection={connection}
-					environments={environments}
-					connecting={connect.running}
-					canRun={canRun}
-					running={running}
-					namesLead={namesLead}
-					onConnectionChange={onConnectionChange}
-					onNamesLeadChange={setNamesLead}
-					onRun={() => void runQuery()}
-				/>
-				<FailureBanner />
-				<div className={styles.body}>
-					<EditorPanes gateway={gateway} hidden={maximised} />
-					{resultsCollapsed || maximised ? null : (
-						<Splitter
-							orientation="horizontal"
-							reverse
-							size={layout.resultsHeight}
-							min={RESULTS_MIN_HEIGHT}
-							otherMin={EDITORS_MIN_HEIGHT}
-							label="Resize the results"
-							controls={RESULTS_PANE_ID}
-							onResize={(size) => resizePane("results", size)}
-							onToggle={() => togglePane("results")}
-						/>
-					)}
-					<section
-						id={RESULTS_PANE_ID}
-						aria-label="Results"
-						className={mergeClasses(styles.pane, styles.results, resultsCollapsed && styles.resultsCollapsed, maximised && styles.resultsMaximised)}
-						style={resultsCollapsed || maximised ? undefined : { height: `${layout.resultsHeight}px` }}>
-						<ResultsPane
-							run={run}
-							connection={run.connection ?? connection}
-							connectionName={run.connection ? connectionLabel(run.connection, byId) : connectionName}
-							ready={gateway.ready}
-							collapsed={collapsed.results}
-							maximised={maximised}
-							onToggle={() => togglePane("results")}
-							onMaximisedChange={setResultsMaximised}
-							onNextPage={nextPage}
-							onLoadAll={loadAll}
-							onKeepLoading={keepLoading}
-							onStop={stop}
-						/>
-					</section>
+			<StartProvider gateway={gateway}>
+				<div className={styles.root} onKeyDownCapture={onKeyDownCapture} onKeyDown={onKeyDown}>
+					<QueryBuilderHeader
+						hosted={hosted}
+						connection={connection}
+						environments={environments}
+						connecting={connect.running}
+						canRun={canRun}
+						running={running}
+						namesLead={namesLead}
+						onConnectionChange={onConnectionChange}
+						onNamesLeadChange={setNamesLead}
+						onRun={() => void runQuery()}
+						onOpenLibrary={() => setLibraryOpen(true)}
+					/>
+					<FailureBanner />
+					<div className={styles.body}>
+						<EditorPanes gateway={gateway} hidden={maximised} />
+						{resultsCollapsed || maximised || !showResults ? null : (
+							<Splitter
+								orientation="horizontal"
+								reverse
+								size={layout.resultsHeight}
+								min={RESULTS_MIN_HEIGHT}
+								otherMin={EDITORS_MIN_HEIGHT}
+								label="Resize the results"
+								controls={RESULTS_PANE_ID}
+								onResize={(size) => resizePane("results", size)}
+								onToggle={() => togglePane("results")}
+							/>
+						)}
+						<section
+							id={RESULTS_PANE_ID}
+							aria-label="Results"
+							className={mergeClasses(
+								styles.pane,
+								styles.results,
+								resultsCollapsed && styles.resultsCollapsed,
+								maximised && styles.resultsMaximised,
+								!showResults && styles.hidden
+							)}
+							style={resultsCollapsed || maximised ? undefined : { height: `${layout.resultsHeight}px` }}>
+							<ResultsPane
+								run={run}
+								connection={run.connection ?? connection}
+								connectionName={run.connection ? connectionLabel(run.connection, byId) : connectionName}
+								ready={gateway.ready}
+								collapsed={collapsed.results}
+								maximised={maximised}
+								onToggle={() => togglePane("results")}
+								onMaximisedChange={setResultsMaximised}
+								onNextPage={nextPage}
+								onLoadAll={loadAll}
+								onKeepLoading={keepLoading}
+								onStop={stop}
+							/>
+						</section>
+					</div>
 				</div>
-			</div>
+				<QueryLibraryDrawer open={libraryOpen} onClose={() => setLibraryOpen(false)} />
+			</StartProvider>
 		</QueryDiagnosticsProvider>
 	);
 };
@@ -193,13 +226,64 @@ interface QueryBuilderProps {
 	hosted?: boolean;
 }
 
-export const QueryBuilder = ({ launch, hosted = false }: QueryBuilderProps) => {
-	const [store] = useState(() => createQueryBuilderStore({ connection: connectionFor(launch), fetchXml: launch.fetchXml }));
+interface QueryBuilderSessionProps extends QueryBuilderProps {
+	restored: string | null;
+	write: (fetchXml: string) => void;
+	flush: () => Promise<void>;
+}
+
+const QueryBuilderSession = ({ launch, hosted = false, restored, write, flush }: QueryBuilderSessionProps) => {
+	const [store] = useState(() =>
+		createQueryBuilderStore({
+			connection: connectionFor(launch),
+			fetchXml: launch.fetchXml ?? restored,
+			origin: launch.fetchXml === null ? NO_ORIGIN : { storedQueryId: null, loadedText: launch.fetchXml },
+		})
+	);
 	useEffect(() => () => store.getState().dispose(), [store]);
+	useEffect(
+		() =>
+			store.subscribe((state, previous) => {
+				if (state.text !== previous.text) {
+					write(state.text);
+				}
+			}),
+		[store, write]
+	);
+	useEffect(() => {
+		const onVisibility = () => {
+			if (globalThis.document.visibilityState === "hidden") {
+				void flush();
+			}
+		};
+		const onPageHide = () => void flush();
+		globalThis.document.addEventListener("visibilitychange", onVisibility);
+		globalThis.addEventListener("pagehide", onPageHide);
+		return () => {
+			globalThis.document.removeEventListener("visibilitychange", onVisibility);
+			globalThis.removeEventListener("pagehide", onPageHide);
+		};
+	}, [flush]);
 	return (
 		<QueryBuilderStoreContext.Provider value={store}>
 			<QueryBuilderWorkspace hosted={hosted} />
 		</QueryBuilderStoreContext.Provider>
+	);
+};
+
+export const QueryBuilder = ({ launch, hosted = false }: QueryBuilderProps) => {
+	const working = useWorkingQuery();
+	if (launch.fetchXml === null && working.isLoading) {
+		return <Spinner style={{ padding: "24px" }} />;
+	}
+	return (
+		<QueryBuilderSession
+			launch={launch}
+			hosted={hosted}
+			restored={launch.fetchXml === null ? (working.opened?.fetchXml ?? null) : null}
+			write={working.write}
+			flush={working.flush}
+		/>
 	);
 };
 

@@ -10,7 +10,9 @@ import {
 	type ChangeResult,
 	type CollapsibleGroup,
 	type NamesLead,
+	NO_ORIGIN,
 	pathKey,
+	type QueryOrigin,
 	type QueryChange,
 	remapKeys,
 	remapPath,
@@ -84,6 +86,7 @@ export interface TreeSnapshot {
 	text: string;
 	selectedPath: NodePath | null;
 	collapsed: ReadonlySet<string>;
+	origin: QueryOrigin;
 }
 
 export interface HistoryEntry {
@@ -99,6 +102,7 @@ export interface TreeHistory {
 export interface EditorHistory {
 	undo: () => boolean;
 	redo: () => boolean;
+	focus?: () => void;
 }
 
 export interface QueryBuilderState extends ParsedQuery {
@@ -110,9 +114,14 @@ export interface QueryBuilderState extends ParsedQuery {
 	collapsed: ReadonlySet<string>;
 	namesLead: NamesLead;
 	history: TreeHistory;
+	origin: QueryOrigin;
+	lastRunText: string | null;
 	run: QueryRunState;
 	layout: PaneLayout;
 	setText: (text: string) => void;
+	loadQuery: (text: string, origin: QueryOrigin) => void;
+	setStoredQuery: (storedQueryId: string | null) => void;
+	focusXml: () => void;
 	parseNow: () => ParsedQuery;
 	setConnection: (connection: ConnectionTarget) => void;
 	select: (path: NodePath | null, origin?: SelectionOrigin) => void;
@@ -148,6 +157,7 @@ export type PagingOutcome = { kind: "finished" } | { kind: "confirm" } | { kind:
 export interface QueryBuilderInit {
 	connection: ConnectionTarget;
 	fetchXml: string | null;
+	origin?: QueryOrigin;
 }
 
 export const DEFAULT_LAYOUT: PaneLayout = {
@@ -198,7 +208,12 @@ const withoutAncestors = (collapsed: ReadonlySet<string>, path: NodePath | null)
 	return next;
 };
 
-const snapshotOf = (state: QueryBuilderState): TreeSnapshot => ({ text: state.text, selectedPath: state.selectedPath, collapsed: state.collapsed });
+const snapshotOf = (state: QueryBuilderState): TreeSnapshot => ({
+	text: state.text,
+	selectedPath: state.selectedPath,
+	collapsed: state.collapsed,
+	origin: state.origin,
+});
 
 const updateRun = (state: QueryBuilderState, id: number, update: (run: QueryRunState) => Partial<QueryRunState>): Partial<QueryBuilderState> =>
 	state.run.id === id ? { run: { ...state.run, ...update(state.run) } } : state;
@@ -211,7 +226,7 @@ export const parseQueryText = (text: string, previous: FetchXmlDocument | null):
 	return result.ok ? { query: result.document, errors: [] } : { query: previous, errors: result.errors };
 };
 
-export const createQueryBuilderStore = ({ connection, fetchXml }: QueryBuilderInit): StoreApi<QueryBuilderState> => {
+export const createQueryBuilderStore = ({ connection, fetchXml, origin = NO_ORIGIN }: QueryBuilderInit): StoreApi<QueryBuilderState> => {
 	let timer: ReturnType<typeof setTimeout> | null = null;
 	const cancelParse = () => {
 		if (timer !== null) {
@@ -261,6 +276,7 @@ export const createQueryBuilderStore = ({ connection, fetchXml }: QueryBuilderIn
 				selectedPath: snapshot.selectedPath,
 				selectionOrigin: "tree",
 				collapsed: snapshot.collapsed,
+				origin: snapshot.origin,
 				history,
 			});
 		};
@@ -288,6 +304,8 @@ export const createQueryBuilderStore = ({ connection, fetchXml }: QueryBuilderIn
 			collapsed: NO_KEYS,
 			namesLead: "logical",
 			history: EMPTY_HISTORY,
+			origin,
+			lastRunText: null,
 			run: idleRun(0),
 			layout: DEFAULT_LAYOUT,
 			setText: (next) => {
@@ -299,6 +317,34 @@ export const createQueryBuilderStore = ({ connection, fetchXml }: QueryBuilderIn
 				timer = setTimeout(applyParse, PARSE_DELAY_MS);
 			},
 			parseNow: applyParse,
+			loadQuery: (next, nextOrigin) => {
+				const state = get();
+				if (next === state.text) {
+					set({ origin: nextOrigin });
+					return;
+				}
+				const after: TreeSnapshot = { text: next, selectedPath: null, collapsed: NO_KEYS, origin: nextOrigin };
+				const entry: HistoryEntry = { before: snapshotOf(state), after };
+				restore(after, { undo: [...state.history.undo, entry].slice(-HISTORY_LIMIT), redo: [] });
+				set((current) => (current.run.status === "running" ? current : { run: idleRun(current.run.id + 1) }));
+			},
+			setStoredQuery: (storedQueryId) => set((state) => ({ origin: { ...state.origin, storedQueryId } })),
+			focusXml: () => {
+				set((state) =>
+					state.layout.collapsed.xml || state.layout.xmlTab !== "fetchxml" || state.layout.resultsMaximised
+						? {
+								layout: {
+									...state.layout,
+									collapsed: { ...state.layout.collapsed, xml: false },
+									xmlTab: "fetchxml",
+									resultsMaximised: false,
+									detailsForced: false,
+								},
+							}
+						: state
+				);
+				setTimeout(() => editor?.focus?.(), 0);
+			},
 			setConnection: (next) => set((state) => ({ connection: next, run: idleRun(state.run.id + 1) })),
 			select: (path, origin = "tree") => {
 				const state = get();
@@ -356,6 +402,7 @@ export const createQueryBuilderStore = ({ connection, fetchXml }: QueryBuilderIn
 					text: nextText,
 					selectedPath,
 					collapsed: withoutAncestors(remapKeys(state.collapsed, change.shift), selectedPath),
+					origin: state.origin,
 				};
 				const entry: HistoryEntry = { before: snapshotOf(state), after };
 				restore(after, { undo: [...state.history.undo, entry].slice(-HISTORY_LIMIT), redo: [] });
@@ -389,9 +436,9 @@ export const createQueryBuilderStore = ({ connection, fetchXml }: QueryBuilderIn
 				};
 			},
 			startRun: () => {
-				const { run, connection: current } = get();
+				const { run, connection: current, text: ran } = get();
 				const id = run.id + 1;
-				set({ run: { ...idleRun(id), status: "running", connection: current } });
+				set({ run: { ...idleRun(id), status: "running", connection: current }, lastRunText: ran });
 				return id;
 			},
 			finishRun: (id, result, source = null) =>

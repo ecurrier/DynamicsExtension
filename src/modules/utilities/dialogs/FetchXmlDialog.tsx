@@ -36,9 +36,10 @@ interface FetchXmlDialogBodyProps {
 	queries: NamedFetchXml[];
 	onClose: () => void;
 	onRetrieveRecords: (fetchXml: string) => void;
+	onOpenInQueryBuilder?: (fetchXml: string) => void;
 }
 
-const FetchXmlDialogBody = ({ queries, onClose, onRetrieveRecords }: FetchXmlDialogBodyProps) => {
+const FetchXmlDialogBody = ({ queries, onClose, onRetrieveRecords, onOpenInQueryBuilder }: FetchXmlDialogBodyProps) => {
 	const styles = useStyles();
 	const [selectedIndex, setSelectedIndex] = useState("0");
 	const [doubleQuotes, setDoubleQuotes] = useState(true);
@@ -93,6 +94,13 @@ const FetchXmlDialogBody = ({ queries, onClose, onRetrieveRecords }: FetchXmlDia
 					</div>
 				</FormStack>
 			</DialogContent>
+			{onOpenInQueryBuilder ? (
+				<DialogActions position="start">
+					<Button appearance="subtle" disabled={!selected} onClick={() => selected && onOpenInQueryBuilder(selected.fetchXml)}>
+						Open in Query Builder
+					</Button>
+				</DialogActions>
+			) : null}
 			<DialogActions>
 				<Button appearance="secondary" onClick={onClose}>
 					Close
@@ -110,12 +118,15 @@ interface FetchXmlDialogProps {
 	queries: NamedFetchXml[] | null;
 	onClose: () => void;
 	onRetrieveRecords: (fetchXml: string) => void;
+	onOpenInQueryBuilder?: (fetchXml: string) => void;
 }
 
-export const FetchXmlDialog = ({ queries, onClose, onRetrieveRecords }: FetchXmlDialogProps) => (
+export const FetchXmlDialog = ({ queries, onClose, onRetrieveRecords, onOpenInQueryBuilder }: FetchXmlDialogProps) => (
 	<Dialog open={queries !== null} onOpenChange={(_, data) => (data.open ? undefined : onClose())}>
 		<DialogSurface style={{ maxWidth: "680px" }}>
-			{queries ? <FetchXmlDialogBody queries={queries} onClose={onClose} onRetrieveRecords={onRetrieveRecords} /> : null}
+			{queries ? (
+				<FetchXmlDialogBody queries={queries} onClose={onClose} onRetrieveRecords={onRetrieveRecords} onOpenInQueryBuilder={onOpenInQueryBuilder} />
+			) : null}
 		</DialogSurface>
 	</Dialog>
 );

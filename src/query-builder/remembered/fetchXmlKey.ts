@@ -1,13 +1,8 @@
-import { parseFetchXml, serializeFetchXml } from "@/shared/lib/fetchxml";
+import { parseFetchXml } from "@/shared/lib/fetchxml";
 
-import { rootTableName } from "../lib";
+import { normalizeFetchXml, rootTableName, sameFetchXml } from "../lib";
 
-export const normalizeFetchXml = (text: string): string => {
-	const result = parseFetchXml(text);
-	return result.ok ? serializeFetchXml(result.document, { minify: true, omitExcluded: false }) : text.trim();
-};
-
-export const sameFetchXml = (left: string, right: string): boolean => left === right || normalizeFetchXml(left) === normalizeFetchXml(right);
+export { normalizeFetchXml, sameFetchXml };
 
 const ENTITY_NAME = /<entity\b[^>]*?\bname\s*=\s*(["'])\s*([^"']*?)\s*\1/;
 

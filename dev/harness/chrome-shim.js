@@ -12,8 +12,48 @@
 			.map((value) => Number(value))
 			.filter((value) => Number.isInteger(value) && value > 0)
 	);
+	// These items survive a reload of the same tab, so the Query Builder's remembered Queries can be checked.
+	const persistedKeys = { local: ["workingQuery", "queryHistory", "storedQueries"], session: [] };
+	const persistedKey = (areaName, key) => `harness:${areaName}:${key}`;
+	const persist = (areaName, key, value) => {
+		if (!(persistedKeys[areaName] ?? []).includes(key)) {
+			return;
+		}
+		try {
+			if (value === undefined) {
+				sessionStorage.removeItem(persistedKey(areaName, key));
+			} else {
+				sessionStorage.setItem(persistedKey(areaName, key), JSON.stringify(value));
+			}
+		} catch {
+			// sessionStorage can be unavailable; the item then lives in memory only.
+		}
+	};
+	const restorePersisted = (areaName) => {
+		const restored = {};
+		for (const key of persistedKeys[areaName] ?? []) {
+			try {
+				const raw = sessionStorage.getItem(persistedKey(areaName, key));
+				if (raw !== null) {
+					restored[key] = JSON.parse(raw);
+				}
+			} catch {
+				// Ignore an unreadable entry and keep the seed.
+			}
+		}
+		return restored;
+	};
+	const takeQueryBuilderLaunch = () => {
+		try {
+			const raw = sessionStorage.getItem("harness:queryBuilderLaunch");
+			sessionStorage.removeItem("harness:queryBuilderLaunch");
+			return raw === null ? null : JSON.parse(raw);
+		} catch {
+			return null;
+		}
+	};
 	const makeArea = (initial, areaName = "local") => {
-		const store = { ...initial };
+		const store = { ...initial, ...restorePersisted(areaName) };
 		return {
 			get: async (keys) => {
 				if (keys === null || keys === undefined) {
@@ -33,6 +73,7 @@
 				for (const [k, v] of Object.entries(items)) {
 					changes[k] = { oldValue: store[k], newValue: v };
 					store[k] = v;
+					persist(areaName, k, v);
 				}
 				listeners.forEach((l) => l(changes, areaName));
 			},
@@ -42,6 +83,7 @@
 				for (const k of list) {
 					changes[k] = { oldValue: store[k], newValue: undefined };
 					delete store[k];
+					persist(areaName, k, undefined);
 				}
 				listeners.forEach((l) => l(changes, areaName));
 			},
@@ -2833,7 +2875,7 @@
 				environmentId: null,
 				launchedAt: new Date().toISOString(),
 			},
-			queryBuilderLaunch: {
+			queryBuilderLaunch: takeQueryBuilderLaunch() ?? {
 				tabId: 1,
 				environmentId: new URLSearchParams(location.search).get("queryConnection") === "environment" ? "env-dev" : null,
 				fetchXml:
@@ -2938,7 +2980,14 @@
 					{ id: 3, title: "Active Accounts: Sales Hub", url: "https://org12345.crm.dynamics.com/main.aspx?appid=1&pagetype=entitylist&etn=account" },
 				].filter((tab) => !closedTabs.has(tab.id)),
 			create: async ({ url }) => {
+				if (url.includes("query-builder.html")) {
+					const launch = (await session.get("queryBuilderLaunch")).queryBuilderLaunch;
+					if (launch) {
+						sessionStorage.setItem("harness:queryBuilderLaunch", JSON.stringify(launch));
+					}
+				}
 				const harnessUrl = url
+					.replace("query-builder.html", "harness-query-builder.html")
 					.replace("results-viewer.html", "harness-results.html")
 					.replace("plugin-traces.html", "harness-traces.html")
 					.replace("data-transporter.html", "harness-transporter.html");
