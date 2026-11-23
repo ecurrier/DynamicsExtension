@@ -62,6 +62,7 @@ interface ResultsGridProps {
 	visible: DisplayWindow;
 	maximised: boolean;
 	onPageChange: (page: number) => void;
+	caption?: string;
 }
 
 interface ScrollPosition {
@@ -96,7 +97,7 @@ const useScrollKeptAcross = (maximised: boolean) => {
 	};
 };
 
-export const ResultsGrid = ({ rows, columns, mode, appUrl, visible, maximised, onPageChange }: ResultsGridProps) => {
+export const ResultsGrid = ({ rows, columns, mode, appUrl, visible, maximised, onPageChange, caption }: ResultsGridProps) => {
 	const styles = useStyles();
 	const onScrollCapture = useScrollKeptAcross(maximised);
 	const items = useMemo<IndexedRow[]>(
@@ -129,7 +130,7 @@ export const ResultsGrid = ({ rows, columns, mode, appUrl, visible, maximised, o
 			{rows.length > 0 ? (
 				<div className={styles.pager}>
 					<Text size={200} className={styles.caption}>
-						{displayCaption(visible, rows.length)}
+						{caption ?? displayCaption(visible, rows.length)}
 					</Text>
 					<Button
 						size="small"

@@ -5,6 +5,7 @@ import {
 	type DifferingPair,
 	differingColumnsGrid,
 	displayWindow,
+	rangeCaption,
 	matchKeyLabel,
 	matchKeyText,
 	pairLabelColumn,
@@ -74,6 +75,7 @@ export const DifferencesBucket = ({ stored, columns, appUrlOf, maximised }: Diff
 					visible={displayWindow(grid.rows.length, page)}
 					maximised={maximised}
 					onPageChange={setPage}
+					caption={rangeCaption(displayWindow(grid.rows.length, page), grid.rows.length, "Pairs")}
 				/>
 			) : (
 				<PairList

@@ -1,6 +1,6 @@
 # Query Builder
 
-Status: ready-for-agent
+Status: ready-for-human (all 19 issues are built and pass in the harness; the two smoke tests, `smoke-test-phase-1.md` and `smoke-test-phase-2.md`, need a person and a real org)
 Decided: 2026-11-22 (grilling session)
 
 ## Problem
