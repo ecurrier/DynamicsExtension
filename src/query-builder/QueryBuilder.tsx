@@ -11,6 +11,7 @@ import { EDITORS_MIN_HEIGHT, EditorPanes } from "./EditorPanes";
 import { useQueryGateway } from "./hooks";
 import { connectionLabel } from "./lib";
 import { QueryBuilderHeader } from "./QueryBuilderHeader";
+import { QueryDiagnosticsProvider } from "./QueryDiagnostics";
 import { ResultsPane } from "./ResultsPane";
 import { Splitter, SPLITTER_THICKNESS } from "./Splitter";
 import { createQueryBuilderStore, QueryBuilderStoreContext, useQueryBuilder, useQueryBuilderStoreApi } from "./store";
@@ -131,57 +132,59 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 	};
 
 	return (
-		<div className={styles.root} onKeyDownCapture={onKeyDownCapture} onKeyDown={onKeyDown}>
-			<QueryBuilderHeader
-				hosted={hosted}
-				connection={connection}
-				environments={environments}
-				connecting={connect.running}
-				canRun={canRun}
-				running={running}
-				namesLead={namesLead}
-				onConnectionChange={onConnectionChange}
-				onNamesLeadChange={setNamesLead}
-				onRun={() => void runQuery()}
-			/>
-			<FailureBanner />
-			<div className={styles.body}>
-				<EditorPanes gateway={gateway} hidden={maximised} />
-				{resultsCollapsed || maximised ? null : (
-					<Splitter
-						orientation="horizontal"
-						reverse
-						size={layout.resultsHeight}
-						min={RESULTS_MIN_HEIGHT}
-						otherMin={EDITORS_MIN_HEIGHT}
-						label="Resize the results"
-						controls={RESULTS_PANE_ID}
-						onResize={(size) => resizePane("results", size)}
-						onToggle={() => togglePane("results")}
-					/>
-				)}
-				<section
-					id={RESULTS_PANE_ID}
-					aria-label="Results"
-					className={mergeClasses(styles.pane, styles.results, resultsCollapsed && styles.resultsCollapsed, maximised && styles.resultsMaximised)}
-					style={resultsCollapsed || maximised ? undefined : { height: `${layout.resultsHeight}px` }}>
-					<ResultsPane
-						run={run}
-						connection={run.connection ?? connection}
-						connectionName={run.connection ? connectionLabel(run.connection, byId) : connectionName}
-						ready={gateway.ready}
-						collapsed={collapsed.results}
-						maximised={maximised}
-						onToggle={() => togglePane("results")}
-						onMaximisedChange={setResultsMaximised}
-						onNextPage={nextPage}
-						onLoadAll={loadAll}
-						onKeepLoading={keepLoading}
-						onStop={stop}
-					/>
-				</section>
+		<QueryDiagnosticsProvider gateway={gateway}>
+			<div className={styles.root} onKeyDownCapture={onKeyDownCapture} onKeyDown={onKeyDown}>
+				<QueryBuilderHeader
+					hosted={hosted}
+					connection={connection}
+					environments={environments}
+					connecting={connect.running}
+					canRun={canRun}
+					running={running}
+					namesLead={namesLead}
+					onConnectionChange={onConnectionChange}
+					onNamesLeadChange={setNamesLead}
+					onRun={() => void runQuery()}
+				/>
+				<FailureBanner />
+				<div className={styles.body}>
+					<EditorPanes gateway={gateway} hidden={maximised} />
+					{resultsCollapsed || maximised ? null : (
+						<Splitter
+							orientation="horizontal"
+							reverse
+							size={layout.resultsHeight}
+							min={RESULTS_MIN_HEIGHT}
+							otherMin={EDITORS_MIN_HEIGHT}
+							label="Resize the results"
+							controls={RESULTS_PANE_ID}
+							onResize={(size) => resizePane("results", size)}
+							onToggle={() => togglePane("results")}
+						/>
+					)}
+					<section
+						id={RESULTS_PANE_ID}
+						aria-label="Results"
+						className={mergeClasses(styles.pane, styles.results, resultsCollapsed && styles.resultsCollapsed, maximised && styles.resultsMaximised)}
+						style={resultsCollapsed || maximised ? undefined : { height: `${layout.resultsHeight}px` }}>
+						<ResultsPane
+							run={run}
+							connection={run.connection ?? connection}
+							connectionName={run.connection ? connectionLabel(run.connection, byId) : connectionName}
+							ready={gateway.ready}
+							collapsed={collapsed.results}
+							maximised={maximised}
+							onToggle={() => togglePane("results")}
+							onMaximisedChange={setResultsMaximised}
+							onNextPage={nextPage}
+							onLoadAll={loadAll}
+							onKeepLoading={keepLoading}
+							onStop={stop}
+						/>
+					</section>
+				</div>
 			</div>
-		</div>
+		</QueryDiagnosticsProvider>
 	);
 };
 

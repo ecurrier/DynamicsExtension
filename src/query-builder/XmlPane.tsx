@@ -1,16 +1,22 @@
 import { isolateHistory, redo, undo } from "@codemirror/commands";
+import { linter, setDiagnostics } from "@codemirror/lint";
 import { EditorSelection, EditorState, type Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { makeStyles, tokens } from "@fluentui/react-components";
 import { PanelRightContract20Regular } from "@fluentui/react-icons";
+import { useQueryClient } from "@tanstack/react-query";
 import { ExternalChange } from "@uiw/react-codemirror";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { CodeEditor } from "@/shared/components";
-import { rangeOfNode } from "@/shared/lib/fetchxml";
+import { rangeOfNode, type TableLookup } from "@/shared/lib/fetchxml";
+import { type QueryTable } from "@/shared/types";
 
+import { fetchXmlCompletion, layeredMetadata, lintDiagnostics, updateXmlCompletionServices, xmlPaneTheme } from "./editor";
+import { useQueryEditing } from "./editors";
 import { PaneHeader } from "./PaneChrome";
 import { ParseErrorBanner } from "./ParseErrorBanner";
+import { useQueryDiagnostics } from "./QueryDiagnostics";
 import { type QueryBuilderState, useQueryBuilder, useQueryBuilderStoreApi } from "./store";
 
 const TREE_SELECT_EVENT = "select.tree";
@@ -57,10 +63,41 @@ export const XmlPane = ({ onCollapse }: XmlPaneProps) => {
 	const selectedPath = useQueryBuilder((state) => state.selectedPath);
 	const selectionOrigin = useQueryBuilder((state) => state.selectionOrigin);
 	const query = useQueryBuilder((state) => state.query);
+	const errors = useQueryBuilder((state) => state.errors);
+	const parsedText = useQueryBuilder((state) => state.parsedText);
+	const namesLead = useQueryBuilder((state) => state.namesLead);
+	const { diagnostics } = useQueryDiagnostics();
+	const { gateway, metadata, tables, loadTable } = useQueryEditing();
+	const queryClient = useQueryClient();
 	const viewRef = useRef<EditorView | null>(null);
+	const [view, setView] = useState<EditorView | null>(null);
+
+	useEffect(() => {
+		const cached = (logicalName: string): TableLookup | null => {
+			const key = gateway.key("getTable", { logicalName: logicalName.toLowerCase() });
+			const table = queryClient.getQueryData<QueryTable>(key);
+			if (table) {
+				return { state: "loaded", table };
+			}
+			return queryClient.getQueryState(key)?.status === "error" ? { state: "missing" } : null;
+		};
+		if (!view) {
+			return;
+		}
+		updateXmlCompletionServices(view, {
+			metadata: layeredMetadata(cached, metadata),
+			options: { names: namesLead, tables: tables ?? [] },
+			requestTables: async (logicalNames) => {
+				await Promise.all(logicalNames.map((logicalName) => loadTable(logicalName.toLowerCase())));
+			},
+		});
+	}, [view, gateway, queryClient, metadata, tables, namesLead, loadTable]);
 
 	const extensions = useMemo<Extension[]>(
 		() => [
+			fetchXmlCompletion,
+			linter(null),
+			xmlPaneTheme,
 			EditorState.transactionExtender.of((transaction) => (transaction.annotation(ExternalChange) ? { annotations: isolateHistory.of("full") } : null)),
 			EditorView.updateListener.of((update) => {
 				const external = update.transactions.some((transaction) => transaction.annotation(ExternalChange));
@@ -92,6 +129,13 @@ export const XmlPane = ({ onCollapse }: XmlPaneProps) => {
 		}
 	}, [store, selectedPath, selectionOrigin, query]);
 
+	useEffect(() => {
+		if (!view || view.state.doc.toString() !== parsedText) {
+			return;
+		}
+		view.dispatch(setDiagnostics(view.state, lintDiagnostics({ errors, diagnostics, length: view.state.doc.length })));
+	}, [view, errors, diagnostics, parsedText]);
+
 	return (
 		<>
 			<PaneHeader title="Fetch XML" toggleIcon={PanelRightContract20Regular} toggleLabel="Collapse the Fetch XML" onToggle={onCollapse} />
@@ -103,8 +147,9 @@ export const XmlPane = ({ onCollapse }: XmlPaneProps) => {
 					fill
 					extensions={extensions}
 					onChange={setText}
-					onCreateEditor={(view) => {
-						viewRef.current = view;
+					onCreateEditor={(created) => {
+						viewRef.current = created;
+						setView(created);
 					}}
 					placeholder="Paste a Fetch XML query here, then press Ctrl+Enter to run it"
 				/>

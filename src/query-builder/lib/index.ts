@@ -14,6 +14,7 @@ export * from "./resultColumn";
 export * from "./results";
 export * from "./resultsView";
 export * from "./rootTable";
+export * from "./rowProblems";
 export * from "./rowScope";
 export * from "./rowSummary";
 export * from "./textPosition";

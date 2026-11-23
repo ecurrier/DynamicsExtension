@@ -38,7 +38,9 @@ import { type KeyboardEvent, type MouseEvent, type ReactElement, useState } from
 import { elementDefinition, type NodePath } from "@/shared/lib/fetchxml";
 
 import { useQueryEditing } from "./editors";
-import { type RowKind, samePath, summaryText, type TreeRow } from "./lib";
+import { problemBeneathRow, problemsOfRow, type RowKind, samePath, summaryText, type TreeRow } from "./lib";
+import { RowProblemIcon } from "./ProblemIcon";
+import { useQueryDiagnostics } from "./QueryDiagnostics";
 import { RowContent } from "./RowContent";
 import { useQueryBuilder } from "./store";
 
@@ -191,6 +193,8 @@ export const QueryTreeRow = ({ row, actions }: QueryTreeRowProps) => {
 	const selected = useQueryBuilder((state) => samePath(state.selectedPath, row.path));
 	const select = useQueryBuilder((state) => state.select);
 	const { openDetails } = useQueryEditing();
+	const collapsed = useQueryBuilder((state) => state.collapsed.has(row.key));
+	const { rows: problems } = useQueryDiagnostics();
 	const [hovered, setHovered] = useState(false);
 	const [menuOpen, setMenuOpen] = useState(false);
 	const label = summaryText(row.summary);
@@ -313,6 +317,10 @@ export const QueryTreeRow = ({ row, actions }: QueryTreeRowProps) => {
 						</Tooltip>
 					)}
 					<RowContent row={row} />
+					<RowProblemIcon
+						diagnostics={problemsOfRow(problems, row.path)}
+						beneath={branch && collapsed ? problemBeneathRow(problems, row.path) : null}
+					/>
 					{row.kind === "unknown" ? (
 						<Badge size="small" appearance="outline" color="informative">
 							edit in XML

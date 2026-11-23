@@ -111,7 +111,6 @@ describe("element names", () => {
 
 	it("inserts required attributes with the cursor in the first, self-closing childless elements", () => {
 		const items = complete(`${ENTITY}<link-entity name="contact"><filter><|`).items;
-		expect(items.find((item) => item.value === "condition")?.apply).toEqual({ insert: 'condition operator=""/>', cursorOffset: 20 });
 		expect(items.find((item) => item.value === "filter")?.apply).toEqual({ insert: "filter></filter>", cursorOffset: 7 });
 		expect(items.find((item) => item.value === "link-entity")?.apply).toEqual({ insert: 'link-entity name=""></link-entity>', cursorOffset: 18 });
 		const entityItems = complete(`${ENTITY}<|`).items;
@@ -120,6 +119,13 @@ describe("element names", () => {
 		expect(complete(`${ENTITY}<filter><condition attribute="x" operator="in"><|`).items).toEqual([
 			expect.objectContaining({ value: "value", apply: { insert: "value></value>", cursorOffset: 6 } }),
 		]);
+	});
+
+	it("inserts a condition with empty attribute and operator, the cursor in attribute", () => {
+		const items = complete(`${ENTITY}<filter><|`).items;
+		const apply = items.find((item) => item.value === "condition")?.apply;
+		expect(apply).toEqual({ insert: 'condition attribute="" operator=""/>', cursorOffset: 21 });
+		expect(apply?.insert.slice(0, apply.cursorOffset)).toBe('condition attribute="');
 	});
 
 	it("inserts only the name when the tag already has more after it", () => {

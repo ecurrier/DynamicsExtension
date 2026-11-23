@@ -1,6 +1,6 @@
 # XML pane autocomplete
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Phase: 1
 Blocked by: 02, 04
@@ -50,3 +50,11 @@ What the adapter has to do:
 Decide in the adapter step: accepting `<condition` inserts only `operator=""`, because the catalogue marks only `operator` as required. It should insert `attribute="" operator=""` with the cursor in `attribute`; special-case it in `completions.ts`.
 
 Known limits: the scope rules here are a second copy of those in `@/shared/lib/fetchxml` `metadata.ts` (they have to run on text that does not parse), so a change to one must be made in both. The cursor just before an opening quote, or after `<` followed by a space, completes nothing. An unclosed `<condition>` swallows what follows it, so only `value` is offered there until it is closed.
+
+2026-11-22: the adapter is done and the issue is resolved (Opus worker, reviewed and verified; in the harness, typing `<attribute name="acc` on a new line offered the account Table's Columns matching by logical and display name while the XML did not parse).
+
+- `editor/completionSource.ts` is the CodeMirror source, `editor/completionFilter.ts` filters across label, detail and value and reuses `rankPickerOptions` from `lib/pickerSearch`, `editor/editorTheme.ts` styles the popup from Fluent tokens. `@codemirror/autocomplete` is pinned at 6.20.3.
+- `fetchXmlCompletion` keeps its metadata and settings in editor state, refreshed by `updateXmlCompletionServices`. The popup is fixed-position, so no ancestor of the editor may use `transform` or `filter`.
+- Accepting `<condition` inserts `attribute="" operator=""` with the cursor in `attribute`. After a completion that leaves the cursor inside empty quotes, the list opens again.
+
+Not verified: a real org; metadata loading for a Table named only in text that does not parse yet.

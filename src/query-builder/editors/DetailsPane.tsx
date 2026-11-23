@@ -3,8 +3,10 @@ import { PanelRightContract20Regular } from "@fluentui/react-icons";
 
 import { elementDefinition, isKnownElement, type NodePath, nodeAtPath } from "@/shared/lib/fetchxml";
 
-import { detailsEntries, rowSummary, summaryText } from "../lib";
+import { attributeProblems, detailsEntries, problemsOfRow, rowSummary, summaryText } from "../lib";
 import { PaneButton } from "../PaneChrome";
+import { ProblemList } from "../ProblemIcon";
+import { useQueryDiagnostics } from "../QueryDiagnostics";
 import { useQueryBuilder } from "../store";
 import { AttributeControl, DetailsField, RelationshipField, WrittenValue } from "./AttributeField";
 import { InPane, useQueryEditing } from "./EditingContext";
@@ -61,6 +63,12 @@ const useStyles = makeStyles({
 	hint: {
 		color: tokens.colorNeutralForeground3,
 	},
+	problems: {
+		padding: `${tokens.spacingVerticalXS} ${tokens.spacingHorizontalS}`,
+		borderRadius: tokens.borderRadiusMedium,
+		backgroundColor: tokens.colorNeutralBackground1,
+		border: `1px solid ${tokens.colorNeutralStroke2}`,
+	},
 	note: {
 		padding: `${tokens.spacingVerticalXS} ${tokens.spacingHorizontalS}`,
 		borderRadius: tokens.borderRadiusMedium,
@@ -83,6 +91,7 @@ export const DetailsPane = ({ onCollapse }: DetailsPaneProps) => {
 	const lead = useQueryBuilder((state) => state.namesLead);
 	const edit = useQueryBuilder((state) => state.edit);
 	const { metadata } = useQueryEditing();
+	const { diagnostics, rows } = useQueryDiagnostics();
 	const node = query && selectedPath ? nodeAtPath(query, selectedPath) : undefined;
 	const path = selectedPath ?? [];
 	const summary = query && node ? summaryText(rowSummary(query, path, metadata, lead)) : "";
@@ -102,6 +111,10 @@ export const DetailsPane = ({ onCollapse }: DetailsPaneProps) => {
 		}
 		const entries = detailsEntries(node);
 		const props = { document: query, path, element: node, edit };
+		const listed = new Set(entries.map((entry) => entry.name));
+		const rowLevel = problemsOfRow(rows, path).filter(
+			(problem) => problem.attribute === undefined || !listed.has(problem.attribute) || problem.path.length !== path.length
+		);
 		return (
 			<InPane>
 				{node.switchedOff || parentOff ? (
@@ -111,15 +124,20 @@ export const DetailsPane = ({ onCollapse }: DetailsPaneProps) => {
 							: "Inside a switched-off row: written into the Fetch XML as a comment."}
 					</Text>
 				) : null}
+				{rowLevel.length > 0 ? <ProblemList diagnostics={rowLevel} className={styles.problems} /> : null}
 				{isKnownElement(node.name) ? null : <Text className={styles.hint}>Not recognised by the Fetch XML reference; edit it in the Fetch XML.</Text>}
 				{node.name === "link-entity" ? <RelationshipField {...props} /> : null}
 				{entries.map((entry) =>
 					entry.kind === "known" ? (
-						<DetailsField key={entry.name} name={entry.name} hint={entry.definition.description}>
+						<DetailsField
+							key={entry.name}
+							name={entry.name}
+							hint={entry.definition.description}
+							problems={attributeProblems(diagnostics, path, entry.name)}>
 							<AttributeControl {...props} entry={entry} />
 						</DetailsField>
 					) : (
-						<DetailsField key={entry.name} name={entry.name} hint="left as written">
+						<DetailsField key={entry.name} name={entry.name} hint="left as written" problems={attributeProblems(diagnostics, path, entry.name)}>
 							<WrittenValue value={entry.value} />
 						</DetailsField>
 					)

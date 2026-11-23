@@ -1,6 +1,6 @@
 # Validation
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Phase: 1
 Blocked by: 02, 06
@@ -50,3 +50,8 @@ In `@/shared/lib/fetchxml`:
   - Warnings: `choice-option`, `deprecated-operator`. Info: `unknown-element`, `unknown-attribute`.
 
 For the display half: a problem with a `<value>` child is reported on the `<value>` element's own path, so the tree must roll it up to its condition row. `valueOfColumns` includes Columns that have `attributeOf`; pickers filter those out. `from` and `to` are not required, because the reference marks both optional.
+
+2026-11-22: the display half is done and the issue is resolved (Opus worker, reviewed and verified: typecheck, lint, 1,419 tests, build).
+
+- `QueryDiagnostics.tsx` wraps the Workspace and runs `validate` as a memo over the last valid Query and the loaded Table metadata. The rollup of diagnostics to rows is `lib/rowProblems.ts`. Rows show `ProblemIcon.tsx`; the details pane shows each message under its field, and problems with no field of their own at the top of the pane; a count sits beside Run and is hidden while the XML does not parse.
+- XML pane: `editor/lintDiagnostics.ts` feeds `@codemirror/lint` (pinned at 6.9.7). Lint marks refresh only when the editor text equals the parsed text.

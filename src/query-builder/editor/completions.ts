@@ -107,15 +107,23 @@ const named = (names: CompletionNames, logicalName: string, displayName: string)
 	return names === "display" && display ? { label: display, detail: logicalName } : { label: logicalName, detail: display };
 };
 
+const INSERTED_ATTRIBUTES: Readonly<Record<string, readonly string[]>> = { condition: ["attribute", "operator"] };
+
+const insertedAttributes = (name: string): readonly string[] =>
+	INSERTED_ATTRIBUTES[name] ??
+	attributesOf(name)
+		.filter((attribute) => attribute.required)
+		.map((attribute) => attribute.name);
+
 const elementInsert = (name: string): CompletionApply => {
 	const definition = elementDefinition(name);
-	const required = attributesOf(name).filter((attribute) => attribute.required);
+	const required = insertedAttributes(name);
 	const selfClosing = name === "condition" || (definition !== undefined && definition.children.length === 0 && !definition.text);
-	const attributes = required.map((attribute) => ` ${attribute.name}=""`).join("");
+	const attributes = required.map((attribute) => ` ${attribute}=""`).join("");
 	const insert = `${name}${attributes}${selfClosing ? "/>" : `></${name}>`}`;
 	const [first] = required;
 	if (first) {
-		return { insert, cursorOffset: name.length + ` ${first.name}="`.length };
+		return { insert, cursorOffset: name.length + ` ${first}="`.length };
 	}
 	return { insert, cursorOffset: selfClosing ? insert.length : name.length + 1 };
 };

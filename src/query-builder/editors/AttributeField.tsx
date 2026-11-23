@@ -1,7 +1,7 @@
 import { Field, makeStyles, Text, tokens } from "@fluentui/react-components";
 import { type ReactNode, useMemo } from "react";
 
-import { aliasesIn } from "@/shared/lib/fetchxml";
+import { aliasesIn, type Diagnostic } from "@/shared/lib/fetchxml";
 
 import {
 	attributeAliasOptions,
@@ -9,12 +9,14 @@ import {
 	enumerationOptions,
 	isTrueValue,
 	linkReferenceOptions,
+	worstSeverity,
 	presentValue,
 	setAttributes,
 	setConditionValueOf,
 	tableScope,
 	valueOfOptions,
 } from "../lib";
+import { SeverityIcon } from "../ProblemIcon";
 import { useQueryBuilder } from "../store";
 import { Flag, MultiPicker } from "./Controls";
 import { DraftInput } from "./DraftInput";
@@ -46,13 +48,22 @@ const useStyles = makeStyles({
 interface DetailsFieldProps {
 	name: string;
 	hint: string;
+	problems?: readonly Diagnostic[];
 	children: ReactNode;
 }
 
-export const DetailsField = ({ name, hint, children }: DetailsFieldProps) => {
+const NO_PROBLEMS: readonly Diagnostic[] = [];
+
+export const DetailsField = ({ name, hint, problems = NO_PROBLEMS, children }: DetailsFieldProps) => {
 	const styles = useStyles();
+	const severity = worstSeverity(problems);
 	return (
-		<Field label={{ children: name, className: styles.label }} hint={hint}>
+		<Field
+			label={{ children: name, className: styles.label }}
+			hint={hint}
+			validationState={severity === "error" ? "error" : severity === "warning" ? "warning" : "none"}
+			validationMessage={severity === null ? undefined : problems.map((problem) => problem.message).join(" ")}
+			validationMessageIcon={severity === "info" ? <SeverityIcon severity="info" /> : undefined}>
 			{children}
 		</Field>
 	);

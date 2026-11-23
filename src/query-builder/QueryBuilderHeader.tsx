@@ -1,11 +1,14 @@
-import { Button, makeStyles, mergeClasses, Text, ToggleButton, tokens, Tooltip } from "@fluentui/react-components";
+import { Badge, Button, makeStyles, mergeClasses, Text, ToggleButton, tokens, Tooltip } from "@fluentui/react-components";
 import { DatabaseSearch20Regular, Play20Regular, TextboxSettings20Regular } from "@fluentui/react-icons";
 
 import { ConnectionPicker } from "@/shared/components";
 import { type ConnectionTarget } from "@/shared/connections";
 import { type Environment } from "@/shared/storage";
 
-import { type NamesLead } from "./lib";
+import { type NamesLead, problemCounts, problemCountText } from "./lib";
+import { SeverityIcon } from "./ProblemIcon";
+import { useQueryDiagnostics } from "./QueryDiagnostics";
+import { useQueryBuilder } from "./store";
 
 const useStyles = makeStyles({
 	bar: {
@@ -50,6 +53,17 @@ const useStyles = makeStyles({
 	run: {
 		flexShrink: 0,
 	},
+	runGroup: {
+		display: "flex",
+		alignItems: "center",
+		flexShrink: 0,
+		columnGap: tokens.spacingHorizontalS,
+	},
+	problems: {
+		flexShrink: 0,
+		columnGap: "2px",
+		fontVariantNumeric: "tabular-nums",
+	},
 	names: {
 		flexShrink: 0,
 	},
@@ -59,6 +73,32 @@ const useStyles = makeStyles({
 		},
 	},
 });
+
+const RunProblems = () => {
+	const styles = useStyles();
+	const { diagnostics } = useQueryDiagnostics();
+	const broken = useQueryBuilder((state) => state.errors.length > 0);
+	const counts = problemCounts(diagnostics);
+	const text = problemCountText(counts);
+	if (broken || text === null) {
+		return null;
+	}
+	const severity = counts.errors > 0 ? "error" : "warning";
+	return (
+		<Tooltip content={`The Query has ${text}. Run still sends it; Dataverse has the final say.`} relationship="label">
+			<Badge
+				role="status"
+				tabIndex={0}
+				size="medium"
+				appearance="tint"
+				color={severity === "error" ? "danger" : "warning"}
+				icon={<SeverityIcon severity={severity} />}
+				className={styles.problems}>
+				{counts.errors + counts.warnings}
+			</Badge>
+		</Tooltip>
+	);
+};
 
 interface QueryBuilderHeaderProps {
 	hosted: boolean;
@@ -115,11 +155,14 @@ export const QueryBuilderHeader = ({
 					<span className={styles.namesText}>Display names first</span>
 				</ToggleButton>
 			</Tooltip>
-			<Tooltip content="Run the Query (Ctrl+Enter)" relationship="description">
-				<Button appearance="primary" icon={<Play20Regular />} className={styles.run} disabled={!canRun} onClick={onRun}>
-					Run
-				</Button>
-			</Tooltip>
+			<div className={styles.runGroup}>
+				<RunProblems />
+				<Tooltip content="Run the Query (Ctrl+Enter)" relationship="description">
+					<Button appearance="primary" icon={<Play20Regular />} className={styles.run} disabled={!canRun} onClick={onRun}>
+						Run
+					</Button>
+				</Tooltip>
+			</div>
 		</div>
 	);
 };
