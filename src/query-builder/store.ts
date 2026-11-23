@@ -11,11 +11,17 @@ import {
 	appendPage,
 	type ChangeResult,
 	type CollapsibleGroup,
+	type CompareProgress,
+	type CompareSetup,
+	type ComparisonBucket,
 	connectionKey,
+	DEFAULT_COMPARE_SETUP,
 	failRun,
 	finishPaging,
 	finishRun,
+	IDLE_COMPARE,
 	idleRun,
+	type LoadPagesOutcome,
 	type NamesLead,
 	NO_ORIGIN,
 	type PagingOutcome,
@@ -37,9 +43,10 @@ import {
 	setFirstConnection,
 	startedRuns,
 	startPaging,
+	type StoredComparison,
 } from "./lib";
 
-export type { PagingOutcome, QueryRunPage, QueryRuns, QueryRunSource, QueryRunState, QueryRunStatus } from "./lib";
+export type { LoadPagesOutcome, PagingOutcome, QueryRunPage, QueryRuns, QueryRunSource, QueryRunState, QueryRunStatus } from "./lib";
 
 export const PARSE_DELAY_MS = 300;
 
@@ -50,8 +57,6 @@ export interface ConnectionRunRequest {
 	fetchXml: string;
 	checkLacks: boolean;
 }
-
-export type LoadPagesOutcome = "complete" | "stopped" | "confirm" | "failed" | "unavailable";
 
 export interface QueryRunner {
 	start: (id: number, request: ConnectionRunRequest) => Promise<void>;
@@ -105,6 +110,16 @@ export interface EditorHistory {
 	focus?: () => void;
 }
 
+export interface CompareState {
+	setup: CompareSetup;
+	progress: CompareProgress;
+	result: StoredComparison | null;
+	bucket: ComparisonBucket | null;
+	attempt: number;
+}
+
+export const INITIAL_COMPARE: CompareState = { setup: DEFAULT_COMPARE_SETUP, progress: IDLE_COMPARE, result: null, bucket: null, attempt: 0 };
+
 export interface QueryBuilderState extends ParsedQuery {
 	connection: ConnectionTarget;
 	connections: readonly ConnectionTarget[];
@@ -119,6 +134,7 @@ export interface QueryBuilderState extends ParsedQuery {
 	lastRunText: string | null;
 	runs: QueryRuns;
 	layout: PaneLayout;
+	compare: CompareState;
 	setText: (text: string) => void;
 	loadQuery: (text: string, origin: QueryOrigin) => void;
 	setStoredQuery: (storedQueryId: string | null) => void;
@@ -152,6 +168,11 @@ export interface QueryBuilderState extends ParsedQuery {
 	releaseDetails: () => void;
 	setDetailsGroupOpen: (group: CollapsibleGroup, open: boolean) => void;
 	setXmlTab: (tab: XmlPaneTab) => void;
+	setCompareSetup: (setup: CompareSetup) => void;
+	beginCompare: (progress: CompareProgress) => number;
+	updateCompare: (attempt: number, progress: CompareProgress) => boolean;
+	finishCompare: (attempt: number, result: StoredComparison) => void;
+	selectComparisonBucket: (bucket: ComparisonBucket) => void;
 	registerDraft: (commit: () => void) => () => void;
 	flushDraft: () => void;
 	dispose: () => void;
@@ -301,6 +322,7 @@ export const createQueryBuilderStore = ({ connection, fetchXml, origin = NO_ORIG
 			lastRunText: null,
 			runs: { [connectionKey(connection)]: idleRun(nextRunId(), connection) },
 			layout: DEFAULT_LAYOUT,
+			compare: INITIAL_COMPARE,
 			setText: (next) => {
 				if (next === get().text || travel(next)) {
 					return;
@@ -491,6 +513,22 @@ export const createQueryBuilderStore = ({ connection, fetchXml, origin = NO_ORIG
 						: { layout: { ...state.layout, detailsGroups: { ...state.layout.detailsGroups, [group]: open } } }
 				),
 			setXmlTab: (tab) => set((state) => (state.layout.xmlTab === tab ? state : { layout: { ...state.layout, xmlTab: tab } })),
+			setCompareSetup: (setup) => set((state) => ({ compare: { ...state.compare, setup } })),
+			beginCompare: (progress) => {
+				const attempt = get().compare.attempt + 1;
+				set((state) => ({ compare: { ...state.compare, progress, attempt } }));
+				return attempt;
+			},
+			updateCompare: (attempt, progress) => {
+				if (get().compare.attempt !== attempt) {
+					return false;
+				}
+				set((state) => ({ compare: { ...state.compare, progress } }));
+				return true;
+			},
+			finishCompare: (attempt, result) =>
+				set((state) => (state.compare.attempt === attempt ? { compare: { ...state.compare, progress: IDLE_COMPARE, result, bucket: null } } : state)),
+			selectComparisonBucket: (bucket) => set((state) => ({ compare: { ...state.compare, bucket } })),
 			registerDraft: (commit) => {
 				draft = commit;
 				return () => {

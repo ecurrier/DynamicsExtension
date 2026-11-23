@@ -1,4 +1,7 @@
 export * from "./attributeEdits";
+export * from "./compareFlow";
+export * from "./compareSetup";
+export * from "./compareView";
 export * from "./comparison";
 export * from "./conditionEditing";
 export * from "./connectionLabel";

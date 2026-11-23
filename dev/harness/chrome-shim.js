@@ -1199,6 +1199,8 @@
 			name: `Test Only Account ${k + 1}`,
 			accountnumber: `AC-T${k + 1}`,
 		})),
+		{ ...queryAccounts[9], "@odata.etag": `W/"${98600}"`, accountid: guid(9860), accountnumber: "AC-T-DUP" },
+		{ ...queryAccounts[10], "@odata.etag": `W/"${98601}"`, accountid: guid(9861), name: null, accountnumber: "AC-T-NONAME" },
 	];
 	const stagingAccounts = queryAccounts.flatMap((row, i) => {
 		if (i < 5) {
@@ -3008,19 +3010,21 @@
 								? harnessNestedFetchXml
 								: new URLSearchParams(location.search).get("queryFetchXml") === "batch"
 									? harnessBatchFetchXml()
-									: new URLSearchParams(location.search).get("queryFetchXml") === "regions"
-										? [
-												'<fetch version="1.0" mapping="logical">',
-												'  <entity name="account">',
-												'    <attribute name="name" />',
-												'    <attribute name="accountnumber" />',
-												'    <attribute name="revenue" />',
-												'    <attribute name="new_regions" />',
-												'    <order attribute="name" />',
-												"  </entity>",
-												"</fetch>",
-											].join("\n")
-										: null,
+									: new URLSearchParams(location.search).get("queryFetchXml") === "aggregate"
+										? '<fetch version="1.0" mapping="logical" aggregate="true"><entity name="account"><attribute name="accountid" alias="accounts" aggregate="count" /></entity></fetch>'
+										: new URLSearchParams(location.search).get("queryFetchXml") === "regions"
+											? [
+													'<fetch version="1.0" mapping="logical">',
+													'  <entity name="account">',
+													'    <attribute name="name" />',
+													'    <attribute name="accountnumber" />',
+													'    <attribute name="revenue" />',
+													'    <attribute name="new_regions" />',
+													'    <order attribute="name" />',
+													"  </entity>",
+													"</fetch>",
+												].join("\n")
+											: null,
 				launchedAt: new Date().toISOString(),
 			},
 		},

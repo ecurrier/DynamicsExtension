@@ -1,12 +1,15 @@
 import { makeStyles, Tab, TabList, tokens } from "@fluentui/react-components";
 import { useState } from "react";
 
+import { ComparePane } from "./compare";
 import { type ConnectionRunEntry, currentResultsView, initialResultsView, isRunBusy, type ResultsViewState, runStatusText } from "./lib";
 import { ResultsBody } from "./ResultsBody";
 import { type ResultsFrameProps, ResultsHeader } from "./ResultsHeader";
 import { ResultsSummaryStrip } from "./ResultsSummaryStrip";
 import { ResultsTabLabel } from "./ResultsTabLabel";
 import { type QueryRunControls } from "./useQueryRun";
+
+const COMPARE_TAB = "compare";
 
 const useStyles = makeStyles({
 	content: {
@@ -40,11 +43,12 @@ export const MultiResultsPane = ({ entries, controls, collapsed, maximised, onTo
 		setViews((current) => ({ ...current, [selected.key]: viewState }));
 	}
 	const { key } = selected;
+	const comparing = selectedKey === COMPARE_TAB;
 
 	return (
 		<>
 			<ResultsHeader
-				status={runStatusText(selected.run, selected.name)}
+				status={comparing ? "Comparison" : runStatusText(selected.run, selected.name)}
 				busy={entries.some((entry) => isRunBusy(entry.run))}
 				collapsed={collapsed}
 				maximised={maximised}
@@ -58,26 +62,31 @@ export const MultiResultsPane = ({ entries, controls, collapsed, maximised, onTo
 						size="small"
 						className={styles.tabs}
 						aria-label="Query Run on each Connection"
-						selectedValue={key}
+						selectedValue={comparing ? COMPARE_TAB : key}
 						onTabSelect={(_, data) => setSelectedKey(String(data.value))}>
 						{entries.map((entry) => (
 							<Tab key={entry.key} value={entry.key}>
 								<ResultsTabLabel entry={entry} />
 							</Tab>
 						))}
+						<Tab value={COMPARE_TAB}>Compare</Tab>
 					</TabList>
-					<ResultsBody
-						key={key}
-						run={selected.run}
-						connection={selected.connection}
-						maximised={maximised}
-						viewState={viewState}
-						onViewStateChange={(next) => setViews((current) => ({ ...current, [key]: next }))}
-						onNextPage={() => controls.nextPage(key)}
-						onLoadAll={() => controls.loadAll(key)}
-						onKeepLoading={() => controls.keepLoading(key)}
-						onStop={() => controls.stop(key)}
-					/>
+					{comparing ? (
+						<ComparePane entries={entries} controls={controls} maximised={maximised} />
+					) : (
+						<ResultsBody
+							key={key}
+							run={selected.run}
+							connection={selected.connection}
+							maximised={maximised}
+							viewState={viewState}
+							onViewStateChange={(next) => setViews((current) => ({ ...current, [key]: next }))}
+							onNextPage={() => controls.nextPage(key)}
+							onLoadAll={() => controls.loadAll(key)}
+							onKeepLoading={() => controls.keepLoading(key)}
+							onStop={() => controls.stop(key)}
+						/>
+					)}
 				</div>
 			) : null}
 		</>

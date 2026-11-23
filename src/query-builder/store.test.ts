@@ -363,4 +363,22 @@ describe("the Query Builder store", () => {
 			expect(firstRun(store)?.rows).toEqual([]);
 		});
 	});
+
+	describe("the Comparison", () => {
+		it("keeps the setup for the session and ignores replies from an older Compare", () => {
+			const store = createQueryBuilderStore({ connection: PAGE_CONNECTION, fetchXml: GOOD });
+			store.getState().setCompareSetup({ ...store.getState().compare.setup, matchKeyKind: "columns", keyColumns: ["name"] });
+			const older = store.getState().beginCompare({ kind: "loading" });
+			const newer = store.getState().beginCompare({ kind: "running" });
+			expect(store.getState().updateCompare(older, { kind: "idle" })).toBe(false);
+			expect(store.getState().compare.progress).toEqual({ kind: "running" });
+			expect(store.getState().updateCompare(newer, { kind: "loading" })).toBe(true);
+			store.getState().selectComparisonBucket("equal");
+			expect(store.getState().compare).toMatchObject({
+				setup: { matchKeyKind: "columns", keyColumns: ["name"] },
+				progress: { kind: "loading" },
+				bucket: "equal",
+			});
+		});
+	});
 });

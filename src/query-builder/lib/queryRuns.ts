@@ -49,6 +49,8 @@ export interface ConnectionRunEntry {
 
 export type PagingOutcome = { kind: "finished" } | { kind: "confirm" } | { kind: "failed"; message: string };
 
+export type LoadPagesOutcome = "complete" | "stopped" | "confirm" | "failed" | "unavailable";
+
 export const idleRun = (id: number, connection: ConnectionTarget | null = null): QueryRunState => ({
 	id,
 	status: "idle",
