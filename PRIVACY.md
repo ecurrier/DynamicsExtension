@@ -29,6 +29,7 @@ Kept until you delete it or remove the extension:
 - Environments you save: name, URLs, environment ID, notes, and alert settings.
 - Service principals you save: name, tenant ID, client ID, client secret, and notes.
 - Form presets, code generation templates, and your preferences.
+- Queries from the Query Builder: the query you are working on, the Fetch XML, connection, time and record count of your last 100 query runs, and the queries you save under a name. The records a query returns are not stored.
 - The areas of the extension you visited most recently.
 
 Kept only until the browser is closed:

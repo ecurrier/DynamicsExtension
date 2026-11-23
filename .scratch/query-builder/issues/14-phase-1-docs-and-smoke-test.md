@@ -1,6 +1,6 @@
 # Phase 1 docs and smoke-test checklist
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Phase: 1
 Blocked by: 05, 07, 08, 09, 10, 11, 12, 13
@@ -26,3 +26,15 @@ Acceptance:
 - The harness README section matches what the shim actually serves.
 - The checklist exists and every "Needs a real org" note in the phase 1 issues is covered by a step.
 - `npm run typecheck`, `npm run lint`, `npm test` and `npm run build` pass.
+
+## Comments
+
+Resolved 2026-11-22 (Opus worker, reviewed; typecheck, lint, 1,501 tests and the build pass).
+
+- `.scratch/query-builder/smoke-test-phase-1.md`: 35 steps, 8 of them marked quick (1, 2, 3, 4, 7, 9, 10, 12), ending with a table that maps every "needs a real org" note from the issues to the step that covers it.
+- `dev/harness/README.md`: the Query Builder section rewritten as one description and checked against the shim.
+- `README.md`, `docs/store-submission.md` (now "fourteen modules") and `PRIVACY.md` (one bullet under "Kept until you delete it": the working Query, the Fetch XML, Connection, time and Record count of the last 100 Query Runs, and Stored Queries; result Records are not stored). The policy's effective date was left alone, to be set at release.
+- Permissions: `wxt.config.ts` is unchanged from `main`, so the Query Builder adds no permission and no host permission.
+- The prototype was already gone from the working tree.
+
+Phase 1 is feature-complete in the harness and has not been run against a real org.
