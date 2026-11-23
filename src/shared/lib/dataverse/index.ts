@@ -1,6 +1,7 @@
 export * from "./audit";
 export * from "./auth";
 export * from "./automation";
+export * from "./batch";
 export * from "./codegen";
 export * from "./columnUsage";
 export * from "./entityRef";
@@ -16,6 +17,7 @@ export * from "./pluginSteps";
 export * from "./paging";
 export * from "./privileges";
 export * from "./publish";
+export * from "./query";
 export * from "./recordAccess";
 export * from "./recordCounts";
 export * from "./recordSearch";

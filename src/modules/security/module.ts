@@ -9,7 +9,7 @@ export const securityModule: ModuleDefinition = {
 	id: "security",
 	label: "Security",
 	icon: ShieldPerson20Regular,
-	order: 7,
+	order: 8,
 	areas: [
 		{
 			id: "security.roles",

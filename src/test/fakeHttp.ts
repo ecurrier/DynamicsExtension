@@ -31,6 +31,8 @@ export const createFakeHttp = (responses: Record<string, FakeHttpResponse> = {})
 		origin: "https://org.crm.dynamics.com",
 		apiUrl: "https://org.crm.dynamics.com/api/data/v9.2/",
 		request: respond,
+		requestText: (method: string, path: string, init: { body?: string; contentType?: string; headers?: Record<string, string> } = {}) =>
+			respond(method, path, init.body, { ...(init.contentType === undefined ? {} : { "Content-Type": init.contentType }), ...init.headers }),
 		get: (path: string) => respond("GET", path),
 		post: (path: string, body: unknown) => respond("POST", path, body),
 		patch: (path: string, body: unknown) => respond("PATCH", path, body),

@@ -37,8 +37,36 @@ A Power Automate cloud flow, and the Dialect whose output is pasted into one: Li
 _Avoid_: Automation (that is the wider term), workflow, Logic App
 
 **Workspace**:
-A full-window experience for one long-running job: the Data Transporter, the Trace Viewer, the Results Viewer, Schema Tools, and Security Tools. It opens in its own browser tab, or, when Power Tools is pinned in a window, fills that window in place of the Areas until the user goes back. From the side panel it always opens in a tab, because a Workspace cannot be read at panel width. An Area whose width tier is "workspace" opens one directly when the user selects it in the navigation drawer; the Results Viewer is the exception, launched from the Retrieve Records results footer.
+A full-window experience for one long-running job: the Data Transporter, the Trace Viewer, the Results Viewer, the Query Builder, Schema Tools, and Security Tools. It opens in its own browser tab, or, when Power Tools is pinned in a window, fills that window in place of the Areas until the user goes back. From the side panel it always opens in a tab, because a Workspace cannot be read at panel width. An Area whose width tier is "workspace" opens one directly when the user selects it in the navigation drawer; the Results Viewer is the exception, launched from the Retrieve Records results footer.
 _Avoid_: Tool page, full-page tool, viewer tab, standalone page
+
+**Query**:
+A question asked of one Table and the Tables related to it: which Columns, which Records, in what order. Its canonical written form is Fetch XML, and every other Dialect is an output derived from that.
+_Avoid_: Fetch, FetchXML (that is the Dialect), search, view, request
+
+**Query Builder**:
+The Workspace where a Query is written, as a tree or as Fetch XML, run over a Connection, and its results checked. It reads and never writes.
+_Avoid_: FetchXML Builder (that is another product), query designer, advanced find
+
+**Exclude**:
+To leave one row of a Query out for a test without deleting it, and **Include** to put it back. An Excluded row travels in the Fetch XML as a comment, because that is the only place the format has for it; the comment is how it is stored, not what it is for.
+_Avoid_: Switch off, disable, mute, comment out
+
+**Query Run**:
+One execution of a Query over one Connection, and the Records it returned.
+_Avoid_: Run on its own (a Bulk Run writes), execution, result
+
+**Stored Query**:
+A Query the user keeps under a name in Power Tools, shown as "My queries".
+_Avoid_: Saved query (that is the platform's name for a System View), favourite, bookmark
+
+**Comparison**:
+The Records of two Query Runs of the same Query, paired by a Match Key and sorted into those only in one, only in the other, and in both with differing values.
+_Avoid_: Diff, sync check, Role Compare (that compares Security Roles)
+
+**Match Key**:
+What a Comparison pairs Records by: the primary key, or Columns the user chooses when the two Environments do not share GUIDs.
+_Avoid_: Join key, identity, alternate key (that is a platform feature a Match Key may happen to use)
 
 **Page Context**:
 The kind of Power Platform surface the active tab is showing: a model-driven app or a Power Pages portal.
@@ -95,11 +123,11 @@ _Avoid_: Client, service, API layer, repository
 ## Platform concepts
 
 **Table**:
-A Dataverse table definition and the records in it. Say table in prose and UI; the platform's own `entity` spelling survives only in API and type names.
+A Dataverse table definition and the records in it. Say table in prose and UI; the platform's own `entity` spelling survives only in API and type names, and in the Query Builder's tree and details pane, which show Fetch XML in its own words.
 _Avoid_: Entity, object
 
 **Column**:
-A single field on a Table.
+A single field on a Table. Fetch XML calls it an `attribute`, and the Query Builder's tree and details pane keep that spelling for the same reason they keep `entity`.
 _Avoid_: Attribute, field, property
 
 **Choice**:
@@ -109,6 +137,14 @@ _Avoid_: Option set, picklist, dropdown, enum
 **Record**:
 A single instance of a Table, identified by a GUID.
 _Avoid_: Item, object, entity instance
+
+**System View**:
+A Query and its column layout saved in an Environment for everyone who uses a Table.
+_Avoid_: Saved query, public view, view on its own when the kind matters
+
+**Personal View**:
+A Query and its column layout that one user saved for themselves, visible to them and to whoever they shared it with.
+_Avoid_: User query, my view, private view
 
 **Dirty**:
 A Column on the open form whose value has changed since the Record was loaded or last saved, so the next save sends it unless the Column's submit mode is never.

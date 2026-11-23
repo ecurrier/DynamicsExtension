@@ -1,6 +1,8 @@
 import { PageError } from "@/messaging/page";
 import { DataverseOperationError } from "@/shared/lib";
 
+import { translateHttpError } from "./webApi";
+
 export const runOperation = async <T>(action: () => Promise<T>): Promise<T> => {
 	try {
 		return await action();
@@ -8,6 +10,6 @@ export const runOperation = async <T>(action: () => Promise<T>): Promise<T> => {
 		if (error instanceof DataverseOperationError) {
 			throw new PageError(error.code, error.message);
 		}
-		throw error;
+		return translateHttpError(error);
 	}
 };

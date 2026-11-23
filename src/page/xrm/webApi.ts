@@ -16,7 +16,7 @@ export const retrieveMultipleOData = async <T = Record<string, unknown>>(entityL
 	return response?.entities ?? [];
 };
 
-const translate = (error: unknown): never => {
+export const translateHttpError = (error: unknown): never => {
 	if (error instanceof DataverseHttpError) {
 		throw new PageError("HttpError", error.message, { status: error.status, body: error.body });
 	}
@@ -31,11 +31,12 @@ export const pageHttp = (): DataverseHttp => {
 	}
 	const http = createDataverseHttp({ origin: window.location.origin });
 	const request = <T>(method: DataverseMethod, path: string, body?: unknown, headers?: Record<string, string>) =>
-		http.request<T>(method, path, body, headers).catch(translate);
+		http.request<T>(method, path, body, headers).catch(translateHttpError);
 	cachedHttp = {
 		origin: http.origin,
 		apiUrl: http.apiUrl,
 		request,
+		requestText: http.requestText,
 		get: (path) => request("GET", path),
 		post: (path, body) => request("POST", path, body),
 		patch: (path, body) => request("PATCH", path, body),

@@ -4,7 +4,6 @@ export * from "./cloudUrls";
 export * from "./columnBrowser";
 export * from "./dirtyColumns";
 export * from "./environmentDetails";
-export * from "./fetchXmlSnippets";
 export * from "./recordPayload";
 export * from "./sessionSnapshot";
 export * from "./tableMetadata";

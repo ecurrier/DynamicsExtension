@@ -54,6 +54,42 @@ describe("createDataverseHttp", () => {
 	});
 });
 
+describe("createDataverseHttp.requestText", () => {
+	it("sends a text body with the caller's content type and returns the status, content type and text", async () => {
+		const fetchImpl = vi.fn(
+			async () => new Response("--b\r\n", { status: 400, statusText: "Bad Request", headers: { "Content-Type": "multipart/mixed; boundary=b" } })
+		);
+		const http = createDataverseHttp({ origin: "https://org.crm.dynamics.com", headers: () => ({ Authorization: "Bearer abc" }), fetchImpl });
+		const response = await http.requestText("POST", "$batch", {
+			body: "--a--\r\n",
+			contentType: 'multipart/mixed; boundary="a"',
+			headers: { Prefer: "x" },
+		});
+		expect(response).toEqual({ status: 400, statusText: "Bad Request", contentType: "multipart/mixed; boundary=b", text: "--b\r\n" });
+		const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+		expect(url).toBe("https://org.crm.dynamics.com/api/data/v9.2/$batch");
+		expect(init.method).toBe("POST");
+		expect(init.body).toBe("--a--\r\n");
+		expect(init.headers).toEqual({
+			Accept: "application/json",
+			"OData-MaxVersion": "4.0",
+			"OData-Version": "4.0",
+			"Content-Type": 'multipart/mixed; boundary="a"',
+			Authorization: "Bearer abc",
+			Prefer: "x",
+		});
+	});
+
+	it("sends no content type without a body and reports a missing response content type as empty", async () => {
+		const fetchImpl = vi.fn(async () => new Response(null, { status: 204 }));
+		const http = createDataverseHttp({ origin: "https://org.crm.dynamics.com", fetchImpl });
+		await expect(http.requestText("GET", "x", { contentType: "text/plain" })).resolves.toEqual({ status: 204, statusText: "", contentType: "", text: "" });
+		const [, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+		expect(init.headers).not.toHaveProperty("Content-Type");
+		expect(init.body).toBeUndefined();
+	});
+});
+
 describe("withSolution", () => {
 	it("adds the solution header when a name is given", () => {
 		expect(withSolution(undefined, "ContosoCore")).toEqual({ "MSCRM.SolutionUniqueName": "ContosoCore" });

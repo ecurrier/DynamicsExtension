@@ -38,7 +38,7 @@ TEST STEPS
 
 2. Sign in to Dynamics 365 and open a model-driven app (Sales Hub, in the Sales trial). Open Accounts, then open any account record.
 
-3. Click the Power Tools icon. Expected: a navigation drawer listing thirteen modules, among them Utilities, Investigate, Web API and Security.
+3. Click the Power Tools icon. Expected: a navigation drawer listing fourteen modules, among them Utilities, Investigate, Web API and Security.
 
 4. Utilities > Admin > Environment & Session. Expected: the signed-in user, security roles, organization version, and the open table and record.
 

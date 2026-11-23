@@ -11,6 +11,7 @@ const TraceViewer = lazy(() => import("@/plugin-traces").then((module) => ({ def
 const ResultsViewer = lazy(() => import("@/results-viewer").then((module) => ({ default: module.ResultsViewer })));
 const SecurityTools = lazy(() => import("@/security-tools").then((module) => ({ default: module.SecurityTools })));
 const SchemaTools = lazy(() => import("@/schema-tools").then((module) => ({ default: module.SchemaTools })));
+const QueryBuilder = lazy(() => import("@/query-builder").then((module) => ({ default: module.QueryBuilder })));
 
 interface HostedTransporterProps {
 	launch: TransporterLaunch;
@@ -38,5 +39,6 @@ export const WorkspaceOutlet = ({ workspace }: WorkspaceOutletProps) => (
 		{workspace.id === "results-viewer" ? <ResultsViewer share={workspace.share} /> : null}
 		{workspace.id === "security-tools" ? <SecurityTools launch={workspace.launch} /> : null}
 		{workspace.id === "schema-tools" ? <SchemaTools launch={workspace.launch} hosted /> : null}
+		{workspace.id === "query-builder" ? <QueryBuilder key={workspace.launch.launchedAt} launch={workspace.launch} hosted /> : null}
 	</Suspense>
 );

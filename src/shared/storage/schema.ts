@@ -82,6 +82,36 @@ export const DEFAULT_SETTINGS: ExtensionSettings = {
 	traceColumns: ["createdOn", "typeName", "messageName", "primaryEntity", "duration", "exception"],
 };
 
+export interface WorkingQuery {
+	fetchXml: string;
+	writtenAt: number;
+}
+
+export type QueryHistoryConnection = { kind: "page"; host: string } | { kind: "environment"; environmentId: string };
+
+export type QueryRunOutcome = { kind: "records"; count: number; moreRecords: boolean } | { kind: "error"; message: string };
+
+export interface QueryHistoryEntry {
+	fetchXml: string;
+	connection: QueryHistoryConnection;
+	connectionLabel: string;
+	ranAt: number;
+	outcome: QueryRunOutcome;
+	elapsedMs: number | null;
+}
+
+export type QueryHistory = QueryHistoryEntry[];
+
+export interface StoredQuery {
+	id: string;
+	name: string;
+	fetchXml: string;
+	createdAt: number;
+	updatedAt: number;
+}
+
+export type StoredQueries = Record<string, StoredQuery>;
+
 export const EMPTY_FORM_PRESETS: FormPresetsByContext = {
 	"model-driven-app": {},
 	portal: {},

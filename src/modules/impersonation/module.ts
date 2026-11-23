@@ -8,7 +8,7 @@ export const impersonationModule: ModuleDefinition = {
 	id: "impersonation",
 	label: "Impersonation",
 	icon: PersonSwap20Regular,
-	order: 8,
+	order: 9,
 	areas: [
 		{
 			id: "impersonation.user",

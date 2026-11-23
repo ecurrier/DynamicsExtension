@@ -51,7 +51,14 @@ describe("areaWorkspaceLaunch", () => {
 		});
 	});
 
-	it("refuses the Results Viewer, which opens from a results footer and not from navigation", () => {
+	it("opens the Query Builder on the page's tab with no Query", () => {
+		expect(areaWorkspaceLaunch({ id: "query-builder" }, context)).toEqual({
+			id: "query-builder",
+			launch: { tabId: 7, environmentId: null, fetchXml: null, launchedAt: context.now },
+		});
+	});
+
+	it("refuses the Results Viewer,which opens from a results footer and not from navigation", () => {
 		expect(areaWorkspaceLaunch({ id: "results-viewer" }, context)).toBeNull();
 	});
 });

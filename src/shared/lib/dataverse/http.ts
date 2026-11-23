@@ -1,9 +1,23 @@
 export type DataverseMethod = "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
 
+export interface DataverseTextRequest {
+	body?: string;
+	contentType?: string;
+	headers?: Record<string, string>;
+}
+
+export interface DataverseTextResponse {
+	status: number;
+	statusText: string;
+	contentType: string;
+	text: string;
+}
+
 export interface DataverseHttp {
 	origin: string;
 	apiUrl: string;
 	request<T>(method: DataverseMethod, path: string, body?: unknown, headers?: Record<string, string>): Promise<T>;
+	requestText(method: DataverseMethod, path: string, init?: DataverseTextRequest): Promise<DataverseTextResponse>;
 	get<T>(path: string): Promise<T>;
 	post<T>(path: string, body: unknown): Promise<T>;
 	patch(path: string, body: unknown): Promise<void>;
@@ -68,18 +82,24 @@ export class DataverseTimeoutError extends Error {
 export const createDataverseHttp = ({ origin, headers, fetchImpl = fetch, timeoutMs }: DataverseHttpOptions): DataverseHttp => {
 	const apiUrl = `${origin}/api/data/${WEB_API_VERSION}/`;
 	const deadline = timeoutMs === undefined ? null : AbortSignal.timeout(timeoutMs);
-	const request = async <T>(method: DataverseMethod, path: string, body?: unknown, extraHeaders?: Record<string, string>): Promise<T> => {
-		const response = await fetchImpl(`${apiUrl}${path}`, {
+	const send = async (
+		method: DataverseMethod,
+		path: string,
+		body: string | undefined,
+		contentType: string | undefined,
+		extraHeaders?: Record<string, string>
+	) =>
+		fetchImpl(`${apiUrl}${path}`, {
 			method,
 			headers: {
 				Accept: "application/json",
 				"OData-MaxVersion": "4.0",
 				"OData-Version": "4.0",
-				...(body === undefined ? {} : { "Content-Type": "application/json; charset=utf-8" }),
+				...(contentType === undefined ? {} : { "Content-Type": contentType }),
 				...(await headers?.()),
 				...extraHeaders,
 			},
-			body: body === undefined ? undefined : JSON.stringify(body),
+			body,
 			...(deadline ? { signal: deadline } : {}),
 		}).catch((error: unknown) => {
 			if (timeoutMs !== undefined && deadline?.aborted) {
@@ -87,6 +107,9 @@ export const createDataverseHttp = ({ origin, headers, fetchImpl = fetch, timeou
 			}
 			throw error;
 		});
+	const request = async <T>(method: DataverseMethod, path: string, body?: unknown, extraHeaders?: Record<string, string>): Promise<T> => {
+		const json = body === undefined ? undefined : JSON.stringify(body);
+		const response = await send(method, path, json, json === undefined ? undefined : "application/json; charset=utf-8", extraHeaders);
 		if (!response.ok) {
 			throw new DataverseHttpError(response.status, response.statusText, await response.text());
 		}
@@ -96,10 +119,20 @@ export const createDataverseHttp = ({ origin, headers, fetchImpl = fetch, timeou
 		const text = await response.text();
 		return (text ? JSON.parse(text) : undefined) as T;
 	};
+	const requestText = async (method: DataverseMethod, path: string, init: DataverseTextRequest = {}): Promise<DataverseTextResponse> => {
+		const response = await send(method, path, init.body, init.body === undefined ? undefined : init.contentType, init.headers);
+		return {
+			status: response.status,
+			statusText: response.statusText,
+			contentType: response.headers.get("Content-Type") ?? "",
+			text: await response.text(),
+		};
+	};
 	return {
 		origin,
 		apiUrl,
 		request,
+		requestText,
 		get: (path) => request("GET", path),
 		post: (path, body) => request("POST", path, body),
 		patch: (path, body) => request("PATCH", path, body),

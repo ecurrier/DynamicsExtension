@@ -36,6 +36,8 @@ export const areaWorkspaceLaunch = (target: AreaWorkspace, context: AreaLaunchCo
 					launchedAt: now,
 				},
 			};
+		case "query-builder":
+			return { id: "query-builder", launch: { tabId, environmentId: null, fetchXml: null, launchedAt: now } };
 		case "results-viewer":
 			// Launched from the Retrieve Records results footer, never from navigation.
 			return null;

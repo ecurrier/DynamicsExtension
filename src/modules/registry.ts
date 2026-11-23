@@ -5,6 +5,7 @@ import { formsModule } from "./forms";
 import { impersonationModule } from "./impersonation";
 import { investigateModule } from "./investigate";
 import { pluginsModule } from "./plugins";
+import { queryBuilderModule } from "./querybuilder";
 import { schemaModule } from "./schema";
 import { securityModule } from "./security";
 import { settingsModule } from "./settings";
@@ -18,6 +19,7 @@ export const modules: ModuleDefinition[] = [
 	investigateModule,
 	formPresetsModule,
 	webApiModule,
+	queryBuilderModule,
 	codegenModule,
 	formsModule,
 	schemaModule,

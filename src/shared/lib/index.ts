@@ -23,3 +23,4 @@ export * from "./recordUrl";
 export * from "./solutions";
 export * from "./tabLabel";
 export * from "./url";
+export * from "./webApiUrl";

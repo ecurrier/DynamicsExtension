@@ -8,6 +8,7 @@ export * from "./pluginPackages";
 export * from "./transport";
 export * from "./investigate";
 export * from "./privileges";
+export * from "./query";
 export * from "./results";
 export * from "./workspaces";
 export * from "./codegen";
