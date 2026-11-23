@@ -1,6 +1,8 @@
-import { Button, Caption1Strong, makeStyles, tokens, Tooltip } from "@fluentui/react-components";
+import { Button, Caption1Strong, makeStyles, mergeClasses, tokens, Tooltip } from "@fluentui/react-components";
 import { type FluentIcon } from "@fluentui/react-icons";
 import { type ReactNode } from "react";
+
+export const STRIP_WIDTH = 32;
 
 const useStyles = makeStyles({
 	header: {
@@ -30,15 +32,34 @@ const useStyles = makeStyles({
 		alignItems: "center",
 		flexShrink: 0,
 		rowGap: tokens.spacingVerticalS,
-		width: "32px",
-		paddingTop: tokens.spacingVerticalXS,
+		width: `${STRIP_WIDTH}px`,
+		margin: 0,
+		paddingTop: tokens.spacingVerticalS,
+		paddingBottom: tokens.spacingVerticalS,
+		paddingLeft: 0,
+		paddingRight: 0,
+		cursor: "pointer",
+		color: tokens.colorNeutralForeground2,
 		backgroundColor: tokens.colorNeutralBackground1,
+		borderTopStyle: "none",
+		borderBottomStyle: "none",
 		borderLeft: `1px solid ${tokens.colorNeutralStroke2}`,
 		borderRight: `1px solid ${tokens.colorNeutralStroke2}`,
+		":hover": {
+			backgroundColor: tokens.colorNeutralBackground1Hover,
+			color: tokens.colorNeutralForeground2BrandHover,
+		},
+		":active": {
+			backgroundColor: tokens.colorNeutralBackground1Pressed,
+		},
+		":focus-visible": {
+			outline: `2px solid ${tokens.colorStrokeFocus2}`,
+			outlineOffset: "-2px",
+		},
 	},
 	stripLabel: {
 		writingMode: "vertical-rl",
-		color: tokens.colorNeutralForeground3,
+		color: "inherit",
 		whiteSpace: "nowrap",
 	},
 });
@@ -80,15 +101,18 @@ interface CollapsedPaneProps {
 	title: string;
 	icon: FluentIcon;
 	label: string;
+	className?: string;
 	onRestore: () => void;
 }
 
-export const CollapsedPane = ({ title, icon, label, onRestore }: CollapsedPaneProps) => {
+export const CollapsedPane = ({ title, icon: Icon, label, className, onRestore }: CollapsedPaneProps) => {
 	const styles = useStyles();
 	return (
-		<div className={styles.strip}>
-			<PaneButton icon={icon} label={label} onClick={onRestore} />
-			<Caption1Strong className={styles.stripLabel}>{title}</Caption1Strong>
-		</div>
+		<Tooltip content={label} relationship="label" positioning="after">
+			<button type="button" className={mergeClasses(styles.strip, className)} onClick={onRestore}>
+				<Icon />
+				<Caption1Strong className={styles.stripLabel}>{title}</Caption1Strong>
+			</button>
+		</Tooltip>
 	);
 };

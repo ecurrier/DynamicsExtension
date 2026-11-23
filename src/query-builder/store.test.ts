@@ -141,12 +141,50 @@ describe("the Query Builder store", () => {
 		store.getState().togglePane("xml");
 		expect(store.getState().layout).toEqual({
 			treeWidth: 320,
+			detailsWidth: 280,
 			resultsHeight: 200,
-			collapsed: { tree: false, xml: true, results: false },
+			collapsed: { tree: false, details: false, xml: true, results: false },
+			detailsForced: false,
 			resultsMaximised: false,
 		});
 		store.getState().togglePane("xml");
 		expect(store.getState().layout.collapsed.xml).toBe(false);
+	});
+
+	it("opens the tree at two fifths of the Workspace and the details pane at 280px", () => {
+		const { layout } = createQueryBuilderStore({ connection: PAGE_CONNECTION, fetchXml: null }).getState();
+		expect(layout.treeWidth).toBeNull();
+		expect(layout.detailsWidth).toBe(280);
+	});
+
+	it("keeps the details pane's width while it is collapsed and forces it open only when asked to", () => {
+		const store = createQueryBuilderStore({ connection: PAGE_CONNECTION, fetchXml: null });
+		store.getState().resizePane("details", 320);
+		store.getState().togglePane("details");
+		expect(store.getState().layout).toMatchObject({ detailsWidth: 320, collapsed: { details: true }, detailsForced: false });
+		store.getState().showDetails(true);
+		expect(store.getState().layout).toMatchObject({ detailsWidth: 320, collapsed: { details: false }, detailsForced: true });
+		store.getState().releaseDetails();
+		expect(store.getState().layout.detailsForced).toBe(false);
+	});
+
+	it("commits the focused draft before acting on the Query", () => {
+		const store = createQueryBuilderStore({ connection: PAGE_CONNECTION, fetchXml: null });
+		const commits: string[] = [];
+		const release = store.getState().registerDraft(() => commits.push("a"));
+		store.getState().flushDraft();
+		release();
+		store.getState().flushDraft();
+		expect(commits).toEqual(["a"]);
+	});
+
+	it("adds no undo step for an edit that leaves the Fetch XML as it was", () => {
+		const store = createQueryBuilderStore({ connection: PAGE_CONNECTION, fetchXml: GOOD });
+		store.getState().edit((query) => ({ ok: true, change: { document: query, shift: { kind: "none" }, select: null } }));
+		expect(store.getState().history.undo).toHaveLength(1);
+		store.getState().edit((query) => ({ ok: true, change: { document: query, shift: { kind: "none" }, select: [0] } }));
+		expect(store.getState().history.undo).toHaveLength(1);
+		expect(store.getState().selectedPath).toEqual([0]);
 	});
 
 	it("maximises the results and restores the layout as it was", () => {

@@ -703,6 +703,32 @@
 	const queryStateOptions = queryOptions([0, "Active"], [1, "Inactive"]);
 	const queryStatusOptions = queryOptions([1, "Active"], [2, "Inactive"]);
 	const queryYesNo = (no, yes) => queryOptions([0, no], [1, yes]);
+	const QUERY_FILLER_NAMES = [
+		["Loyalty Points", "Integer"],
+		["Survey Score", "Decimal"],
+		["Preferred Language", "String"],
+		["Renewal Date", "DateTime"],
+		["Credit Limit", "Money"],
+		["Payment Terms", "String"],
+		["Shipping Method", "String"],
+		["Tax Exempt", "Boolean"],
+		["Key Account", "Boolean"],
+		["Market Segment", "String"],
+		["Partner Tier", "String"],
+		["Website Visits", "Integer"],
+		["Last Survey Date", "DateTime"],
+		["Support Plan", "String"],
+		["Annual Budget", "Money"],
+		["Territory Code", "String"],
+	];
+	const queryFillerColumns = Array.from({ length: 48 }, (_, i) => {
+		const [display, type] = QUERY_FILLER_NAMES[i % QUERY_FILLER_NAMES.length];
+		const round = Math.floor(i / QUERY_FILLER_NAMES.length);
+		return queryCol(`new_f${String(i + 1).padStart(3, "0")}`, round === 0 ? display : `${display} ${round + 1}`, type, {
+			...(type === "DateTime" ? { behavior: "DateOnly", format: "DateOnly" } : {}),
+			...(type === "Boolean" ? { options: queryYesNo("No", "Yes") } : {}),
+		});
+	});
 	const queryFixtures = {
 		account: {
 			columns: [
@@ -729,6 +755,7 @@
 					options: queryOptions([100000000, "North"], [100000001, "South"], [100000002, "East"], [100000003, "West"]),
 				}),
 				queryCol("new_secret", "Secret", "String", { isValidForRead: false }),
+				...queryFillerColumns,
 			],
 			manyToOne: [
 				{

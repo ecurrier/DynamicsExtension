@@ -1,6 +1,6 @@
 # Tree: row editors and the details pane
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Phase: 1
 Blocked by: 06
@@ -47,3 +47,21 @@ Acceptance:
 - A condition value of `1000021` is fully visible on its row; typing more digits widens the input up to its maximum. Clicking anywhere on the collapsed details strip reopens the pane.
 - Unit tests for the picker's filtering and ranking. In the harness, on a Table with at least 60 Columns: typing three letters of a display name while logical names lead finds the Column; typing "equals" finds `eq`; Escape and clicking away both leave the Query unchanged.
 - `npm run typecheck`, `npm run lint` and `npm test` pass. Verify in the harness and include a screenshot.
+
+## Comments
+
+Resolved 2026-11-22. Built by an Opus worker, reviewed and verified (typecheck, lint, 1,398 tests, build; in the harness, searching an operator picker for "ne" and pressing Enter changed the condition in the XML and in the details pane).
+
+- Pure logic in `src/query-builder/lib/`: `pickerSearch`, `conditionEditing`, `relationships`, `controlSize`, `detailsEntries`, `attributeEdits`, `queryStart`, plus `pickerOptions` and `rowScope`.
+- Components in `src/query-builder/editors/`: `SearchPicker`, `DraftInput`, `Controls`, `Pickers`, `ConditionValue`, `RowEditors`, `AttributeField`, `DetailsPane`, `BlankStart`, `EditingContext`, `useTableChange`, `measureText`. Also `EditorPanes.tsx` and `RowContent.tsx`.
+- Value inputs keep a local draft and write on blur or Enter (Escape discards), so one edit is one undo step and nothing re-parses while typing. Rows are keyed by path and attribute edits never change paths, so a focused input is not remounted. Ctrl+Enter writes the focused draft before running.
+- The picker: Fluent's own matching is off and the list is filtered by `pickerSearch`; options get a new key per search so the first match is the active option; Tab picks and clear-on-type are ignored.
+- `EditingContext` holds the metadata, the Table list and `loadTable`.
+
+Decisions made here: many-to-many relationships are not offered in the relationship picker and stay "custom join". Operator search also matches a short list of synonyms ("equals", "contains"). The empty tree shows a small Table picker so a Query can be started there (issue 10 may replace it). At narrow widths the details pane collapses first, and opening it by hand collapses the XML pane instead. Every collapsed strip in the editors row is one whole button, not only the details strip.
+
+For issue 08's display half: problem icons belong in `RowContent` beside the badges; a problem on a `<value>` element rolls up to its condition row; the details pane can show per-attribute messages through `DetailsField`. For issue 09's adapter: reuse `EditingContext` and the lib helpers `columnOptions`, `tableOptions`, `operatorOptions`, `linkRelationships`.
+
+Bundle: `page.js` is 88.60 kB, up from 84.86 kB, from the `$batch` route and `listViews` (issues 13 and 10), not from this issue. No parser in it.
+
+Not verified: a real org. The Record lookup searches through `runQuery` (top 25, `like` on the primary name) and has only been exercised against the harness, whose `runQuery` ignores filters.

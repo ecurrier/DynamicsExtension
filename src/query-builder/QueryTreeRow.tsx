@@ -14,6 +14,7 @@ import {
 	Tree,
 	TreeItem,
 	TreeItemLayout,
+	treeItemLayoutClassNames,
 } from "@fluentui/react-components";
 import {
 	Add16Regular,
@@ -26,6 +27,7 @@ import {
 	Database20Regular,
 	Delete16Regular,
 	Filter20Regular,
+	PanelRight16Regular,
 	Grid20Regular,
 	Table20Regular,
 	TableLink20Regular,
@@ -35,8 +37,9 @@ import { type KeyboardEvent, type MouseEvent, type ReactElement, useState } from
 
 import { elementDefinition, type NodePath } from "@/shared/lib/fetchxml";
 
+import { useQueryEditing } from "./editors";
 import { type RowKind, samePath, summaryText, type TreeRow } from "./lib";
-import { RowSummaryText } from "./RowSummaryText";
+import { RowContent } from "./RowContent";
 import { useQueryBuilder } from "./store";
 
 export const SWITCH_GUTTER_WIDTH = 32;
@@ -172,6 +175,12 @@ const SwitchCell = ({ row, label, selected, onToggle }: SwitchCellProps) => {
 
 const isFromGutter = (target: EventTarget): boolean => target instanceof Element && target.closest(`[${GUTTER_ATTRIBUTE}]`) !== null;
 
+const ownsFocus = (target: EventTarget, item: HTMLElement): boolean =>
+	target === item ||
+	(target instanceof Element &&
+		target.closest("[data-tree-key]") === item &&
+		target.closest(`[${GUTTER_ATTRIBUTE}], .${treeItemLayoutClassNames.actions}`) === null);
+
 interface QueryTreeRowProps {
 	row: TreeRow;
 	actions: TreeActions;
@@ -181,6 +190,7 @@ export const QueryTreeRow = ({ row, actions }: QueryTreeRowProps) => {
 	const styles = useStyles();
 	const selected = useQueryBuilder((state) => samePath(state.selectedPath, row.path));
 	const select = useQueryBuilder((state) => state.select);
+	const { openDetails } = useQueryEditing();
 	const [hovered, setHovered] = useState(false);
 	const [menuOpen, setMenuOpen] = useState(false);
 	const label = summaryText(row.summary);
@@ -246,6 +256,14 @@ export const QueryTreeRow = ({ row, actions }: QueryTreeRowProps) => {
 					</MenuPopover>
 				</Menu>
 			) : null}
+			<ActionButton
+				label="Details"
+				icon={<PanelRight16Regular />}
+				onClick={() => {
+					select(row.path);
+					openDetails();
+				}}
+			/>
 			{row.fixed ? null : (
 				<>
 					<ActionButton label="Move up (Alt+Up)" icon={<ArrowUp16Regular />} disabled={!row.canMoveUp} onClick={() => actions.move(row.path, -1)} />
@@ -270,7 +288,7 @@ export const QueryTreeRow = ({ row, actions }: QueryTreeRowProps) => {
 			data-tree-key={row.key}
 			onClick={onClick}
 			onFocus={(event) => {
-				if (event.target === event.currentTarget) {
+				if (ownsFocus(event.target, event.currentTarget)) {
 					select(row.path);
 				}
 			}}
@@ -294,7 +312,7 @@ export const QueryTreeRow = ({ row, actions }: QueryTreeRowProps) => {
 							</Badge>
 						</Tooltip>
 					)}
-					<RowSummaryText summary={row.summary} comment={row.kind === "comment"} />
+					<RowContent row={row} />
 					{row.kind === "unknown" ? (
 						<Badge size="small" appearance="outline" color="informative">
 							edit in XML

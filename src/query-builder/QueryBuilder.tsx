@@ -1,5 +1,4 @@
 import { makeStyles, mergeClasses, Spinner, tokens } from "@fluentui/react-components";
-import { PanelLeftExpand20Regular, PanelRightExpand20Regular } from "@fluentui/react-icons";
 import { type KeyboardEvent, useEffect, useState } from "react";
 
 import { useConnectableEnvironments } from "@/modules/settings";
@@ -8,24 +7,18 @@ import { type ConnectionTarget, requestEnvironmentAccess } from "@/shared/connec
 import { useAsyncAction } from "@/shared/hooks";
 import { type QueryBuilderLaunch } from "@/shared/types";
 
+import { EDITORS_MIN_HEIGHT, EditorPanes } from "./EditorPanes";
 import { useQueryGateway } from "./hooks";
 import { connectionLabel } from "./lib";
-import { CollapsedPane } from "./PaneChrome";
 import { QueryBuilderHeader } from "./QueryBuilderHeader";
-import { QueryTree } from "./QueryTree";
 import { ResultsPane } from "./ResultsPane";
 import { Splitter, SPLITTER_THICKNESS } from "./Splitter";
-import { createQueryBuilderStore, QueryBuilderStoreContext, useQueryBuilder } from "./store";
+import { createQueryBuilderStore, QueryBuilderStoreContext, useQueryBuilder, useQueryBuilderStoreApi } from "./store";
 import { connectionFor, type QueryBuilderBootstrapStatus } from "./useQueryBuilderBootstrap";
 import { useQueryRun } from "./useQueryRun";
-import { XmlPane } from "./XmlPane";
 
-export const TREE_MIN_WIDTH = 180;
-export const XML_MIN_WIDTH = 280;
 export const RESULTS_MIN_HEIGHT = 120;
-export const EDITORS_MIN_HEIGHT = 160;
 
-const TREE_PANE_ID = "query-builder-tree";
 const RESULTS_PANE_ID = "query-builder-results";
 
 const useStyles = makeStyles({
@@ -45,14 +38,6 @@ const useStyles = makeStyles({
 		minHeight: 0,
 		minWidth: 0,
 	},
-	editors: {
-		display: "flex",
-		justifyContent: "space-between",
-		flexGrow: 1,
-		flexBasis: 0,
-		minHeight: `${EDITORS_MIN_HEIGHT}px`,
-		minWidth: 0,
-	},
 	pane: {
 		display: "flex",
 		flexDirection: "column",
@@ -60,22 +45,6 @@ const useStyles = makeStyles({
 		minHeight: 0,
 		overflow: "hidden",
 		backgroundColor: tokens.colorNeutralBackground1,
-	},
-	tree: {
-		flexGrow: 0,
-		flexShrink: 0,
-		minWidth: `${TREE_MIN_WIDTH}px`,
-		maxWidth: `calc(100% - ${XML_MIN_WIDTH + SPLITTER_THICKNESS}px)`,
-	},
-	treeAlone: {
-		flexGrow: 1,
-		flexBasis: 0,
-		maxWidth: "none",
-	},
-	xml: {
-		flexGrow: 1,
-		flexBasis: 0,
-		minWidth: `${XML_MIN_WIDTH}px`,
 	},
 	results: {
 		flexGrow: 0,
@@ -106,6 +75,7 @@ interface QueryBuilderWorkspaceProps {
 
 const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 	const styles = useStyles();
+	const store = useQueryBuilderStoreApi();
 	const { environments, byId } = useConnectableEnvironments();
 	const connection = useQueryBuilder((state) => state.connection);
 	const setConnection = useQueryBuilder((state) => state.setConnection);
@@ -154,6 +124,7 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 		}
 		event.preventDefault();
 		event.stopPropagation();
+		store.getState().flushDraft();
 		if (canRun) {
 			void runQuery();
 		}
@@ -175,38 +146,7 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 			/>
 			<FailureBanner />
 			<div className={styles.body}>
-				<div className={mergeClasses(styles.editors, maximised && styles.hidden)}>
-					{collapsed.tree ? (
-						<CollapsedPane title="Tree" icon={PanelLeftExpand20Regular} label="Restore the tree" onRestore={() => togglePane("tree")} />
-					) : (
-						<section
-							id={TREE_PANE_ID}
-							aria-label="Tree"
-							className={mergeClasses(styles.pane, styles.tree, collapsed.xml && styles.treeAlone)}
-							style={collapsed.xml ? undefined : { width: `${layout.treeWidth}px` }}>
-							<QueryTree onCollapse={() => togglePane("tree")} />
-						</section>
-					)}
-					{collapsed.tree || collapsed.xml ? null : (
-						<Splitter
-							orientation="vertical"
-							size={layout.treeWidth}
-							min={TREE_MIN_WIDTH}
-							otherMin={XML_MIN_WIDTH}
-							label="Resize the tree and the Fetch XML"
-							controls={TREE_PANE_ID}
-							onResize={(size) => resizePane("tree", size)}
-							onToggle={() => togglePane("tree")}
-						/>
-					)}
-					{collapsed.xml ? (
-						<CollapsedPane title="Fetch XML" icon={PanelRightExpand20Regular} label="Restore the Fetch XML" onRestore={() => togglePane("xml")} />
-					) : (
-						<section aria-label="Fetch XML" className={mergeClasses(styles.pane, styles.xml)}>
-							<XmlPane onCollapse={() => togglePane("xml")} />
-						</section>
-					)}
-				</div>
+				<EditorPanes gateway={gateway} hidden={maximised} />
 				{resultsCollapsed || maximised ? null : (
 					<Splitter
 						orientation="horizontal"

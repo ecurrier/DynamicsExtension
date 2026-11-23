@@ -55,14 +55,16 @@ export interface QueryRunState {
 	awaitingLimitConfirmation: boolean;
 }
 
-export type PaneId = "tree" | "xml" | "results";
+export type PaneId = "tree" | "details" | "xml" | "results";
 
-export type ResizablePane = "tree" | "results";
+export type ResizablePane = "tree" | "details" | "results";
 
 export interface PaneLayout {
-	treeWidth: number;
+	treeWidth: number | null;
+	detailsWidth: number;
 	resultsHeight: number;
 	collapsed: Record<PaneId, boolean>;
+	detailsForced: boolean;
 	resultsMaximised: boolean;
 }
 
@@ -127,6 +129,10 @@ export interface QueryBuilderState extends ParsedQuery {
 	setResultsMaximised: (maximised: boolean) => void;
 	resizePane: (pane: ResizablePane, size: number) => void;
 	togglePane: (pane: PaneId) => void;
+	showDetails: (force: boolean) => void;
+	releaseDetails: () => void;
+	registerDraft: (commit: () => void) => () => void;
+	flushDraft: () => void;
 	dispose: () => void;
 }
 
@@ -138,9 +144,11 @@ export interface QueryBuilderInit {
 }
 
 export const DEFAULT_LAYOUT: PaneLayout = {
-	treeWidth: 280,
+	treeWidth: null,
+	detailsWidth: 280,
 	resultsHeight: 300,
-	collapsed: { tree: false, xml: false, results: false },
+	collapsed: { tree: false, details: false, xml: false, results: false },
+	detailsForced: false,
 	resultsMaximised: false,
 };
 
@@ -205,6 +213,7 @@ export const createQueryBuilderStore = ({ connection, fetchXml }: QueryBuilderIn
 	const text = fetchXml ?? "";
 	let pendingOffset: number | null = null;
 	let editor: EditorHistory | null = null;
+	let draft: (() => void) | null = null;
 	return createStore<QueryBuilderState>()((set, get) => {
 		const selectionAt = (query: FetchXmlDocument, offset: number): NodePath | null => {
 			const path = pathAtOffset(query, offset);
@@ -327,6 +336,12 @@ export const createQueryBuilderStore = ({ connection, fetchXml }: QueryBuilderIn
 			applyChange: (change) => {
 				const state = get();
 				const nextText = serializeFetchXml(change.document);
+				if (nextText === state.text) {
+					if (change.select !== null) {
+						get().select(change.select);
+					}
+					return;
+				}
 				const selectedPath = change.select ?? (state.selectedPath === null ? null : remapPath(state.selectedPath, change.shift));
 				const after: TreeSnapshot = {
 					text: nextText,
@@ -425,9 +440,40 @@ export const createQueryBuilderStore = ({ connection, fetchXml }: QueryBuilderIn
 			requestStop: (id) =>
 				set((state) => updateRun(state, id, (run) => (run.paging === "idle" ? { awaitingLimitConfirmation: false } : { stopRequested: true }))),
 			setResultsMaximised: (maximised) => set((state) => ({ layout: { ...state.layout, resultsMaximised: maximised } })),
-			resizePane: (pane, size) => set((state) => ({ layout: { ...state.layout, ...(pane === "tree" ? { treeWidth: size } : { resultsHeight: size }) } })),
+			resizePane: (pane, size) =>
+				set((state) => ({
+					layout: {
+						...state.layout,
+						...(pane === "tree" ? { treeWidth: size } : pane === "details" ? { detailsWidth: size } : { resultsHeight: size }),
+					},
+				})),
 			togglePane: (pane) =>
-				set((state) => ({ layout: { ...state.layout, collapsed: { ...state.layout.collapsed, [pane]: !state.layout.collapsed[pane] } } })),
+				set((state) => {
+					const collapsed = !state.layout.collapsed[pane];
+					return {
+						layout: {
+							...state.layout,
+							collapsed: { ...state.layout.collapsed, [pane]: collapsed },
+							detailsForced: pane === "details" ? false : state.layout.detailsForced,
+						},
+					};
+				}),
+			showDetails: (force) =>
+				set((state) =>
+					!state.layout.collapsed.details && state.layout.detailsForced === force
+						? state
+						: { layout: { ...state.layout, collapsed: { ...state.layout.collapsed, details: false }, detailsForced: force } }
+				),
+			releaseDetails: () => set((state) => (state.layout.detailsForced ? { layout: { ...state.layout, detailsForced: false } } : state)),
+			registerDraft: (commit) => {
+				draft = commit;
+				return () => {
+					if (draft === commit) {
+						draft = null;
+					}
+				};
+			},
+			flushDraft: () => draft?.(),
 			dispose: cancelParse,
 		};
 	});

@@ -1,0 +1,177 @@
+import { Field, makeStyles, Text, tokens } from "@fluentui/react-components";
+import { type ReactNode, useMemo } from "react";
+
+import { aliasesIn } from "@/shared/lib/fetchxml";
+
+import {
+	attributeAliasOptions,
+	type DetailsEntry,
+	enumerationOptions,
+	isTrueValue,
+	linkReferenceOptions,
+	presentValue,
+	setAttributes,
+	setConditionValueOf,
+	tableScope,
+	valueOfOptions,
+} from "../lib";
+import { useQueryBuilder } from "../store";
+import { Flag, MultiPicker } from "./Controls";
+import { DraftInput } from "./DraftInput";
+import { useQueryEditing } from "./EditingContext";
+import { ColumnPicker, EnumPicker, OptionPicker, TablePicker } from "./Pickers";
+import {
+	ConditionColumnPicker,
+	ConditionOperatorPicker,
+	ConditionValueEditor,
+	type ElementEditorProps,
+	EntityTablePicker,
+	RelationshipPicker,
+	useTextAttribute,
+} from "./RowEditors";
+
+const useStyles = makeStyles({
+	label: {
+		fontFamily: tokens.fontFamilyMonospace,
+		fontWeight: tokens.fontWeightSemibold,
+		overflowWrap: "anywhere",
+	},
+	written: {
+		fontFamily: tokens.fontFamilyMonospace,
+		fontSize: tokens.fontSizeBase200,
+		overflowWrap: "anywhere",
+	},
+});
+
+interface DetailsFieldProps {
+	name: string;
+	hint: string;
+	children: ReactNode;
+}
+
+export const DetailsField = ({ name, hint, children }: DetailsFieldProps) => {
+	const styles = useStyles();
+	return (
+		<Field label={{ children: name, className: styles.label }} hint={hint}>
+			{children}
+		</Field>
+	);
+};
+
+interface AttributeControlProps extends ElementEditorProps {
+	entry: Extract<DetailsEntry, { kind: "known" }>;
+}
+
+const OptionalAliasPicker = ({ document, path, entry, edit }: AttributeControlProps) => {
+	const references = useMemo(
+		() =>
+			entry.name === "entityname"
+				? linkReferenceOptions(document)
+				: entry.name === "alias" && entry.definition.value.kind === "alias"
+					? attributeAliasOptions(document)
+					: aliasesIn(document).map((alias) => ({ value: alias.alias, text: alias.alias })),
+		[document, entry]
+	);
+	return (
+		<OptionPicker
+			label={entry.name}
+			kind="alias"
+			value={entry.value}
+			options={references}
+			optional
+			onChange={(value) => edit((query) => setAttributes(query, path, { [entry.name]: value }))}
+		/>
+	);
+};
+
+const ValueOfPicker = ({ document, path, entry, edit }: AttributeControlProps) => {
+	const { metadata } = useQueryEditing();
+	const lead = useQueryBuilder((state) => state.namesLead);
+	const options = useMemo(() => valueOfOptions(document, path, metadata, lead), [document, path, metadata, lead]);
+	return (
+		<OptionPicker
+			label="valueof"
+			kind="value"
+			value={entry.value}
+			options={options}
+			optional
+			onChange={(reference) => edit((query) => setConditionValueOf(query, path, reference))}
+		/>
+	);
+};
+
+const GenericControl = (props: AttributeControlProps) => {
+	const { document, path, entry, edit } = props;
+	const { metadata } = useQueryEditing();
+	const text = useTextAttribute({ path, edit });
+	const set = (value: string | null) => edit((query) => setAttributes(query, path, { [entry.name]: value }));
+	const kind = entry.definition.value;
+	switch (kind.kind) {
+		case "enumeration":
+			if (kind.multiple) {
+				const values = (entry.value ?? "")
+					.split(",")
+					.map((part) => part.trim())
+					.filter((part) => part !== "");
+				return (
+					<MultiPicker
+						label={entry.name}
+						values={values}
+						options={enumerationOptions(kind.values)}
+						onChange={(next) => set(next.length === 0 ? null : next.join(","))}
+					/>
+				);
+			}
+			return <EnumPicker label={entry.name} value={entry.value} values={kind.values} optional={!entry.definition.required} onChange={set} />;
+		case "boolean":
+			return <Flag name={entry.name} checked={isTrueValue(entry.value)} onChange={(checked) => set(checked ? "true" : null)} />;
+		case "number":
+			return <DraftInput label={entry.name} kind="number" type="number" value={entry.value ?? ""} onCommit={text(entry.name)} />;
+		case "table":
+			return <TablePicker label={entry.name} value={presentValue(props.element, entry.name)} optional={!entry.definition.required} onChange={set} />;
+		case "column":
+			return (
+				<ColumnPicker
+					label={entry.name}
+					scope={tableScope(document, path, entry.name, metadata)}
+					value={presentValue(props.element, entry.name)}
+					optional={!entry.definition.required}
+					onChange={set}
+				/>
+			);
+		case "alias":
+			return <OptionalAliasPicker {...props} />;
+		case "text":
+			return <DraftInput label={entry.name} kind="value" value={entry.value ?? ""} onCommit={text(entry.name)} />;
+	}
+};
+
+export const AttributeControl = (props: AttributeControlProps) => {
+	const { path, element, entry } = props;
+	const key = `${element.name}.${entry.name}`;
+	switch (key) {
+		case "entity.name":
+			return <EntityTablePicker path={path} element={element} />;
+		case "condition.attribute":
+			return <ConditionColumnPicker {...props} />;
+		case "condition.operator":
+			return <ConditionOperatorPicker {...props} />;
+		case "condition.value":
+			return <ConditionValueEditor {...props} />;
+		case "condition.valueof":
+			return <ValueOfPicker {...props} />;
+		default:
+			return <GenericControl {...props} />;
+	}
+};
+
+export const RelationshipField = (props: ElementEditorProps) => (
+	<DetailsField name="relationship" hint="A relationship of the parent Table; picking one sets name, from and to together. A custom join matches none.">
+		<RelationshipPicker {...props} />
+	</DetailsField>
+);
+
+export const WrittenValue = ({ value }: { value: string }) => {
+	const styles = useStyles();
+	return <Text className={styles.written}>{value === "" ? '""' : value}</Text>;
+};

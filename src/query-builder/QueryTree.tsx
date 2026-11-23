@@ -1,9 +1,10 @@
-import { Button, comboboxClassNames, makeStyles, mergeClasses, Text, tokens, Tooltip, Tree, type TreeProps } from "@fluentui/react-components";
+import { Button, comboboxClassNames, makeStyles, mergeClasses, tokens, Tooltip, Tree, type TreeProps } from "@fluentui/react-components";
 import { Broom20Regular, PanelLeftContract20Regular } from "@fluentui/react-icons";
 import { type KeyboardEvent, useEffect, useMemo, useRef } from "react";
 
 import { type FetchXmlDocument, type NodePath, type QueryMetadata, tablesNamedIn, tidy } from "@/shared/lib/fetchxml";
 
+import { BlankStart } from "./editors";
 import { useQueryGateway, useQueryTables } from "./hooks";
 import { addChild, ALREADY_TIDY, branchKeys, buildTreeRows, type ChangeResult, moveRow, pathKey, removeRow, tidyQuery, toggleRow } from "./lib";
 import { PaneHeader } from "./PaneChrome";
@@ -38,11 +39,6 @@ const useStyles = makeStyles({
 	stale: {
 		opacity: 0.5,
 		filter: "grayscale(1)",
-	},
-	hint: {
-		display: "block",
-		padding: tokens.spacingHorizontalM,
-		color: tokens.colorNeutralForeground3,
 	},
 });
 
@@ -182,9 +178,7 @@ export const QueryTree = ({ onCollapse }: QueryTreeProps) => {
 						</Tree>
 					</div>
 				) : (
-					<Text size={200} className={styles.hint}>
-						Write or paste a Query as Fetch XML on the right and its tree appears here.
-					</Text>
+					<BlankStart />
 				)}
 			</div>
 		</div>

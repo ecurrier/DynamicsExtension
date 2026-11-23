@@ -60,12 +60,13 @@ const useStyles = makeStyles({
 
 export interface SplitterProps {
 	orientation: SplitterOrientation;
-	size: number;
+	size: number | null;
 	min: number;
-	otherMin: number;
+	otherMin: number | (() => number);
 	reverse?: boolean;
 	label: string;
 	controls?: string;
+	className?: string;
 	onResize: (size: number) => void;
 	onToggle?: () => void;
 }
@@ -76,15 +77,20 @@ interface DragStart {
 	bounds: PaneBounds;
 }
 
-export const Splitter = ({ orientation, size, min, otherMin, reverse = false, label, controls, onResize, onToggle }: SplitterProps) => {
+export const Splitter = ({ orientation, size, min, otherMin, reverse = false, label, controls, className, onResize, onToggle }: SplitterProps) => {
 	const styles = useStyles();
 	const drag = useRef<DragStart | null>(null);
 	const [dragging, setDragging] = useState(false);
 
+	const extentOf = (element: Element | null | undefined): number | null => {
+		const rect = element?.getBoundingClientRect();
+		return rect ? (orientation === "vertical" ? rect.width : rect.height) : null;
+	};
+	const currentSize = (): number => extentOf(controls ? globalThis.document.getElementById(controls) : null) ?? size ?? min;
 	const boundsFor = (element: HTMLElement): PaneBounds => {
-		const rect = element.parentElement?.getBoundingClientRect();
-		const extent = rect ? (orientation === "vertical" ? rect.width : rect.height) : size + otherMin + SPLITTER_THICKNESS;
-		return paneBounds(extent, min, otherMin, SPLITTER_THICKNESS);
+		const other = typeof otherMin === "function" ? otherMin() : otherMin;
+		const extent = extentOf(element.parentElement) ?? currentSize() + other + SPLITTER_THICKNESS;
+		return paneBounds(extent, min, other, SPLITTER_THICKNESS);
 	};
 	const pointerAt = (event: PointerEvent<HTMLDivElement>): number => (orientation === "vertical" ? event.clientX : event.clientY);
 
@@ -96,7 +102,7 @@ export const Splitter = ({ orientation, size, min, otherMin, reverse = false, la
 		event.currentTarget.focus();
 		event.currentTarget.setPointerCapture(event.pointerId);
 		const bounds = boundsFor(event.currentTarget);
-		drag.current = { startSize: clampPaneSize(size, bounds), startPointer: pointerAt(event), bounds };
+		drag.current = { startSize: clampPaneSize(currentSize(), bounds), startPointer: pointerAt(event), bounds };
 		setDragging(true);
 	};
 	const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
@@ -126,7 +132,7 @@ export const Splitter = ({ orientation, size, min, otherMin, reverse = false, la
 			shiftKey: event.shiftKey,
 			orientation,
 			reverse,
-			size: clampPaneSize(size, bounds),
+			size: clampPaneSize(currentSize(), bounds),
 			bounds,
 			step: KEYBOARD_STEP,
 		});
@@ -143,9 +149,9 @@ export const Splitter = ({ orientation, size, min, otherMin, reverse = false, la
 			aria-orientation={orientation}
 			aria-label={label}
 			aria-controls={controls}
-			aria-valuenow={size}
+			aria-valuenow={size ?? undefined}
 			aria-valuemin={min}
-			className={mergeClasses(styles.root, orientation === "vertical" ? styles.vertical : styles.horizontal, dragging && styles.dragging)}
+			className={mergeClasses(styles.root, orientation === "vertical" ? styles.vertical : styles.horizontal, dragging && styles.dragging, className)}
 			onPointerDown={onPointerDown}
 			onPointerMove={onPointerMove}
 			onPointerUp={endDrag}
