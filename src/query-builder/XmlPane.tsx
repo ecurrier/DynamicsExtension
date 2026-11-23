@@ -2,7 +2,7 @@ import { isolateHistory, redo, undo } from "@codemirror/commands";
 import { linter, setDiagnostics } from "@codemirror/lint";
 import { EditorSelection, EditorState, type Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { makeStyles, tokens } from "@fluentui/react-components";
+import { makeStyles, mergeClasses, Tab, TabList, tokens } from "@fluentui/react-components";
 import { PanelRightContract20Regular } from "@fluentui/react-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { ExternalChange } from "@uiw/react-codemirror";
@@ -17,7 +17,9 @@ import { useQueryEditing } from "./editors";
 import { PaneHeader } from "./PaneChrome";
 import { ParseErrorBanner } from "./ParseErrorBanner";
 import { useQueryDiagnostics } from "./QueryDiagnostics";
-import { type QueryBuilderState, useQueryBuilder, useQueryBuilderStoreApi } from "./store";
+import { type QueryBuilderState, useQueryBuilder, useQueryBuilderStoreApi, type XmlPaneTab } from "./store";
+import { WebApiPane } from "./WebApiPane";
+import { XmlCopyButton } from "./XmlCopyButton";
 
 const TREE_SELECT_EVENT = "select.tree";
 
@@ -44,10 +46,28 @@ const revealSelection = (view: EditorView, state: QueryBuilderState) => {
 };
 
 const useStyles = makeStyles({
+	body: {
+		position: "relative",
+		flexGrow: 1,
+		minHeight: 0,
+	},
+	layer: {
+		position: "absolute",
+		inset: 0,
+		display: "flex",
+		flexDirection: "column",
+		minHeight: 0,
+	},
+	hiddenLayer: {
+		visibility: "hidden",
+	},
 	editor: {
 		flexGrow: 1,
 		minHeight: 0,
 		padding: tokens.spacingHorizontalS,
+	},
+	tabs: {
+		marginLeft: `calc(-1 * ${tokens.spacingHorizontalS})`,
 	},
 });
 
@@ -66,6 +86,8 @@ export const XmlPane = ({ onCollapse }: XmlPaneProps) => {
 	const errors = useQueryBuilder((state) => state.errors);
 	const parsedText = useQueryBuilder((state) => state.parsedText);
 	const namesLead = useQueryBuilder((state) => state.namesLead);
+	const tab = useQueryBuilder((state) => state.layout.xmlTab);
+	const setTab = useQueryBuilder((state) => state.setXmlTab);
 	const { diagnostics } = useQueryDiagnostics();
 	const { gateway, metadata, tables, loadTable } = useQueryEditing();
 	const queryClient = useQueryClient();
@@ -138,21 +160,42 @@ export const XmlPane = ({ onCollapse }: XmlPaneProps) => {
 
 	return (
 		<>
-			<PaneHeader title="Fetch XML" toggleIcon={PanelRightContract20Regular} toggleLabel="Collapse the Fetch XML" onToggle={onCollapse} />
-			<ParseErrorBanner />
-			<div className={styles.editor}>
-				<CodeEditor
-					value={text}
-					language="xml"
-					fill
-					extensions={extensions}
-					onChange={setText}
-					onCreateEditor={(created) => {
-						viewRef.current = created;
-						setView(created);
-					}}
-					placeholder="Paste a Fetch XML Query here. Press Ctrl+Enter to run it."
-				/>
+			<PaneHeader
+				toggleIcon={PanelRightContract20Regular}
+				toggleLabel="Collapse the Fetch XML"
+				onToggle={onCollapse}
+				actions={tab === "fetchxml" ? <XmlCopyButton /> : null}>
+				<TabList className={styles.tabs} size="small" selectedValue={tab} onTabSelect={(_, data) => setTab(data.value as XmlPaneTab)}>
+					<Tab value="fetchxml">Fetch XML</Tab>
+					<Tab value="webapi">Web API</Tab>
+				</TabList>
+			</PaneHeader>
+			{tab === "fetchxml" ? <ParseErrorBanner /> : null}
+			<div className={styles.body}>
+				<div
+					className={mergeClasses(styles.layer, tab !== "fetchxml" && styles.hiddenLayer)}
+					aria-hidden={tab !== "fetchxml"}
+					inert={tab !== "fetchxml"}>
+					<div className={styles.editor}>
+						<CodeEditor
+							value={text}
+							language="xml"
+							fill
+							extensions={extensions}
+							onChange={setText}
+							onCreateEditor={(created) => {
+								viewRef.current = created;
+								setView(created);
+							}}
+							placeholder="Paste a Fetch XML Query here. Press Ctrl+Enter to run it."
+						/>
+					</div>
+				</div>
+				{tab === "webapi" ? (
+					<div className={styles.layer}>
+						<WebApiPane />
+					</div>
+				) : null}
 			</div>
 		</>
 	);

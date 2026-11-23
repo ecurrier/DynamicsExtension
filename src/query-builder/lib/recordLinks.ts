@@ -1,5 +1,5 @@
 import { type ConnectionTarget } from "@/shared/connections";
-import { normalizeGuid, recordUrl } from "@/shared/lib";
+import { normalizeGuid, recordUrl, webApiBaseUrl } from "@/shared/lib";
 import { type QueryRow } from "@/shared/types";
 
 import { LOOKUP_LOGICAL_NAME_SUFFIX } from "./resultColumn";
@@ -28,6 +28,9 @@ export interface RecordLinkSources {
 
 export const connectionRecordAppUrl = (connection: ConnectionTarget, { environmentUrl, tabUrl }: RecordLinkSources): string | null =>
 	recordAppUrl(connection.kind === "page" ? tabUrl : environmentUrl);
+
+export const connectionApiBaseUrl = (connection: ConnectionTarget, { environmentUrl, tabUrl }: RecordLinkSources): string | null =>
+	webApiBaseUrl(connection.kind === "page" ? tabUrl : environmentUrl);
 
 const recordId = (value: unknown): string | null => (typeof value === "string" && GUID_PATTERN.test(value) ? normalizeGuid(value) : null);
 

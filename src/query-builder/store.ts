@@ -60,6 +60,8 @@ export type PaneId = "tree" | "details" | "xml" | "results";
 
 export type ResizablePane = "tree" | "details" | "results";
 
+export type XmlPaneTab = "fetchxml" | "webapi";
+
 export interface PaneLayout {
 	treeWidth: number | null;
 	detailsWidth: number;
@@ -68,6 +70,7 @@ export interface PaneLayout {
 	detailsForced: boolean;
 	resultsMaximised: boolean;
 	detailsGroups: Record<CollapsibleGroup, boolean>;
+	xmlTab: XmlPaneTab;
 }
 
 export interface ParsedQuery {
@@ -134,6 +137,7 @@ export interface QueryBuilderState extends ParsedQuery {
 	showDetails: (force: boolean) => void;
 	releaseDetails: () => void;
 	setDetailsGroupOpen: (group: CollapsibleGroup, open: boolean) => void;
+	setXmlTab: (tab: XmlPaneTab) => void;
 	registerDraft: (commit: () => void) => () => void;
 	flushDraft: () => void;
 	dispose: () => void;
@@ -154,6 +158,7 @@ export const DEFAULT_LAYOUT: PaneLayout = {
 	detailsForced: false,
 	resultsMaximised: false,
 	detailsGroups: { more: false, legacy: false },
+	xmlTab: "fetchxml",
 };
 
 const idleRun = (id: number): QueryRunState => ({
@@ -475,6 +480,7 @@ export const createQueryBuilderStore = ({ connection, fetchXml }: QueryBuilderIn
 						? state
 						: { layout: { ...state.layout, detailsGroups: { ...state.layout.detailsGroups, [group]: open } } }
 				),
+			setXmlTab: (tab) => set((state) => (state.layout.xmlTab === tab ? state : { layout: { ...state.layout, xmlTab: tab } })),
 			registerDraft: (commit) => {
 				draft = commit;
 				return () => {

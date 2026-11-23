@@ -1,15 +1,23 @@
 import { useQueries, type UseQueryResult } from "@tanstack/react-query";
 import { useMemo } from "react";
 
+import { describeError } from "@/shared/lib";
 import { metadataFrom, type QueryMetadata } from "@/shared/lib/fetchxml";
 import { type QueryTable } from "@/shared/types";
 
 import { type ResultTables } from "../lib";
 import { type QueryGateway } from "./useQueryGateway";
 
+export interface QueryTableFailure {
+	readonly logicalName: string;
+	readonly message: string;
+}
+
 export interface QueryTables {
 	tables: ResultTables;
 	metadata: QueryMetadata;
+	loading: boolean;
+	failures: readonly QueryTableFailure[];
 }
 
 const combineTables =
@@ -20,6 +28,10 @@ const combineTables =
 		return {
 			tables: Object.fromEntries(loaded.map((table) => [table.logicalName.toLowerCase(), table])),
 			metadata: metadataFrom(loaded, missing),
+			loading: results.some((result) => result.isPending),
+			failures: results.flatMap((result, index) =>
+				result.isError ? [{ logicalName: logicalNames[index] ?? "", message: describeError(result.error) }] : []
+			),
 		};
 	};
 

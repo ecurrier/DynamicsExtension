@@ -269,6 +269,15 @@
 		if (queryMetadata) {
 			return queryMetadata;
 		}
+		if (path === "$batch" && method === "POST") {
+			return batchQueryResponse(init?.body);
+		}
+		if (path.startsWith("savedqueries?") && path.includes("statecode eq 0")) {
+			return jsonResponse({ value: savedQueryRecords(viewTableOf(path)) });
+		}
+		if (path.startsWith("userqueries?")) {
+			return jsonResponse({ error: { code: "0x80040220", message: "Principal user is missing prvReadUserQuery privilege on entity 'userquery'." } }, 403);
+		}
 		const queryRun = path.match(/^(\w+)\?fetchXml=([\s\S]*)$/);
 		if (queryRun && init?.headers?.Prefer === 'odata.include-annotations="*"') {
 			const { status, body } = queryRunBody(queryRun[1], queryRun[2]);
@@ -1138,11 +1147,21 @@
 			return { ...row, ...linked };
 		});
 	};
+	const primaryIdInList = (fetchXml, primaryId) => {
+		const conditions = [...fetchXml.matchAll(/<condition\s+attribute\s*=\s*["'](\w+)["']\s+operator\s*=\s*["']in["']\s*>([\s\S]*?)<\/condition>/g)];
+		const match = conditions.find((candidate) => candidate[1] === primaryId);
+		if (!match) {
+			return null;
+		}
+		return new Set([...match[2].matchAll(/<value>([^<]*)<\/value>/g)].map((value) => value[1].trim().toLowerCase().replace(/[{}]/g, "")));
+	};
 	const queryRunBody = (entitySetName, fetchXml) => {
-		const set = QUERY_SETS[entitySetName];
-		if (!set) {
+		const fixtureSet = QUERY_SETS[entitySetName];
+		if (!fixtureSet) {
 			return queryError(404, `Resource not found for the segment '${entitySetName}'.`);
 		}
+		const listed = primaryIdInList(fetchXml, fixtureSet.primaryId);
+		const set = listed ? { ...fixtureSet, rows: fixtureSet.rows.filter((row) => listed.has(row[fixtureSet.primaryId])) } : fixtureSet;
 		const known = new Set(Object.values(queryFixtures).flatMap((fixture) => fixture.columns.map((column) => column.logicalName)));
 		const unknown = [...fetchXml.matchAll(/<attribute\s+name\s*=\s*["']([^"']+)["']/g)].map((match) => match[1]).find((name) => !known.has(name));
 		if (unknown) {
@@ -1200,6 +1219,141 @@
 			elapsedMs: 150,
 			annotations: Object.fromEntries(Object.entries(body).filter(([key]) => key.startsWith("@"))),
 		};
+	};
+	const BATCH_STATUS_TEXT = { 200: "OK", 400: "Bad Request", 404: "Not Found" };
+	const batchResponse = (status, body) => {
+		const boundary = `batchresponse_${crypto.randomUUID()}`;
+		const text = [
+			`--${boundary}`,
+			"Content-Type: application/http",
+			"Content-Transfer-Encoding: binary",
+			"",
+			`HTTP/1.1 ${status} ${BATCH_STATUS_TEXT[status] ?? "Error"}`,
+			"Content-Type: application/json; odata.metadata=minimal; odata.streaming=true",
+			"OData-Version: 4.0",
+			"",
+			JSON.stringify(body),
+			`--${boundary}--`,
+			"",
+		].join("\r\n");
+		return new Response(text, { status: status === 200 ? 200 : 400, headers: { "Content-Type": `multipart/mixed; boundary=${boundary}` } });
+	};
+	const batchQueryResponse = (requestBody) => {
+		const requestLine = String(requestBody ?? "").match(/^GET (\S+) HTTP\/1\.1\r?$/m);
+		const marker = "/api/data/v9.2/";
+		const target = requestLine ? requestLine[1] : "";
+		const innerPath = target.includes(marker) ? decodeURIComponent(target.slice(target.indexOf(marker) + marker.length)) : "";
+		const queryRun = innerPath.match(/^(\w+)\?fetchXml=([\s\S]*)$/);
+		console.log("[harness] $batch", requestLine ? `GET of ${target.length} characters` : "without a GET request");
+		if (!queryRun) {
+			return batchResponse(400, { error: { code: "0x0", message: "harness: the $batch stub answers only one Fetch XML GET with an absolute URL" } });
+		}
+		const { status, body } = queryRunBody(queryRun[1], queryRun[2]);
+		return batchResponse(status, body);
+	};
+	const queryViews = {
+		account: {
+			system: [
+				{
+					id: guid(7001),
+					name: "Active Accounts",
+					queryType: 0,
+					isDefault: true,
+					fetchXml:
+						'<fetch version="1.0" mapping="logical"><entity name="account"><attribute name="name" /><attribute name="accountnumber" /><attribute name="primarycontactid" /><order attribute="name" /><filter type="and"><condition attribute="statecode" operator="eq" value="0" /></filter></entity></fetch>',
+				},
+				{
+					id: guid(7002),
+					name: "Accounts in Consulting",
+					queryType: 0,
+					isDefault: false,
+					fetchXml:
+						'<fetch version="1.0" mapping="logical"><entity name="account"><attribute name="name" /><attribute name="revenue" /><filter type="and"><condition attribute="industrycode" operator="eq" value="4" /></filter></entity></fetch>',
+				},
+				{
+					id: guid(7003),
+					name: "Quick Find Active Accounts",
+					queryType: 4,
+					isDefault: false,
+					fetchXml:
+						'<fetch version="1.0" mapping="logical"><entity name="account"><attribute name="name" /><filter type="and"><condition attribute="statecode" operator="eq" value="0" /></filter><filter type="or" isquickfindfields="1"><condition attribute="name" operator="like" value="{0}" /><condition attribute="accountnumber" operator="like" value="{0}" /></filter></entity></fetch>',
+				},
+				{
+					id: guid(7004),
+					name: "Account Lookup View",
+					queryType: 64,
+					isDefault: false,
+					fetchXml:
+						'<fetch version="1.0" mapping="logical"><entity name="account"><attribute name="name" /><attribute name="accountnumber" /></entity></fetch>',
+				},
+			],
+			personal: [
+				{
+					id: guid(7101),
+					name: "My big accounts",
+					queryType: 0,
+					fetchXml:
+						'<fetch version="1.0" mapping="logical"><entity name="account"><attribute name="name" /><attribute name="revenue" /><order attribute="revenue" descending="true" /><filter type="and"><condition attribute="revenue" operator="ge" value="100000" /></filter></entity></fetch>',
+				},
+				{
+					id: guid(7102),
+					name: "Accounts without a contact",
+					queryType: 0,
+					fetchXml:
+						'<fetch version="1.0" mapping="logical"><entity name="account"><attribute name="name" /><filter type="and"><condition attribute="primarycontactid" operator="null" /></filter></entity></fetch>',
+				},
+			],
+		},
+	};
+	const viewTableOf = (path) => path.match(/returnedtypecode eq '([^']+)'/)?.[1] ?? "";
+	const savedQueryRecords = (logicalName) =>
+		(queryViews[logicalName]?.system ?? []).map((view) => ({
+			savedqueryid: view.id,
+			name: view.name,
+			fetchxml: view.fetchXml,
+			querytype: view.queryType,
+			isdefault: view.isDefault,
+		}));
+	const queryViewList = (logicalName) => ({
+		views: [
+			...(queryViews[logicalName]?.system ?? []).map((view) => ({ ...view, kind: "system" })),
+			...(queryViews[logicalName]?.personal ?? []).map((view) => ({ ...view, kind: "personal", isDefault: false })),
+		],
+		personalViewsUnavailable: null,
+	});
+	const harnessNestedFetchXml = [
+		'<fetch top="25">',
+		'  <entity name="account">',
+		'    <attribute name="name" />',
+		'    <attribute name="revenue" />',
+		'    <filter type="and">',
+		'      <condition attribute="statecode" operator="eq" value="0" />',
+		'      <filter type="or">',
+		'        <condition attribute="industrycode" operator="eq" value="1" />',
+		'        <condition attribute="name" operator="like" value="Contoso%" />',
+		"      </filter>",
+		"    </filter>",
+		'    <link-entity name="contact" from="contactid" to="primarycontactid" link-type="outer" alias="pc">',
+		'      <attribute name="fullname" />',
+		"    </link-entity>",
+		"  </entity>",
+		"</fetch>",
+	].join("\n");
+	const harnessBatchFetchXml = () => {
+		const ids = Array.from({ length: 600 }, (_, i) => (i % 30 === 0 ? guid(9000 + i / 30) : guid(20000 + i)));
+		return [
+			"<fetch>",
+			'  <entity name="account">',
+			'    <attribute name="name" />',
+			'    <attribute name="accountnumber" />',
+			'    <filter type="and">',
+			'      <condition attribute="accountid" operator="in">',
+			...ids.map((id) => `        <value>${id}</value>`),
+			"      </condition>",
+			"    </filter>",
+			"  </entity>",
+			"</fetch>",
+		].join("\n");
 	};
 
 	const harnessFormAttributes = [
@@ -2145,6 +2299,7 @@
 		"query.listTables": () => queryTableSummaries(),
 		"query.getTable": ({ logicalName }) => toQueryTable(logicalName),
 		"query.runQuery": ({ entitySetName, fetchXml }) => toQueryRunResult(queryRunBody(entitySetName, fetchXml)),
+		"query.listViews": ({ logicalName }) => queryViewList(logicalName),
 		"transport.listViews": () => transportViews.map((view) => ({ ...view })),
 		"transport.getEntityMetadata": (args) => ({
 			info: transportEntities.find((entity) => entity.logicalName === args.logicalName) ?? transportEntities[0],
@@ -2184,6 +2339,10 @@
 			{
 				name: "Contacts (contact_customer_accounts)",
 				fetchXml: "<fetch version='1.0'><entity name='contact'><attribute name='fullname' /><order attribute='fullname' /></entity></fetch>",
+			},
+			{
+				name: "Active Accounts in Accounting or named Contoso",
+				fetchXml: harnessNestedFetchXml.replace(/\n\s*/g, ""),
 			},
 		],
 		"utilities.generateUrls": () => ({
@@ -2719,7 +2878,11 @@
 									"  </entity>",
 									"</fetch>",
 								].join("\n")
-							: null,
+							: new URLSearchParams(location.search).get("queryFetchXml") === "nested"
+								? harnessNestedFetchXml
+								: new URLSearchParams(location.search).get("queryFetchXml") === "batch"
+									? harnessBatchFetchXml()
+									: null,
 				launchedAt: new Date().toISOString(),
 			},
 		},

@@ -36,3 +36,5 @@ Needs a real org (issue 14): Personal Views over both Connections, and the page'
 Harness stubs to add: both routes return `{ value: [...] }`; `savedqueries` rows have `savedqueryid, name, fetchxml, querytype, isdefault`, `userqueries` rows have `userqueryid, name, fetchxml, querytype`; to show the unavailable note, `userqueries` returns a 403 for one Connection.
 
 Needs a real org (for issue 14's checklist): the `fetchxml ne null` and parenthesised `or` filter; which Personal Views appear over each Connection; what a privilege error on `userquery` looks like.
+
+2026-11-22: the harness stubs for `query.listViews` are in: System Views and Personal Views for `account`; Personal Views return a 403 over the Environment connection and load over the page Connection. Nothing in the UI uses them yet.

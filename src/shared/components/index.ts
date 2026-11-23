@@ -28,3 +28,4 @@ export * from "./TextBadge";
 export * from "./Toast";
 export * from "./UserPicker";
 export * from "./ValueChip";
+export * from "./WebApiResult";

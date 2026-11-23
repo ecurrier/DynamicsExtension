@@ -1,6 +1,6 @@
 # Long queries through $batch
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Phase: 1
 Blocked by: 03
@@ -35,3 +35,5 @@ Needs a real org (issue 14): a Query with several hundred GUIDs over both Connec
 The harness stub must answer `POST .../$batch` with `Content-Type: multipart/mixed; boundary=batchresponse_<id>` and one `application/http` part (`HTTP/1.1 200 OK`, a JSON content type, a blank line, the usual JSON result); for an error, a 400 envelope whose part is `HTTP/1.1 400 Bad Request` with `{"error":{"message":...}}`.
 
 Needs a real org (for issue 14's checklist): a Query with several hundred GUIDs over both Connections; whether `$batch` works through the Page connection's session; the absolute inner URL; the error shape inside a batch.
+
+2026-11-22: the harness route is added and the issue is resolved. `?queryFetchXml=batch` opens a Query with a 600-GUID `in` list; it returned 20 Records through `POST $batch` over the Environment connection. Over the page Connection the harness replaces the whole page command, so the page-side `$batch` path is not exercised there and needs a real org.

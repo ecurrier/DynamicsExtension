@@ -10,25 +10,25 @@ import {
 	Field,
 	makeStyles,
 	Option,
+	Spinner,
 	Switch,
 	Tab,
 	TabList,
-	Text,
-	tokens,
 } from "@fluentui/react-components";
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 
 import { CodeBlock, CopyButton, FormRow, FormStack, Grow } from "@/shared/components";
 import { formatXml, toggleQuotes } from "@/shared/lib";
 import { type NamedFetchXml } from "@/shared/types";
 
-import { fetchXmlToOData, webApiSnippet } from "../lib";
-
 type OutputFormat = "fetchxml" | "odata" | "javascript";
 
+const WebApiQueryTab = lazy(() => import("./conversions").then((module) => ({ default: module.WebApiQueryTab })));
+const JavaScriptTab = lazy(() => import("./conversions").then((module) => ({ default: module.JavaScriptTab })));
+
 const useStyles = makeStyles({
-	caption: {
-		color: tokens.colorNeutralForeground3,
+	output: {
+		minHeight: "120px",
 	},
 });
 
@@ -47,23 +47,7 @@ const FetchXmlDialogBody = ({ queries, onClose, onRetrieveRecords }: FetchXmlDia
 	const formatted = useMemo(() => queries.map((query) => ({ name: query.name, fetchXml: formatXml(query.fetchXml) })), [queries]);
 	const selected = formatted[Number(selectedIndex)];
 	const fetchXml = selected ? toggleQuotes(selected.fetchXml, doubleQuotes) : "";
-
-	const odata = useMemo(() => (selected ? fetchXmlToOData(selected.fetchXml) : null), [selected]);
-
-	const content = useMemo(() => {
-		if (!selected) {
-			return "";
-		}
-		if (format === "javascript") {
-			return webApiSnippet(selected.fetchXml);
-		}
-		if (format === "odata") {
-			return odata?.ok ? odata.query : `?fetchXml=${encodeURIComponent(selected.fetchXml.replace(/\s+/g, " ").trim())}`;
-		}
-		return fetchXml;
-	}, [format, selected, odata, fetchXml]);
-
-	const language = format === "fetchxml" ? "xml" : format === "javascript" ? "javascript" : "json";
+	const loadingConverter = <Spinner size="tiny" label="Loading" labelPosition="after" />;
 
 	return (
 		<DialogBody>
@@ -94,25 +78,26 @@ const FetchXmlDialogBody = ({ queries, onClose, onRetrieveRecords }: FetchXmlDia
 						<Tab value="odata">Web API query</Tab>
 						<Tab value="javascript">JavaScript</Tab>
 					</TabList>
-					<CodeBlock value={content} language={language} height="280px" />
-					{format === "odata" && odata && !odata.ok ? (
-						<Text size={200} className={styles.caption}>
-							{`Could not translate to $select/$filter because ${odata.reason}. The fetchXml parameter above is the exact equivalent and is always safe to use.`}
-						</Text>
-					) : null}
-					{format === "odata" && odata?.ok ? (
-						<Text size={200} className={styles.caption}>
-							Append this to the entity set, for example
-							{` /api/data/v9.2/accounts${odata.query}`}
-						</Text>
-					) : null}
+					<div className={styles.output}>
+						{format === "fetchxml" ? <CodeBlock value={fetchXml} language="xml" height="280px" /> : null}
+						{format === "odata" && selected ? (
+							<Suspense fallback={loadingConverter}>
+								<WebApiQueryTab fetchXml={selected.fetchXml} />
+							</Suspense>
+						) : null}
+						{format === "javascript" && selected ? (
+							<Suspense fallback={loadingConverter}>
+								<JavaScriptTab fetchXml={selected.fetchXml} />
+							</Suspense>
+						) : null}
+					</div>
 				</FormStack>
 			</DialogContent>
 			<DialogActions>
 				<Button appearance="secondary" onClick={onClose}>
 					Close
 				</Button>
-				<CopyButton text={content} label="Copy" successMessage="Copied to clipboard" />
+				{format === "fetchxml" ? <CopyButton text={fetchXml} label="Copy" successMessage="Copied to clipboard" /> : null}
 				<Button appearance="primary" disabled={!fetchXml} onClick={() => onRetrieveRecords(fetchXml)}>
 					Retrieve Records
 				</Button>

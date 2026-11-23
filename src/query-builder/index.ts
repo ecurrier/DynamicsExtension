@@ -14,4 +14,6 @@ export * from "./Splitter";
 export * from "./store";
 export * from "./useQueryBuilderBootstrap";
 export * from "./useQueryRun";
+export * from "./WebApiPane";
+export * from "./XmlCopyButton";
 export * from "./XmlPane";

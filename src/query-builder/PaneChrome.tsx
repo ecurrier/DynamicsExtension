@@ -77,7 +77,7 @@ export const PaneButton = ({ icon: Icon, label, onClick }: PaneButtonProps) => (
 );
 
 interface PaneHeaderProps {
-	title: string;
+	title?: string;
 	toggleIcon: FluentIcon;
 	toggleLabel: string;
 	onToggle?: () => void;
@@ -89,7 +89,7 @@ export const PaneHeader = ({ title, toggleIcon, toggleLabel, onToggle, actions, 
 	const styles = useStyles();
 	return (
 		<div className={styles.header}>
-			<Caption1Strong className={styles.title}>{title}</Caption1Strong>
+			{title ? <Caption1Strong className={styles.title}>{title}</Caption1Strong> : null}
 			<div className={styles.middle}>{children}</div>
 			{actions}
 			{onToggle ? <PaneButton icon={toggleIcon} label={toggleLabel} onClick={onToggle} /> : null}

@@ -1,6 +1,6 @@
 # Web API Dialect and copy-as
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Phase: 1
 Blocked by: 02, 03, 04
@@ -54,3 +54,14 @@ Decisions where the documentation was silent: query functions take the Column's 
 Needs a real org (for issue 14's checklist): `EqualUserId` and the hierarchy functions on lookup and owner Columns; a multi-select Choice `eq '1,9'`; date-only literals and time-zone offsets; `_`, `[` and `]` passed through `contains`; `not (nav/col ...)` on an empty lookup; several functions in one `aggregate()`; grouping on `_x_value` and on `nav/col`; `In` on GUID strings; the link types `all` and `not all`; and the acceptance case, a nested `or` with a many-to-one link returning the same Records as its Fetch XML.
 
 For a future Flow "List rows" output: use `options` directly; `$expand` carries its own nested options, and `$apply` is used only for aggregates and is then the only option.
+
+2026-11-22: the UI half is done and the issue is resolved (Opus worker, reviewed and verified: typecheck, lint, 1,467 tests, build; in the harness the Web API tab showed the URL for the nested-filter fixture with its expand, filter, orderby and top).
+
+- **Copy**: `XmlCopyButton.tsx`, a split button in the Fetch XML tab's header; the forms and confirmation texts are in `lib/copyForms.ts`.
+- **Web API tab**: `WebApiPane.tsx`, using the shared display component `src/shared/components/WebApiResult/` and `src/shared/lib/webApiUrl.ts`. The selected tab is `layout.xmlTab`. Both tabs are stacked and the hidden one gets `visibility: hidden` and `inert`, so the editor is never unmounted and keeps its undo history, cursor and extensions.
+- **Utilities dialog**: the Web API and JavaScript tabs are lazy-loaded from `src/modules/utilities/dialogs/conversions/` and load Table metadata with `useQueryGateway` and `useQueryTables` on the page Connection. `useQueryTables` gained `loading` and `failures`, so a failed metadata load says so. The regex converter and its tests are deleted. The dialog's JavaScript tab builds its snippet from the Query core's JavaScript string and `?fetchXml=`, not from the Web API converter.
+- Bundle: the Fetch XML core is in a shared lazy chunk of about 110 kB loaded only by the Workspace and the dialog; the popup's `app` chunk went down by 8 kB; `page.js` and `background.js` are unchanged. Note that `grep LRParser` does not detect the parser in minified output; check for the strings `omitExcluded` or `No parse at` instead.
+
+Decisions made here: Copy shows only on the Fetch XML tab; the Web API tab has its own copy buttons. Clicking a warning selects its row and stays on the Web API tab. The parse-error banner shows only on the Fetch XML tab.
+
+Not verified: a real clipboard write (the browser pane refuses clipboard access, so the text handed to the clipboard API was checked instead); anything against a real org.

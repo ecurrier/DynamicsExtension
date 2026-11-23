@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { connectionRecordAppUrl, recordAppUrl, recordLink } from "./recordLinks";
+import { connectionApiBaseUrl, connectionRecordAppUrl, recordAppUrl, recordLink } from "./recordLinks";
 import { type ResultGridColumn } from "./results";
 
 const ID = "9B1DEB4D-3B7D-4BAD-9BDD-2B0D7B3DCB6D";
@@ -31,6 +31,22 @@ describe("recordAppUrl", () => {
 	it("gives nothing for a missing URL", () => {
 		expect(recordAppUrl(null)).toBeNull();
 		expect(recordAppUrl("")).toBeNull();
+	});
+});
+
+describe("connectionApiBaseUrl", () => {
+	const sources = { environmentUrl: "https://dev.crm.dynamics.com/", tabUrl: "https://prod.crm.dynamics.com/main.aspx?appid=tab&id=1" };
+
+	it("uses the origin of the source tab for a Page connection", () => {
+		expect(connectionApiBaseUrl({ kind: "page" }, sources)).toBe("https://prod.crm.dynamics.com/api/data/v9.2/");
+	});
+
+	it("uses the Environment's URL for an Environment connection", () => {
+		expect(connectionApiBaseUrl({ kind: "environment", environmentId: "env-dev" }, sources)).toBe("https://dev.crm.dynamics.com/api/data/v9.2/");
+	});
+
+	it("gives null when the Connection has no URL", () => {
+		expect(connectionApiBaseUrl({ kind: "page" }, { environmentUrl: null, tabUrl: null })).toBeNull();
 	});
 });
 

@@ -3,6 +3,7 @@ export * from "./comparison";
 export * from "./conditionEditing";
 export * from "./connectionLabel";
 export * from "./controlSize";
+export * from "./copyForms";
 export * from "./detailsEntries";
 export * from "./detailsGroups";
 export * from "./paneSize";

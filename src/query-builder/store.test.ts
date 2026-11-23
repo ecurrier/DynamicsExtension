@@ -147,6 +147,7 @@ describe("the Query Builder store", () => {
 			detailsForced: false,
 			resultsMaximised: false,
 			detailsGroups: { more: false, legacy: false },
+			xmlTab: "fetchxml",
 		});
 		store.getState().togglePane("xml");
 		expect(store.getState().layout.collapsed.xml).toBe(false);
@@ -195,6 +196,17 @@ describe("the Query Builder store", () => {
 		expect(store.getState().layout.detailsGroups).toEqual({ more: true, legacy: false });
 		store.getState().setDetailsGroupOpen("more", false);
 		expect(store.getState().layout.detailsGroups.more).toBe(false);
+	});
+
+	it("remembers which tab the right pane shows, and keeps the text when it changes", () => {
+		const store = createQueryBuilderStore({ connection: PAGE_CONNECTION, fetchXml: GOOD });
+		expect(store.getState().layout.xmlTab).toBe("fetchxml");
+		store.getState().setXmlTab("webapi");
+		expect(store.getState().layout.xmlTab).toBe("webapi");
+		expect(store.getState().text).toBe(GOOD);
+		const layout = store.getState().layout;
+		store.getState().setXmlTab("webapi");
+		expect(store.getState().layout).toBe(layout);
 	});
 
 	it("maximises the results and restores the layout as it was", () => {
