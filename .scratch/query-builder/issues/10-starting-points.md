@@ -7,6 +7,7 @@ Blocked by: 04
 
 See `../spec.md`, decision 19. ADR 0003 (the step explainer goes on the Workspace's own empty state).
 
+- All UI text follows spec decision 31 (few words, Simplified Technical English); issue 19 lists the rules.
 - Empty state: when the Workspace has no Query, the shared `StepExplainer` plus four starting points. Once a Query exists, the same four are reachable from a "New" menu in the header, which asks before replacing a Query that has unsaved edits since it was last run or stored.
   - **Blank**: pick a Table (reuse an existing Table combobox); creates `<fetch><entity name="..."><attribute name="<primary name>"/></entity></fetch>`.
   - **Paste Fetch XML**: focuses the XML pane; pasting into the empty editor is enough.

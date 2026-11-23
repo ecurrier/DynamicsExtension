@@ -9,6 +9,7 @@ See `../spec.md`, decision 26.
 
 A "Compare" tab in the results pane, shown when the Workspace has two or more Connections.
 
+- All UI text follows spec decision 31 (few words, Simplified Technical English); issue 19 lists the rules.
 - Setup row: pick the two Query Runs to compare (defaulting to the first two Connections); pick the Match Key, "Primary key" or "Columns I choose" with a multi-select of the Query's root-Table result columns; and a "Columns compared" multi-select, pre-filled with issue 16's suggestion. A "Compare" button.
 - Compare loads every remaining page of both Query Runs first, with progress, a Stop button, and the same confirmation past 50,000 Records as Load all. If either side stops at the cap or is stopped by the user, the result carries a banner: "Partial: only the first N Records of X were compared", and the "only in" lists are labelled as unreliable.
 - A Comparison is not possible for a Query with `aggregate="true"` or `top`; the tab says why. If a Match Key column is not in the Query's result columns it cannot be chosen; the hint suggests adding the Column to the Query.

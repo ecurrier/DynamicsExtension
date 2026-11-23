@@ -9,6 +9,7 @@ See `../spec.md`, decisions 5, 23, 25.
 
 Phase 1 runs a Query over one Connection. This makes the Workspace hold a list of Connections and one Query Run per Connection.
 
+- All UI text follows spec decision 31 (few words, Simplified Technical English); issue 19 lists the rules.
 - Header: the first Connection stays where the picker is and remains the one whose metadata drives the pickers and autocomplete. An "Add Connection" control adds further Connections: any saved Environment, and the source tab's Page connection if it is not already in the list. Each added Connection can be removed. The same Environment cannot be added twice.
 - Run starts a Query Run on every Connection in the list at once. Each runs and pages independently; one failing or being slow does not hold the others.
 - Before a Connection's Query Run starts, the Query is validated against that Connection's own metadata (issue 08's `validate`, loading that Connection's Tables). A Table or Column the Environment lacks is shown as that Connection's error ("contoso_region does not exist on account in Contoso UAT") and its request is not sent; the other Connections still run.

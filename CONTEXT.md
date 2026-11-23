@@ -48,6 +48,10 @@ _Avoid_: Fetch, FetchXML (that is the Dialect), search, view, request
 The Workspace where a Query is written, as a tree or as Fetch XML, run over a Connection, and its results checked. It reads and never writes.
 _Avoid_: FetchXML Builder (that is another product), query designer, advanced find
 
+**Exclude**:
+To leave one row of a Query out for a test without deleting it, and **Include** to put it back. An Excluded row travels in the Fetch XML as a comment, because that is the only place the format has for it; the comment is how it is stored, not what it is for.
+_Avoid_: Switch off, disable, mute, comment out
+
 **Query Run**:
 One execution of a Query over one Connection, and the Records it returned.
 _Avoid_: Run on its own (a Bulk Run writes), execution, result

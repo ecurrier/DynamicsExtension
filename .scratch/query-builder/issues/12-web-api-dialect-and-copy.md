@@ -21,7 +21,7 @@ Before starting, read the `## Comments` sections of issues 01 and 02: they docum
 UI:
 
 - The right pane gets two tabs, "Fetch XML" (the editor) and "Web API" (read-only: the full URL for the current Connection, the path alone, and the warnings, each a link that selects its node). A copy button on each.
-- A "Copy as" menu on the Fetch XML tab: formatted, minified, JavaScript string, C# string (from issue 01's serialiser).
+- A "Copy as" menu on the Fetch XML tab: formatted, minified, JavaScript string, C# string (from issue 01's serialiser). The minified and string forms leave Excluded rows out (issue 19, spec decision 11); the formatted copy is the XML as it is. All UI text follows spec decision 31.
 - Replace `fetchXmlToOData` and `webApiSnippet` in `src/modules/utilities/lib/fetchXmlSnippets.ts` with the shared converter. The Utilities dialog loads the metadata for the Tables the Fetch XML names through the Gateway, and shows the converter's warnings. Remove the regex implementation and its tests once nothing uses it.
 
 Acceptance:
