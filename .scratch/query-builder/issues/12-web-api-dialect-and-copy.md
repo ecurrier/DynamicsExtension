@@ -21,7 +21,12 @@ Before starting, read the `## Comments` sections of issues 01 and 02: they docum
 UI:
 
 - The right pane gets two tabs, "Fetch XML" (the editor) and "Web API" (read-only: the full URL for the current Connection, the path alone, and the warnings, each a link that selects its node). A copy button on each.
-- A "Copy as" menu on the Fetch XML tab: formatted, minified, JavaScript string, C# string (from issue 01's serialiser). The minified and string forms leave Excluded rows out (issue 19, spec decision 11); the formatted copy is the XML as it is. All UI text follows spec decision 31.
+- A visible **Copy** button in the Fetch XML pane's header, always there, not hidden in a menu. The user looked for one and found none; selecting all in the editor and pressing Ctrl+C is not a substitute, because it copies the text as written, Excluded rows included.
+  - Copy gives the Query as it runs: formatted, without Excluded rows, with ordinary comments kept. When rows were left out, the confirmation says so ("Copied. 2 Excluded rows left out.").
+  - A menu beside it: minified, JavaScript string, C# string (all without Excluded rows, from the Query core's serialiser), and "Copy with Excluded rows", which is the text exactly as it is in the editor.
+  - Ctrl+C in the editor is never changed: it copies the selected text as written.
+  - While the XML does not parse, Copy copies the text as written and says that it did.
+  - All UI text follows spec decision 31.
 - Replace `fetchXmlToOData` and `webApiSnippet` in `src/modules/utilities/lib/fetchXmlSnippets.ts` with the shared converter. The Utilities dialog loads the metadata for the Tables the Fetch XML names through the Gateway, and shows the converter's warnings. Remove the regex implementation and its tests once nothing uses it.
 
 Acceptance:
