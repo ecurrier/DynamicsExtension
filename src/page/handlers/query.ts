@@ -11,4 +11,5 @@ export const queryHandlers = defineHandlers({
 	"query.listTables": () => runOperation(() => operations().listTables()),
 	"query.getTable": (request) => runOperation(() => operations().getTable(request)),
 	"query.runQuery": (request) => runOperation(() => operations().runQuery(request)),
+	"query.listViews": (request) => runOperation(() => operations().listViews(request)),
 });

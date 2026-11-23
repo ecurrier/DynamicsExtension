@@ -44,6 +44,7 @@ import {
 	type QueryRunResult,
 	type QueryTable,
 	type QueryTableSummary,
+	type QueryViewList,
 	type RecordAccessReport,
 	type RecordAccessRequest,
 	type RecordCountRequest,
@@ -180,6 +181,7 @@ export interface CommandMap {
 	"query.listTables": { args: void; result: QueryTableSummary[]; kind: "query" };
 	"query.getTable": { args: { logicalName: string }; result: QueryTable; kind: "query" };
 	"query.runQuery": { args: QueryRunRequest; result: QueryRunResult; kind: "query" };
+	"query.listViews": { args: { logicalName: string }; result: QueryViewList; kind: "query" };
 }
 
 export type CommandName = keyof CommandMap;

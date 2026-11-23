@@ -464,6 +464,144 @@ describe("queryOperations.runQuery", () => {
 	});
 });
 
+const SYSTEM_VIEWS = {
+	value: [
+		{
+			savedqueryid: "{BBBBBBBB-0000-0000-0000-000000000002}",
+			name: "My Active Accounts",
+			fetchxml: '<fetch><entity name="account" /></fetch>',
+			querytype: 0,
+			isdefault: false,
+		},
+		{
+			savedqueryid: "aaaaaaaa-0000-0000-0000-000000000001",
+			name: "Active Accounts",
+			fetchxml: '<fetch><entity name="account" /></fetch>',
+			querytype: 0,
+			isdefault: true,
+		},
+		{
+			savedqueryid: "cccccccc-0000-0000-0000-000000000003",
+			name: "Account Lookup View",
+			fetchxml: '<fetch><entity name="account" /></fetch>',
+			querytype: 64,
+			isdefault: false,
+		},
+	],
+};
+
+const PERSONAL_VIEWS = {
+	value: [
+		{ userqueryid: "eeeeeeee-0000-0000-0000-000000000005", name: "zeta accounts", fetchxml: '<fetch><entity name="account" /></fetch>', querytype: 0 },
+		{
+			userqueryid: "dddddddd-0000-0000-0000-000000000004",
+			name: "Big Accounts",
+			fetchxml: '<fetch top="5"><entity name="account" /></fetch>',
+			querytype: 0,
+		},
+	],
+};
+
+describe("queryOperations.listViews", () => {
+	it("returns System Views then Personal Views, each ordered by name", async () => {
+		const { http, calls } = createFakeHttp({ "savedqueries?": SYSTEM_VIEWS, "userqueries?": PERSONAL_VIEWS });
+		const result = await queryOperations(http).listViews({ logicalName: "Account" });
+		expect(result.personalViewsUnavailable).toBeNull();
+		expect(result.views.map((view) => [view.kind, view.name])).toEqual([
+			["system", "Account Lookup View"],
+			["system", "Active Accounts"],
+			["system", "My Active Accounts"],
+			["personal", "Big Accounts"],
+			["personal", "zeta accounts"],
+		]);
+		expect(result.views[1]).toEqual({
+			id: "aaaaaaaa-0000-0000-0000-000000000001",
+			name: "Active Accounts",
+			kind: "system",
+			fetchXml: '<fetch><entity name="account" /></fetch>',
+			queryType: 0,
+			isDefault: true,
+		});
+		expect(result.views[2]?.id).toBe("bbbbbbbb-0000-0000-0000-000000000002");
+		expect(result.views[3]).toMatchObject({ id: "dddddddd-0000-0000-0000-000000000004", kind: "personal", isDefault: false, queryType: 0 });
+		const types = "(querytype eq 0 or querytype eq 1 or querytype eq 2 or querytype eq 4 or querytype eq 64)";
+		expect(calls.map((call) => call.path)).toEqual([
+			`savedqueries?$select=savedqueryid,isdefault,name,fetchxml,querytype&$filter=returnedtypecode eq 'account' and statecode eq 0 and fetchxml ne null and ${types}&$orderby=name asc`,
+			`userqueries?$select=userqueryid,name,fetchxml,querytype&$filter=returnedtypecode eq 'account' and statecode eq 0 and fetchxml ne null and ${types}&$orderby=name asc`,
+		]);
+	});
+
+	it("returns only System Views for a Table with no Personal Views", async () => {
+		const { http } = createFakeHttp({ "savedqueries?": SYSTEM_VIEWS, "userqueries?": { value: [] } });
+		const result = await queryOperations(http).listViews({ logicalName: "account" });
+		expect(result.views).toHaveLength(3);
+		expect(result.views.every((view) => view.kind === "system")).toBe(true);
+		expect(result.personalViewsUnavailable).toBeNull();
+	});
+
+	it("leaves out views without Fetch XML", async () => {
+		const { http } = createFakeHttp({
+			"savedqueries?": {
+				value: [
+					{ savedqueryid: "aaaaaaaa-0000-0000-0000-000000000001", name: "Has XML", fetchxml: "<fetch />", querytype: 0 },
+					{ savedqueryid: "aaaaaaaa-0000-0000-0000-000000000002", name: "Null XML", fetchxml: null, querytype: 0 },
+					{ savedqueryid: "aaaaaaaa-0000-0000-0000-000000000003", name: "Blank XML", fetchxml: "  ", querytype: 0 },
+				],
+			},
+			"userqueries?": { value: [{ userqueryid: "dddddddd-0000-0000-0000-000000000004", name: "No XML", querytype: 0 }] },
+		});
+		const result = await queryOperations(http).listViews({ logicalName: "account" });
+		expect(result.views.map((view) => view.name)).toEqual(["Has XML"]);
+	});
+
+	it("returns the System Views and a note when Personal Views cannot be read", async () => {
+		const body = JSON.stringify({ error: { code: "0x80040220", message: "Principal user is missing prvReadUserQuery privilege" } });
+		const { http } = createFakeHttp({
+			"savedqueries?": SYSTEM_VIEWS,
+			"userqueries?": () => {
+				throw new DataverseHttpError(403, "Forbidden", body);
+			},
+		});
+		const result = await queryOperations(http).listViews({ logicalName: "account" });
+		expect(result.views).toHaveLength(3);
+		expect(result.personalViewsUnavailable).toBe("Personal Views could not be read: Principal user is missing prvReadUserQuery privilege");
+	});
+
+	it("recognises a privilege error forwarded from the page", async () => {
+		const pageError = Object.assign(new Error("Principal user is missing prvReadUserQuery privilege"), {
+			name: "HttpError",
+			details: { status: 403, body: "" },
+		});
+		const { http } = createFakeHttp({
+			"savedqueries?": SYSTEM_VIEWS,
+			"userqueries?": () => {
+				throw pageError;
+			},
+		});
+		const result = await queryOperations(http).listViews({ logicalName: "account" });
+		expect(result.personalViewsUnavailable).toBe("Personal Views could not be read: Principal user is missing prvReadUserQuery privilege");
+	});
+
+	it("fails when Personal Views fail for a reason other than privileges", async () => {
+		const { http } = createFakeHttp({
+			"savedqueries?": SYSTEM_VIEWS,
+			"userqueries?": () => {
+				throw new DataverseHttpError(500, "Server Error", JSON.stringify({ error: { message: "Generic SQL error" } }));
+			},
+		});
+		await expect(queryOperations(http).listViews({ logicalName: "account" })).rejects.toMatchObject({ name: "DataverseHttpError", status: 500 });
+	});
+
+	it("rejects an invalid logical name without sending a request", async () => {
+		const { http, calls } = createFakeHttp();
+		await expect(queryOperations(http).listViews({ logicalName: "account' or 1 eq 1" })).rejects.toMatchObject({
+			name: "DataverseOperationError",
+			code: "InvalidArgument",
+		});
+		expect(calls).toHaveLength(0);
+	});
+});
+
 describe("decodePagingCookie", () => {
 	it("URL-decodes the pagingcookie attribute twice", () => {
 		expect(decodePagingCookie(DOCS_COOKIE_ANNOTATION)).toBe(DOCS_COOKIE);

@@ -68,6 +68,7 @@ const STALE_TIMES: Record<QueryCommandName, number> = {
 	"query.listTables": Infinity,
 	"query.getTable": Infinity,
 	"query.runQuery": 0,
+	"query.listViews": 0,
 };
 
 export interface PageQueryOptions {

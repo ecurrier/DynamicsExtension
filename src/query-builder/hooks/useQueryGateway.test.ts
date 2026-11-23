@@ -40,9 +40,28 @@ describe("queryGateway", () => {
 		await gateway.ops.runQuery(REQUEST);
 		await gateway.ops.getTable({ logicalName: "account" });
 		await gateway.ops.listTables();
+		await gateway.ops.listViews({ logicalName: "account" });
 		expect(mocks.invoke).toHaveBeenNthCalledWith(1, 4, "query.runQuery", REQUEST, { timeoutMs: 120_000 });
 		expect(mocks.invoke).toHaveBeenNthCalledWith(2, 4, "query.getTable", { logicalName: "account" }, { timeoutMs: 90_000 });
 		expect(mocks.invoke).toHaveBeenNthCalledWith(3, 4, "query.listTables", undefined, { timeoutMs: 90_000 });
+		expect(mocks.invoke).toHaveBeenNthCalledWith(4, 4, "query.listViews", { logicalName: "account" }, { timeoutMs: 90_000 });
+	});
+
+	it("lists views over the Environment's own http", async () => {
+		const { http, calls } = createFakeHttp({
+			"savedqueries?": {
+				value: [{ savedqueryid: "aaaaaaaa-0000-0000-0000-000000000001", name: "Active Accounts", fetchxml: "<fetch />", querytype: 0 }],
+			},
+			"userqueries?": { value: [] },
+		});
+		fake.http = http;
+		const gateway = createGateway(queryGateway, { kind: "environment", environment });
+		await expect(gateway.ops.listViews({ logicalName: "account" })).resolves.toMatchObject({
+			views: [{ name: "Active Accounts", kind: "system" }],
+			personalViewsUnavailable: null,
+		});
+		expect(mocks.getEnvironmentHttp).toHaveBeenCalledWith(environment, { timeoutMs: 90_000 });
+		expect(calls.map((call) => call.path.split("?")[0])).toEqual(["savedqueries", "userqueries"]);
 	});
 
 	it("runs the operations over the Environment's own http", async () => {

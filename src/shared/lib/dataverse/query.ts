@@ -10,8 +10,13 @@ import {
 	type QueryRunResult,
 	type QueryTable,
 	type QueryTableSummary,
+	type QueryView,
+	type QueryViewKind,
+	type QueryViewList,
 } from "@/shared/types";
 
+import { describeError } from "../errors";
+import { normalizeGuid } from "../guid";
 import { getBatchedWhenLong } from "./batch";
 import { codegenOperations } from "./codegen";
 import { DataverseOperationError } from "./errors";
@@ -35,6 +40,12 @@ export const TOTAL_RECORD_COUNT_ANNOTATION = "@Microsoft.Dynamics.CRM.totalrecor
 export const TOTAL_RECORD_COUNT_LIMIT_EXCEEDED_ANNOTATION = "@Microsoft.Dynamics.CRM.totalrecordcountlimitexceeded";
 
 const ODATA_COUNT_ANNOTATION = "@odata.count";
+
+export const VIEW_QUERY_TYPES = [0, 1, 2, 4, 64] as const;
+
+const PRIVILEGE_DENIED_CODE = "0x80040220";
+
+const VIEW_SELECT = "name,fetchxml,querytype";
 
 const COLUMN_TYPES: Record<string, QueryColumnType> = {
 	String: "text",
@@ -107,6 +118,15 @@ interface RelationshipsRecord {
 	ManyToOneRelationships?: ManyToOneRecord[] | null;
 	OneToManyRelationships?: OneToManyRecord[] | null;
 	ManyToManyRelationships?: ManyToManyRecord[] | null;
+}
+
+interface ViewRecord {
+	savedqueryid?: string | null;
+	userqueryid?: string | null;
+	name?: string | null;
+	fetchxml?: string | null;
+	querytype?: number | null;
+	isdefault?: boolean | null;
 }
 
 type QueryResponse = Record<string, unknown> & { value?: QueryRow[] };
@@ -223,10 +243,47 @@ const totalRecordCount = (body: QueryResponse): number | null => {
 
 const topLevelAnnotations = (body: QueryResponse): Record<string, unknown> => Object.fromEntries(Object.entries(body).filter(([key]) => key.startsWith("@")));
 
+export const viewsPath = (entitySet: "savedqueries" | "userqueries", logicalName: string): string => {
+	const idColumn = entitySet === "savedqueries" ? "savedqueryid,isdefault" : "userqueryid";
+	const queryTypes = VIEW_QUERY_TYPES.map((type) => `querytype eq ${type}`).join(" or ");
+	return `${entitySet}?$select=${idColumn},${VIEW_SELECT}&$filter=returnedtypecode eq '${logicalName}' and statecode eq 0 and fetchxml ne null and (${queryTypes})&$orderby=name asc`;
+};
+
+const toViews = (records: ViewRecord[], kind: QueryViewKind): QueryView[] =>
+	records
+		.flatMap((record) => {
+			const id = kind === "system" ? record.savedqueryid : record.userqueryid;
+			if (!id || !record.fetchxml?.trim()) {
+				return [];
+			}
+			return [
+				{
+					id: normalizeGuid(id),
+					name: record.name ?? "",
+					kind,
+					fetchXml: record.fetchxml,
+					queryType: record.querytype ?? 0,
+					isDefault: kind === "system" && record.isdefault === true,
+				},
+			];
+		})
+		.sort((left, right) => left.name.localeCompare(right.name, undefined, { sensitivity: "base" }));
+
+export const isPrivilegeError = (error: unknown): boolean => {
+	if (typeof error !== "object" || error === null) {
+		return false;
+	}
+	const candidate = error as { status?: unknown; body?: unknown; details?: { status?: unknown; body?: unknown } | null };
+	const status = candidate.status ?? candidate.details?.status;
+	const body = candidate.body ?? candidate.details?.body;
+	return status === 403 || (typeof body === "string" && body.includes(PRIVILEGE_DENIED_CODE));
+};
+
 export interface QueryOperations {
 	listTables: () => Promise<QueryTableSummary[]>;
 	getTable: (request: { logicalName: string }) => Promise<QueryTable>;
 	runQuery: (request: QueryRunRequest) => Promise<QueryRunResult>;
+	listViews: (request: { logicalName: string }) => Promise<QueryViewList>;
 }
 
 export const queryOperations = (http: DataverseHttp): QueryOperations => ({
@@ -268,6 +325,25 @@ export const queryOperations = (http: DataverseHttp): QueryOperations => ({
 			totalRecordCountLimitExceeded: body[TOTAL_RECORD_COUNT_LIMIT_EXCEEDED_ANNOTATION] === true,
 			elapsedMs,
 			annotations: topLevelAnnotations(body),
+		};
+	},
+	listViews: async ({ logicalName }) => {
+		const table = requireLogicalName(logicalName, "Table");
+		const [system, personal] = await Promise.all([
+			getAllPages<ViewRecord>(http, viewsPath("savedqueries", table)),
+			getAllPages<ViewRecord>(http, viewsPath("userqueries", table)).then(
+				(page) => ({ rows: page.rows, unavailable: null as string | null }),
+				(error: unknown) => {
+					if (!isPrivilegeError(error)) {
+						throw error;
+					}
+					return { rows: [] as ViewRecord[], unavailable: `Personal Views could not be read: ${describeError(error)}` };
+				}
+			),
+		]);
+		return {
+			views: [...toViews(system.rows, "system"), ...toViews(personal.rows, "personal")],
+			personalViewsUnavailable: personal.unavailable,
 		};
 	},
 });

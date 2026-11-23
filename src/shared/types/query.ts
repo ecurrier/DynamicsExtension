@@ -95,6 +95,22 @@ export interface QueryRunRequest {
 	fetchXml: string;
 }
 
+export type QueryViewKind = "system" | "personal";
+
+export interface QueryView {
+	id: string;
+	name: string;
+	kind: QueryViewKind;
+	fetchXml: string;
+	queryType: number;
+	isDefault: boolean;
+}
+
+export interface QueryViewList {
+	views: QueryView[];
+	personalViewsUnavailable: string | null;
+}
+
 export interface QueryRunResult {
 	rows: QueryRow[];
 	moreRecords: boolean;
