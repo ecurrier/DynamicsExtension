@@ -1,18 +1,13 @@
-import { type QueryRow } from "@/shared/types";
-
 import { type ComparedSide, type StoredComparison } from "./compareFlow";
 import { type CellValue, type ComparisonCounts, type MatchKey } from "./comparison";
-import { FORMATTED_VALUE_SUFFIX, type QueryRunRecord, type ResultColumn } from "./resultColumn";
-import { cellText, cellValueText, type ResultGridColumn } from "./results";
-import { type DisplayWindow } from "./resultsView";
+import { type QueryRunRecord, type ResultColumn } from "./resultColumn";
+import { cellText, cellValueText } from "./results";
 
 export type ComparisonBucket = "onlyInFirst" | "onlyInSecond" | "different" | "equal" | "ambiguous" | "noKey";
 
-export const COMPARISON_BUCKETS: readonly ComparisonBucket[] = ["onlyInFirst", "onlyInSecond", "different", "equal", "ambiguous", "noKey"];
+export const COMPARISON_BUCKETS: readonly ComparisonBucket[] = ["different", "onlyInFirst", "onlyInSecond", "equal", "ambiguous", "noKey"];
 
-const DEFAULT_ORDER: readonly ComparisonBucket[] = ["different", "onlyInFirst", "onlyInSecond", "equal", "ambiguous", "noKey"];
-
-export const defaultBucket = (counts: ComparisonCounts): ComparisonBucket => DEFAULT_ORDER.find((bucket) => counts[bucket] > 0) ?? "equal";
+export const defaultBucket = (counts: ComparisonCounts): ComparisonBucket => COMPARISON_BUCKETS.find((bucket) => counts[bucket] > 0) ?? "equal";
 
 export const bucketLabel = (bucket: ComparisonBucket, firstName: string, secondName: string): string => {
 	switch (bucket) {
@@ -82,73 +77,9 @@ export const matchKeyText = (record: QueryRunRecord, matchKey: MatchKey, primary
 export const matchKeyLabel = ({ matchKey, primaryKey, keyColumns }: Pick<StoredComparison, "matchKey" | "primaryKey" | "keyColumns">): string =>
 	matchKey.kind === "primaryKey" ? primaryKey : keyColumns.map((column) => column.label).join(" · ");
 
-export const pairLabelColumn = (columns: readonly ResultGridColumn[], matchKey: MatchKey, primaryKey: string): ResultGridColumn | null => {
-	if (matchKey.kind === "columns") {
-		return null;
-	}
-	return columns.find((column) => !column.key.includes(".") && column.key !== primaryKey && column.type === "text") ?? null;
-};
-
-export const columnCountText = (value: number): string => (value === 1 ? "1 Column" : `${count(value)} Columns`);
-
-export const rangeCaption = (window: DisplayWindow, total: number, noun: string): string =>
-	total === 0 ? `No ${noun}` : `${noun} ${count(window.start + 1)}-${count(window.end)} of ${count(total)}`;
-
 export const EMPTY_VALUE = "(empty)";
 
 export const showsRaw = (value: CellValue): boolean => {
 	const raw = cellText(value.raw);
 	return raw !== "" && raw !== value.friendly;
-};
-
-const pairText = (first: string, second: string): string => `${first || EMPTY_VALUE} → ${second || EMPTY_VALUE}`;
-
-export const MATCH_KEY_CELL = "__matchKey";
-
-export interface DifferingColumnsGrid {
-	columns: ResultGridColumn[];
-	rows: QueryRow[];
-}
-
-export const LABEL_CELL = "__label";
-
-export const differingColumnsGrid = (
-	stored: Pick<StoredComparison, "comparison" | "matchKey" | "primaryKey" | "keyColumns">,
-	labelColumn: ResultGridColumn | null
-): DifferingColumnsGrid => {
-	const { comparison, matchKey, primaryKey } = stored;
-	const counts = new Map<string, number>();
-	for (const pair of comparison.different) {
-		for (const difference of pair.differences) {
-			counts.set(difference.column, (counts.get(difference.column) ?? 0) + 1);
-		}
-	}
-	const differing = comparison.comparedColumns.filter((column) => counts.has(column.key));
-	const rows = comparison.different.map((pair) => {
-		const row: Record<string, unknown> = { [MATCH_KEY_CELL]: matchKeyText(pair.first, matchKey, primaryKey) };
-		if (labelColumn) {
-			row[LABEL_CELL] = cellValueText(pair.first, labelColumn.key, "friendly");
-		}
-		for (const difference of pair.differences) {
-			row[difference.column] = pairText(cellText(difference.first.raw), cellText(difference.second.raw));
-			row[`${difference.column}${FORMATTED_VALUE_SUFFIX}`] = pairText(difference.first.friendly, difference.second.friendly);
-		}
-		return row;
-	});
-	const column = (key: string, label: string, type: ResultGridColumn["type"] = "text"): ResultGridColumn => ({
-		key,
-		label,
-		type,
-		table: null,
-		column: null,
-		primaryKey: false,
-	});
-	return {
-		columns: [
-			column(MATCH_KEY_CELL, matchKeyLabel(stored), matchKey.kind === "primaryKey" ? "uniqueidentifier" : "text"),
-			...(labelColumn ? [column(LABEL_CELL, labelColumn.label)] : []),
-			...differing.map((entry) => column(entry.key, `${entry.label} (${count(counts.get(entry.key) ?? 0)})`)),
-		],
-		rows,
-	};
 };

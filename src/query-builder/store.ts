@@ -187,7 +187,7 @@ export interface QueryBuilderInit {
 export const DEFAULT_LAYOUT: PaneLayout = {
 	treeWidth: null,
 	detailsWidth: 280,
-	resultsHeight: 300,
+	resultsHeight: 340,
 	collapsed: { tree: false, details: false, xml: false, results: false },
 	detailsForced: false,
 	resultsMaximised: false,

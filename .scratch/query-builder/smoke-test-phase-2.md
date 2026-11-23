@@ -259,22 +259,26 @@ Do:
 3. Make sure that the first Query Run is Dev, the second is Test, and the Match Key is **Primary key**.
 4. Open **Columns compared**, and read the list. Then close it.
 5. Select **Compare**.
-6. Select each count in the row of counts.
-7. Select **Different**, if it is more than 0. Expand one pair. Then select **Differing Columns**.
-8. Open the same Record in Dev and in Test in the app. Compare the values with the pair.
+6. Select each bucket tab in turn.
+7. Select **Different**, if it is more than 0. Read one row. Then select its chevron to open the row.
+8. In that row, select **Open** under Dev. Then select **Open** under Test. Compare the values with the row.
+9. Select the header of one differing Column. Then select it again.
 
 Expect:
 
 - **Columns compared** lists every Column of the Query except `accountid`. All are selected.
 - If a side has more than 50 Records, "Loading all Records." shows during the Comparison, with the count of each side and a **Stop** button.
-- The row of counts shows Only in Dev, Only in Test, Different, Same, Ambiguous and No key. Each count is a filter for the list below.
-- The line below the counts says "Matched on the primary key. Ignored case and braces. Compared lookups by id."
+- The bucket tabs show Different, Only in Dev, Only in Test, Same, Ambiguous and No key, each with its count. A bucket with no Records is disabled.
+- The info icon at the right of the bucket tabs says "Matched on the primary key. Ignored case and braces. Compared lookups by id."
 - Records that came from Dev by the transport are in Same or Different. Records that you created by hand in one Environment are in Only in Dev or Only in Test.
-- A pair in Different shows the Account name beside its GUID. Expanded, it shows each differing Column with the Dev value and the Test value. The friendly value shows first, and the raw value shows below it when it is not the same.
-- **Differing Columns** shows one row for each pair, with only the Columns that differ.
-- The values in the pair agree with the app.
+- Each row in Different is one pair. It starts with **Open** under Dev and **Open** under Test, then the Account name, then its GUID in a short form.
+- Each differing Column shows the Dev value, an arrow, then the Test value. A cell is empty when the Column is the same in both.
+- An open row shows each differing Column with both values. The friendly value shows first, and the raw value shows below it when it is not the same.
+- **Open** under Dev opens the Record in Dev. **Open** under Test opens the Record in Test.
+- The Column header narrows the grid to the pairs that differ in that Column, and the caption names the filter. The second selection shows all pairs again.
+- The values in the row agree with the app.
 
-Report: the six counts, the matching line, and any pair whose values do not agree with the app.
+Report: the six counts, the matching sentence, the host of each **Open** link, and any pair whose values do not agree with the app.
 
 ### 9. Compare more than 5,000 Records on one side
 

@@ -68,6 +68,8 @@ const ConnectionDropdown = ({ label, selected, choices, disabled, onSelect }: Co
 	);
 };
 
+const KEY_COLUMNS_HINT = "The list shows the Columns of the Query. To use another Column, add it to the Query.";
+
 const keySummary = (choices: readonly ResultGridColumn[], selected: readonly string[]): string =>
 	selected
 		.map((key) => choices.find((column) => column.key === key)?.label)
@@ -153,6 +155,7 @@ export const CompareSetupRow = ({
 							choices={keyChoices}
 							selected={keyColumns}
 							summary={keySummary(keyChoices, keyColumns)}
+							hint={KEY_COLUMNS_HINT}
 							disabled={disabled}
 							onChange={(selected) => onSetupChange({ ...setup, keyColumns: selected })}
 						/>
@@ -180,11 +183,6 @@ export const CompareSetupRow = ({
 					</Text>
 				) : null}
 			</div>
-			{setup.matchKeyKind === "columns" ? (
-				<Text size={200} className={styles.hint}>
-					The list shows the Columns of the Query. To use another Column, add it to the Query.
-				</Text>
-			) : null}
 		</div>
 	);
 };

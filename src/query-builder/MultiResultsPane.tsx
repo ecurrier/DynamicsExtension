@@ -57,7 +57,7 @@ export const MultiResultsPane = ({ entries, controls, collapsed, maximised, onTo
 			/>
 			{!collapsed || maximised ? (
 				<div className={styles.content}>
-					<ResultsSummaryStrip entries={entries} onLoadAllEverywhere={controls.loadAllEverywhere} />
+					{comparing ? null : <ResultsSummaryStrip entries={entries} onLoadAllEverywhere={controls.loadAllEverywhere} />}
 					<TabList
 						size="small"
 						className={styles.tabs}
@@ -72,7 +72,7 @@ export const MultiResultsPane = ({ entries, controls, collapsed, maximised, onTo
 						<Tab value={COMPARE_TAB}>Compare</Tab>
 					</TabList>
 					{comparing ? (
-						<ComparePane entries={entries} controls={controls} maximised={maximised} />
+						<ComparePane entries={entries} controls={controls} />
 					) : (
 						<ResultsBody
 							key={key}

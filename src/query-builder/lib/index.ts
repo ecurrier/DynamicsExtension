@@ -1,5 +1,6 @@
 export * from "./attributeEdits";
 export * from "./compareFlow";
+export * from "./compareGrid";
 export * from "./compareSetup";
 export * from "./compareView";
 export * from "./comparison";

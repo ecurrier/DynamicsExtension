@@ -1,6 +1,6 @@
 # Compare tab: navigation and Record links
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Phase: 2
 Blocked by: 17
@@ -76,3 +76,17 @@ Changing how Records are matched or compared (issue 16), exporting a Comparison,
 - Partial and Out of date still show as before, and "Compare again" works.
 - Unit tests for: the columns of each bucket's grid including the open columns and which cells have a link; the label and key columns for each kind of Match Key; the Column filter and its caption. Existing Comparison tests still pass.
 - `npm run typecheck`, `npm run lint`, `npm test` and `npm run build` pass. Verify in the harness and include screenshots of the Different bucket at normal height and maximised, and of an "only in" bucket.
+
+## Comments
+
+Resolved 2026-11-22. Built by an Opus worker in two passes, reviewed and verified (typecheck, lint, 1,602 tests, build; in the harness the Different grid showed 22 pairs with 44 "Open" links, the first row's going to `org12345.crm.dynamics.com` and `contoso-test.crm.dynamics.com`, and seven rows visible at the normal pane height).
+
+- `lib/compareGrid.ts` (tested) decides each bucket's columns, which cells carry an "Open" link, the label and GUID columns, the Column filter and the caption.
+- The shared `DataTable` can neither pin columns nor open a row, so the Compare lists use their own small table, `compare/CompareTable.tsx`, which pins the chevron, open and label columns and handles Up, Down, Home, End, Enter and Tab. `DataTable` is unchanged.
+- Different is one grid of pairs; `PairList`, `ComparisonSummary`, `DifferencesBucket`, `SetAsideBucket` and the old differing-Columns helpers are deleted. `useBucketView.ts` holds paging and the Column filter; `BucketList.tsx` renders any bucket.
+- Rows above the list: the setup row, then one row with the bucket tabs and, right-aligned, an info icon (the "Matched on" sentence, plus the arrow explanation on Different), the Column filter and the caption with the pager. Below 1240px the caption drops; below 1080px the filter becomes an icon button. The summary strip is hidden on the Compare tab.
+- **The results pane's default height is now 340px, up from 300px, for the whole Workspace.** The first pass showed four rows of the Different grid at 300px; with one more row of controls removed and 340px, seven show. The editors row keeps its 160px minimum and the results pane gives way in a short window.
+
+Decisions made here: Ambiguous and No key are one list each with both open columns. With a chosen-Columns Match Key, Different and Same show no GUID column, because each side has its own id.
+
+Left open: the Match Key hint tooltip partly overlaps the Columns list when that list opens upward. Not verified: a real org.

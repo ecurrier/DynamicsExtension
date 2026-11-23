@@ -1,4 +1,4 @@
-import { Dropdown, makeStyles, Option } from "@fluentui/react-components";
+import { Dropdown, makeStyles, Option, Tooltip } from "@fluentui/react-components";
 
 import { type ResultGridColumn } from "../lib";
 
@@ -14,13 +14,14 @@ interface ColumnsDropdownProps {
 	choices: readonly ResultGridColumn[];
 	selected: readonly string[];
 	summary: string;
+	hint?: string;
 	disabled?: boolean;
 	onChange: (selected: string[]) => void;
 }
 
-export const ColumnsDropdown = ({ label, choices, selected, summary, disabled, onChange }: ColumnsDropdownProps) => {
+export const ColumnsDropdown = ({ label, choices, selected, summary, hint, disabled, onChange }: ColumnsDropdownProps) => {
 	const styles = useStyles();
-	return (
+	const dropdown = (
 		<Dropdown
 			multiselect
 			size="small"
@@ -29,7 +30,7 @@ export const ColumnsDropdown = ({ label, choices, selected, summary, disabled, o
 			disabled={disabled}
 			placeholder="Select Columns"
 			value={summary}
-			title={summary}
+			title={hint ? undefined : summary}
 			selectedOptions={[...selected]}
 			onOptionSelect={(_, data) => onChange(data.selectedOptions)}>
 			{choices.map((column) => (
@@ -38,5 +39,12 @@ export const ColumnsDropdown = ({ label, choices, selected, summary, disabled, o
 				</Option>
 			))}
 		</Dropdown>
+	);
+	return hint ? (
+		<Tooltip content={hint} relationship="description" positioning="above">
+			{dropdown}
+		</Tooltip>
+	) : (
+		dropdown
 	);
 };

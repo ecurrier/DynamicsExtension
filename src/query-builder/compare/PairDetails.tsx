@@ -1,7 +1,7 @@
-import { Link, makeStyles, Text, tokens } from "@fluentui/react-components";
+import { makeStyles, Text, tokens } from "@fluentui/react-components";
 import { Fragment } from "react";
 
-import { type CellValue, cellText, type DifferingPair, EMPTY_VALUE, showsRaw } from "../lib";
+import { type CellValue, cellText, type ColumnDifference, EMPTY_VALUE, showsRaw } from "../lib";
 
 const useStyles = makeStyles({
 	table: {
@@ -9,9 +9,7 @@ const useStyles = makeStyles({
 		gridTemplateColumns: "minmax(120px, max-content) minmax(0, 360px) minmax(0, 360px)",
 		columnGap: tokens.spacingHorizontalL,
 		rowGap: tokens.spacingVerticalXXS,
-		padding: `${tokens.spacingVerticalXS} ${tokens.spacingHorizontalM} ${tokens.spacingVerticalS} 32px`,
-		backgroundColor: tokens.colorNeutralBackground2,
-		borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
+		padding: `${tokens.spacingVerticalXS} ${tokens.spacingHorizontalM} ${tokens.spacingVerticalS} 36px`,
 	},
 	head: {
 		color: tokens.colorNeutralForeground3,
@@ -57,42 +55,26 @@ const ValueCell = ({ value }: { value: CellValue }) => {
 	);
 };
 
-interface SideHeading {
-	name: string;
-	href: string | null;
-}
-
-const Heading = ({ side }: { side: SideHeading }) => {
-	const styles = useStyles();
-	return (
-		<Text size={200} className={styles.head} title={side.name}>
-			{side.href ? (
-				<Link href={side.href} target="_blank" rel="noreferrer" title={`Open the Record in ${side.name}`}>
-					{side.name}
-				</Link>
-			) : (
-				side.name
-			)}
-		</Text>
-	);
-};
-
 interface PairDetailsProps {
-	pair: DifferingPair;
-	first: SideHeading;
-	second: SideHeading;
+	differences: readonly ColumnDifference[];
+	firstName: string;
+	secondName: string;
 }
 
-export const PairDetails = ({ pair, first, second }: PairDetailsProps) => {
+export const PairDetails = ({ differences, firstName, secondName }: PairDetailsProps) => {
 	const styles = useStyles();
 	return (
 		<div className={styles.table}>
 			<Text size={200} className={styles.head}>
 				Column
 			</Text>
-			<Heading side={first} />
-			<Heading side={second} />
-			{pair.differences.map((difference) => (
+			<Text size={200} className={styles.head} title={firstName}>
+				{firstName}
+			</Text>
+			<Text size={200} className={styles.head} title={secondName}>
+				{secondName}
+			</Text>
+			{differences.map((difference) => (
 				<Fragment key={difference.column}>
 					<Text size={200} className={styles.column}>
 						{difference.label}

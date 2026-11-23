@@ -3,25 +3,18 @@ import { describe, expect, it } from "vitest";
 import { type ComparedSide } from "./compareFlow";
 import {
 	bucketLabel,
-	columnCountText,
+	COMPARISON_BUCKETS,
 	defaultBucket,
-	differingColumnsGrid,
-	LABEL_CELL,
-	MATCH_KEY_CELL,
 	matchingText,
 	matchKeyLabel,
 	matchKeyText,
 	noPairsHint,
-	pairLabelColumn,
 	partialText,
-	rangeCaption,
 	showsRaw,
 	unreliableBuckets,
 } from "./compareView";
 import { compareQueryRuns, type ComparisonCounts } from "./comparison";
 import { type ResultColumn } from "./resultColumn";
-import { type ResultGridColumn } from "./results";
-import { displayWindow } from "./resultsView";
 
 const FORMATTED = "@OData.Community.Display.V1.FormattedValue";
 
@@ -44,9 +37,11 @@ const COLUMNS: ResultColumn[] = [
 	{ key: "_primarycontactid_value", label: "primarycontactid", type: "lookup" },
 ];
 
-const contact = (id: string, name: string) => ({ _primarycontactid_value: id, [`_primarycontactid_value${FORMATTED}`]: name });
-
 describe("defaultBucket", () => {
+	it("lists the buckets in tab order", () => {
+		expect(COMPARISON_BUCKETS).toEqual(["different", "onlyInFirst", "onlyInSecond", "equal", "ambiguous", "noKey"]);
+	});
+
 	it("picks different first, then the only-in lists, then same", () => {
 		expect(defaultBucket(counts({ different: 1, onlyInFirst: 2, equal: 3 }))).toBe("different");
 		expect(defaultBucket(counts({ onlyInSecond: 2, equal: 3 }))).toBe("onlyInSecond");
@@ -134,7 +129,7 @@ describe("noPairsHint", () => {
 	});
 });
 
-describe("matchKeyText and pairLabelColumn", () => {
+describe("matchKeyText and matchKeyLabel", () => {
 	const record = { accountid: "9", name: "Contoso", revenue: 5, [`revenue${FORMATTED}`]: "$5.00" };
 
 	it("shows the primary key or the friendly key values", () => {
@@ -152,47 +147,9 @@ describe("matchKeyText and pairLabelColumn", () => {
 			})
 		).toBe("name · revenue");
 	});
-
-	it("labels a primary key pair with the first text Column", () => {
-		const grid: ResultGridColumn[] = COLUMNS.map((column) => ({ ...column, table: "account", column: column.key, primaryKey: column.key === "accountid" }));
-		expect(pairLabelColumn(grid, { kind: "primaryKey" }, "accountid")?.key).toBe("name");
-		expect(pairLabelColumn(grid, { kind: "columns", columns: ["name"] }, "accountid")).toBeNull();
-	});
 });
 
-describe("differingColumnsGrid", () => {
-	it("keeps only the Columns that differ somewhere, with counts, and both values in each cell", () => {
-		const comparison = compareQueryRuns(
-			[
-				{ accountid: "1", name: "A", revenue: 1, ...contact("c1", "Jo") },
-				{ accountid: "2", name: "B", revenue: 2, ...contact("c1", "Jo") },
-			],
-			[
-				{ accountid: "1", name: "A", revenue: 5, [`revenue${FORMATTED}`]: "$5.00", ...contact("c2", "Jo") },
-				{ accountid: "2", name: "B", revenue: 7, ...contact("c1", "Jo") },
-			],
-			{ columns: COLUMNS, primaryKey: "accountid", matchKey: { kind: "primaryKey" }, comparedColumns: ["name", "revenue", "_primarycontactid_value"] }
-		);
-		const label: ResultGridColumn = { key: "name", label: "name", type: "text", table: "account", column: "name", primaryKey: false };
-		const grid = differingColumnsGrid({ comparison, matchKey: { kind: "primaryKey" }, primaryKey: "accountid", keyColumns: [] }, label);
-		expect(grid.columns.map((column) => column.label)).toEqual(["accountid", "name", "revenue (2)", "primarycontactid (1)"]);
-		expect(grid.columns[0]?.type).toBe("uniqueidentifier");
-		expect(grid.rows[0]?.[MATCH_KEY_CELL]).toBe("1");
-		expect(grid.rows[0]?.[LABEL_CELL]).toBe("A");
-		expect(grid.rows[0]?.revenue).toBe("1 → 5");
-		expect(grid.rows[0]?.[`revenue${FORMATTED}`]).toBe("1 → $5.00");
-		expect(grid.rows[1]?._primarycontactid_value).toBeUndefined();
-	});
-});
-
-describe("small texts", () => {
-	it("counts Columns and captions a range", () => {
-		expect(columnCountText(1)).toBe("1 Column");
-		expect(columnCountText(3)).toBe("3 Columns");
-		expect(rangeCaption(displayWindow(120, 1), 120, "Pairs")).toBe("Pairs 51-100 of 120");
-		expect(rangeCaption(displayWindow(0, 0), 0, "Pairs")).toBe("No Pairs");
-	});
-
+describe("showsRaw", () => {
 	it("shows the raw value only when it adds something", () => {
 		expect(showsRaw({ raw: 5, friendly: "$5.00" })).toBe(true);
 		expect(showsRaw({ raw: "A", friendly: "A" })).toBe(false);

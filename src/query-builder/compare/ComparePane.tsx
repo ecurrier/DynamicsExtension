@@ -27,8 +27,8 @@ const useStyles = makeStyles({
 		flexDirection: "column",
 		flexGrow: 1,
 		minHeight: 0,
-		rowGap: tokens.spacingVerticalS,
-		padding: tokens.spacingHorizontalS,
+		rowGap: tokens.spacingVerticalXS,
+		padding: `${tokens.spacingVerticalXS} ${tokens.spacingHorizontalS}`,
 		overflowY: "auto",
 	},
 	hint: {
@@ -39,7 +39,6 @@ const useStyles = makeStyles({
 interface ComparePaneProps {
 	entries: readonly ConnectionRunEntry[];
 	controls: QueryRunControls;
-	maximised: boolean;
 }
 
 interface CompareWorkspaceProps extends ComparePaneProps {
@@ -48,7 +47,7 @@ interface CompareWorkspaceProps extends ComparePaneProps {
 	second: ConnectionRunEntry;
 }
 
-const CompareWorkspace = ({ entries, controls, maximised, pair, first, second }: CompareWorkspaceProps) => {
+const CompareWorkspace = ({ entries, controls, pair, first, second }: CompareWorkspaceProps) => {
 	const styles = useStyles();
 	const setup = useQueryBuilder((state) => state.compare.setup);
 	const progress = useQueryBuilder((state) => state.compare.progress);
@@ -111,8 +110,8 @@ const CompareWorkspace = ({ entries, controls, maximised, pair, first, second }:
 					stale={stale}
 					canCompareAgain={canCompare}
 					columns={columns}
+					primaryName={view.primaryName}
 					appUrlOf={view.appUrlOf}
-					maximised={maximised}
 					onSelectBucket={selectComparisonBucket}
 					onCompareAgain={onCompare}
 				/>

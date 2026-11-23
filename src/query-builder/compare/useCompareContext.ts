@@ -14,7 +14,9 @@ export const useCompareContext = (entries: readonly ConnectionRunEntry[], first:
 	const tableNames = useMemo(() => queryTableNames(query), [query]);
 	const { tables } = useQueryTables(gateway, tableNames);
 	const columns = useMemo(() => compareColumns(query, first.run.rows, second.run.rows, tables), [query, first.run.rows, second.run.rows, tables]);
-	const primaryKey = primaryKeyOf(columns, query ? rootTableName(query) : null, tables);
+	const rootTable = query ? rootTableName(query) : null;
+	const primaryKey = primaryKeyOf(columns, rootTable, tables);
+	const primaryName = rootTable ? (tables[rootTable.toLowerCase()]?.primaryNameAttribute ?? null) : null;
 	const { byId } = useConnectableEnvironments();
 	const tabUrl = useSessionStore((state) => state.tabUrl);
 	const names = useMemo(() => Object.fromEntries(entries.map((entry) => [entry.key, entry.name])), [entries]);
@@ -31,7 +33,7 @@ export const useCompareContext = (entries: readonly ConnectionRunEntry[], first:
 		[byId, entries, tabUrl]
 	);
 
-	return { tables, columns, primaryKey, names, appUrlOf };
+	return { tables, columns, primaryKey, primaryName, names, appUrlOf };
 };
 
 export type CompareView = ReturnType<typeof useCompareContext>;
