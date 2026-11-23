@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { createFakeHttp } from "@/test/fakeHttp";
 
+import { boundaryOf } from "./batch";
 import { DataverseHttpError } from "./http";
 import { columnTypeOf, decodePagingCookie, queryableTables, queryOperations } from "./query";
 
@@ -366,6 +367,89 @@ describe("queryOperations.runQuery", () => {
 			},
 		});
 		await expect(queryOperations(http).runQuery({ entitySetName: "accounts", fetchXml: FETCH })).rejects.toMatchObject({
+			name: "DataverseHttpError",
+			status: 400,
+			message: "'account' entity doesn't contain attribute with Name = 'nope'.",
+		});
+	});
+
+	const guid = (index: number) => `00000000-0000-0000-0000-${String(index).padStart(12, "0")}`;
+	const LONG_FETCH = `<fetch count="50" page="2"><entity name="account"><attribute name="name" /><filter><condition attribute="accountid" operator="in">${Array.from(
+		{ length: 600 },
+		(_, index) => `<value>${guid(index)}</value>`
+	).join("")}</condition></filter></entity></fetch>`;
+
+	const batchReply = (status: number, statusText: string, inner: string[]) => ({
+		status,
+		statusText,
+		contentType: "multipart/mixed; boundary=batchresponse_01346794-f2e2-4d45-8cc2-f97e09fe8916",
+		text: [
+			"--batchresponse_01346794-f2e2-4d45-8cc2-f97e09fe8916",
+			"Content-Type: application/http",
+			"Content-Transfer-Encoding: binary",
+			"",
+			...inner,
+			"--batchresponse_01346794-f2e2-4d45-8cc2-f97e09fe8916--",
+			"",
+		].join("\r\n"),
+	});
+
+	it("sends a short Query as a GET", async () => {
+		const { http, calls } = createFakeHttp({ "accounts?fetchXml=": { value: [] } });
+		await queryOperations(http).runQuery({ entitySetName: "accounts", fetchXml: FETCH });
+		expect(calls.map((call) => `${call.method} ${call.path.slice(0, 18)}`)).toEqual(["GET accounts?fetchXml="]);
+	});
+
+	it("sends a Query whose URL is too long inside a $batch request with the same Prefer header", async () => {
+		const { http, calls } = createFakeHttp({
+			"POST $batch": batchReply(200, "OK", [
+				"HTTP/1.1 200 OK",
+				"Content-Type: application/json; odata.metadata=minimal",
+				"OData-Version: 4.0",
+				"",
+				JSON.stringify({
+					"@Microsoft.Dynamics.CRM.fetchxmlpagingcookie": DOCS_COOKIE_ANNOTATION,
+					"@Microsoft.Dynamics.CRM.morerecords": true,
+					value: [{ name: "A", accountid: guid(1) }],
+				}),
+			]),
+		});
+		const result = await queryOperations(http).runQuery({ entitySetName: "accounts", fetchXml: LONG_FETCH });
+		expect(calls).toHaveLength(1);
+		expect(calls[0]?.method).toBe("POST");
+		expect(calls[0]?.path).toBe("$batch");
+		const boundary = boundaryOf(calls[0]?.headers?.["Content-Type"] ?? "") ?? "";
+		const lines = String(calls[0]?.body).split("\r\n");
+		expect(lines).toEqual([
+			`--${boundary}`,
+			"Content-Type: application/http",
+			"Content-Transfer-Encoding: binary",
+			"",
+			`GET https://org.crm.dynamics.com/api/data/v9.2/accounts?fetchXml=${encodeURIComponent(LONG_FETCH)} HTTP/1.1`,
+			"Accept: application/json",
+			'Prefer: odata.include-annotations="*"',
+			"",
+			"",
+			`--${boundary}--`,
+			"",
+		]);
+		expect(result.rows).toEqual([{ name: "A", accountid: guid(1) }]);
+		expect(result.moreRecords).toBe(true);
+		expect(result.pagingCookie).toBe(DOCS_COOKIE);
+		expect(result.elapsedMs).toBeGreaterThanOrEqual(0);
+	});
+
+	it("raises an error inside the batch as the usual error with the platform's message and the inner status", async () => {
+		const { http } = createFakeHttp({
+			"POST $batch": batchReply(400, "BadRequest", [
+				"HTTP/1.1 400 Bad Request",
+				"Content-Type: application/json; odata.metadata=minimal",
+				"OData-Version: 4.0",
+				"",
+				JSON.stringify({ error: { code: "0x80041103", message: "'account' entity doesn't contain attribute with Name = 'nope'." } }),
+			]),
+		});
+		await expect(queryOperations(http).runQuery({ entitySetName: "accounts", fetchXml: LONG_FETCH })).rejects.toMatchObject({
 			name: "DataverseHttpError",
 			status: 400,
 			message: "'account' entity doesn't contain attribute with Name = 'nope'.",

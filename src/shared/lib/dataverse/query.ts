@@ -12,6 +12,7 @@ import {
 	type QueryTableSummary,
 } from "@/shared/types";
 
+import { getBatchedWhenLong } from "./batch";
 import { codegenOperations } from "./codegen";
 import { DataverseOperationError } from "./errors";
 import { requireLogicalName } from "./guards";
@@ -257,7 +258,7 @@ export const queryOperations = (http: DataverseHttp): QueryOperations => ({
 		}
 		const path = fetchXmlPath(requireIdentifier(entitySetName, "Entity set"), fetchXml);
 		const started = performance.now();
-		const body = (await http.request<QueryResponse | undefined>("GET", path, undefined, { Prefer: QUERY_PREFER_HEADER })) ?? {};
+		const body = (await getBatchedWhenLong<QueryResponse | undefined>(http, path, { Prefer: QUERY_PREFER_HEADER })) ?? {};
 		const elapsedMs = Math.round(performance.now() - started);
 		return {
 			rows: body.value ?? [],
