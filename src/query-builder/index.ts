@@ -12,6 +12,7 @@ export * from "./ResultsPane";
 export * from "./RowSummaryText";
 export * from "./Splitter";
 export * from "./store";
+export * from "./useConnectionRunner";
 export * from "./useQueryBuilderBootstrap";
 export * from "./useQueryRun";
 export * from "./WebApiPane";

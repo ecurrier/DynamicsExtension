@@ -56,7 +56,7 @@ describe("loading a Query into the store", () => {
 	it("remembers the text of the last Query Run", () => {
 		const store = createQueryBuilderStore({ connection: PAGE_CONNECTION, fetchXml: GOOD });
 		expect(store.getState().lastRunText).toBeNull();
-		store.getState().startRun();
+		store.getState().startRuns();
 		expect(store.getState().lastRunText).toBe(GOOD);
 	});
 

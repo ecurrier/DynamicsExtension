@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-import { displayCaption, displayPageOf, displayWindow, loadAllStep, resultsStatus, type ResultsStatusInput } from "./resultsView";
+import {
+	currentResultsView,
+	displayCaption,
+	displayPageOf,
+	displayWindow,
+	initialResultsView,
+	loadAllStep,
+	nextDisplay,
+	resultsStatus,
+	type ResultsStatusInput,
+} from "./resultsView";
 
 describe("displayWindow", () => {
 	it("shows one screen of the loaded Records at a time", () => {
@@ -78,5 +88,30 @@ describe("resultsStatus", () => {
 		expect(resultsStatus({ ...done, status: "idle" })).toBe("Contoso Dev");
 		expect(resultsStatus({ ...done, status: "running" })).toBe("The Query is running on Contoso Dev");
 		expect(resultsStatus({ ...done, status: "failed" })).toBe("Query Run failed on Contoso Dev");
+	});
+});
+
+describe("the results view of one Query Run", () => {
+	const rows = (count: number) => Array.from({ length: count }, (_, index) => index);
+
+	it("goes back to the first display page for a new Query Run and keeps the view and value mode", () => {
+		const state = { ...initialResultsView(1), view: "json" as const, mode: "raw" as const, display: { runId: 1, page: 3, jumpTo: null } };
+		expect(currentResultsView(state, { id: 2, rows: rows(50), paging: "idle" })).toEqual({
+			view: "json",
+			mode: "raw",
+			display: { runId: 2, page: 0, jumpTo: null },
+		});
+	});
+
+	it("moves to the next page once its Records arrive", () => {
+		const waiting = { runId: 1, page: 0, jumpTo: 50 };
+		expect(nextDisplay(waiting, { id: 1, rows: rows(50), paging: "next" })).toBe(waiting);
+		expect(nextDisplay(waiting, { id: 1, rows: rows(100), paging: "idle" })).toEqual({ runId: 1, page: 1, jumpTo: null });
+		expect(nextDisplay(waiting, { id: 1, rows: rows(50), paging: "idle" })).toEqual({ runId: 1, page: 0, jumpTo: null });
+	});
+
+	it("returns the same state when nothing changes", () => {
+		const state = initialResultsView(4);
+		expect(currentResultsView(state, { id: 4, rows: rows(10), paging: "idle" })).toBe(state);
 	});
 });

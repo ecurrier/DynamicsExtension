@@ -245,6 +245,7 @@
 		}
 		const path = decodeURIComponent(url.slice(index + marker.length));
 		const method = init?.method ?? "GET";
+		const variant = queryVariantOf(url);
 		console.log("[harness] dataverse", method, path.slice(0, 80));
 		await new Promise((r) => setTimeout(r, 150));
 		if (path.startsWith("WhoAmI")) {
@@ -307,12 +308,12 @@
 			const assembly = pluginAssemblies.find((candidate) => path.includes(candidate.id));
 			return assembly ? jsonResponse(toAssemblyRecord(assembly)) : jsonResponse({ error: { message: "Not found" } }, 404);
 		}
-		const queryMetadata = queryMetadataResponse(path);
+		const queryMetadata = queryMetadataResponse(path, variant);
 		if (queryMetadata) {
 			return queryMetadata;
 		}
 		if (path === "$batch" && method === "POST") {
-			return batchQueryResponse(init?.body);
+			return batchQueryResponse(init?.body, variant);
 		}
 		if (path.startsWith("savedqueries?") && path.includes("statecode eq 0")) {
 			return jsonResponse({ value: savedQueryRecords(viewTableOf(path)) });
@@ -322,7 +323,7 @@
 		}
 		const queryRun = path.match(/^(\w+)\?fetchXml=([\s\S]*)$/);
 		if (queryRun && init?.headers?.Prefer === 'odata.include-annotations="*"') {
-			const { status, body } = queryRunBody(queryRun[1], queryRun[2]);
+			const { status, body } = queryRunBody(queryRun[1], queryRun[2], variant);
 			return jsonResponse(body, status);
 		}
 		if (path.startsWith("EntityDefinitions?")) {
@@ -981,6 +982,17 @@
 			manyToMany: fixture.manyToMany.map((relationship) => ({ ...relationship, first: { ...relationship.first }, second: { ...relationship.second } })),
 		};
 	};
+	const QUERY_VARIANT_HOSTS = { "contoso-test.crm.dynamics.com": "test", "contoso-staging.crm.dynamics.com": "staging" };
+	const queryVariantOf = (url) => {
+		try {
+			return QUERY_VARIANT_HOSTS[new URL(url).host] ?? "base";
+		} catch {
+			return "base";
+		}
+	};
+	const QUERY_MISSING_COLUMNS = { base: [], test: [], staging: ["new_regions"] };
+	const queryColumnsFor = (logicalName, variant = "base") =>
+		queryFixtures[logicalName].columns.filter((column) => logicalName !== "account" || !QUERY_MISSING_COLUMNS[variant].includes(column.logicalName));
 	const QUERY_TYPE_SPECIFIC = ["MaxLength", "Precision", "Format", "DateTimeBehavior", "Targets", "OptionSet"];
 	const queryCastOf = (column) => {
 		if (column.typeName === "MultiSelectPicklistType") {
@@ -1027,12 +1039,13 @@
 		}
 		return record;
 	};
-	const queryMetadataResponse = (path) => {
+	const queryMetadataResponse = (path, variant = "base") => {
 		const logicalName = path.match(/^EntityDefinitions\(LogicalName='([^']+)'\)/)?.[1];
-		const fixture = logicalName ? queryFixtures[logicalName] : undefined;
-		if (!fixture) {
+		const baseFixture = logicalName ? queryFixtures[logicalName] : undefined;
+		if (!baseFixture) {
 			return null;
 		}
+		const fixture = { ...baseFixture, columns: queryColumnsFor(logicalName, variant) };
 		if (path.includes("/Attributes?")) {
 			const property = QUERY_TYPE_SPECIFIC.find((candidate) => path.includes(candidate));
 			if (property) {
@@ -1151,10 +1164,59 @@
 		statecode: 0,
 		"statecode@OData.Community.Display.V1.FormattedValue": "Active",
 	}));
-	const QUERY_SETS = {
-		accounts: { logicalName: "account", primaryId: "accountid", rows: queryAccounts },
+	const withRevenue = (row, revenue) => ({
+		...row,
+		revenue,
+		"revenue@OData.Community.Display.V1.FormattedValue": `$${revenue.toLocaleString("en-US")}.00`,
+	});
+	const testAccounts = [
+		...queryAccounts.flatMap((row, i) => {
+			if (i % 10 === 3) {
+				return [];
+			}
+			if (i % 6 === 4) {
+				return [
+					{
+						...row,
+						accountid: guid(9300 + i),
+						...(row._primarycontactid_value ? { _primarycontactid_value: guid(9700 + (i % 12)) } : {}),
+					},
+				];
+			}
+			if (i % 8 === 1) {
+				return [withRevenue(row, row.revenue + 1000)];
+			}
+			if (i % 11 === 5) {
+				const industry = (row.industrycode % 4) + 1;
+				return [{ ...row, industrycode: industry, "industrycode@OData.Community.Display.V1.FormattedValue": QUERY_INDUSTRIES[industry - 1] }];
+			}
+			return [row];
+		}),
+		...Array.from({ length: 4 }, (_, k) => ({
+			...withRevenue(queryAccounts[k], 77000 + k),
+			"@odata.etag": `W/"${98500 + k}"`,
+			accountid: guid(9850 + k),
+			name: `Test Only Account ${k + 1}`,
+			accountnumber: `AC-T${k + 1}`,
+		})),
+	];
+	const stagingAccounts = queryAccounts.flatMap((row, i) => {
+		if (i < 5) {
+			return [];
+		}
+		if (i % 13 === 2) {
+			return [{ ...row, name: `${row.name} (Staging)` }];
+		}
+		if (i % 9 === 7) {
+			return [{ ...row, accountnumber: `${row.accountnumber}-S` }];
+		}
+		return [row];
+	});
+	const QUERY_ACCOUNTS = { base: queryAccounts, test: testAccounts, staging: stagingAccounts };
+	const querySetsFor = (variant = "base") => ({
+		accounts: { logicalName: "account", primaryId: "accountid", rows: QUERY_ACCOUNTS[variant] },
 		contacts: { logicalName: "contact", primaryId: "contactid", rows: queryContacts },
-	};
+	});
 	const unescapeQueryXml = (value) =>
 		value.replace(/&(lt|gt|quot|apos|amp|#\d+);/g, (_, entity) =>
 			entity.startsWith("#") ? String.fromCharCode(Number(entity.slice(1))) : { lt: "<", gt: ">", quot: '"', apos: "'", amp: "&" }[entity]
@@ -1197,14 +1259,14 @@
 		}
 		return new Set([...match[2].matchAll(/<value>([^<]*)<\/value>/g)].map((value) => value[1].trim().toLowerCase().replace(/[{}]/g, "")));
 	};
-	const queryRunBody = (entitySetName, fetchXml) => {
-		const fixtureSet = QUERY_SETS[entitySetName];
+	const queryRunBody = (entitySetName, fetchXml, variant = "base") => {
+		const fixtureSet = querySetsFor(variant)[entitySetName];
 		if (!fixtureSet) {
 			return queryError(404, `Resource not found for the segment '${entitySetName}'.`);
 		}
 		const listed = primaryIdInList(fetchXml, fixtureSet.primaryId);
 		const set = listed ? { ...fixtureSet, rows: fixtureSet.rows.filter((row) => listed.has(row[fixtureSet.primaryId])) } : fixtureSet;
-		const known = new Set(Object.values(queryFixtures).flatMap((fixture) => fixture.columns.map((column) => column.logicalName)));
+		const known = new Set(Object.keys(queryFixtures).flatMap((logicalName) => queryColumnsFor(logicalName, variant).map((column) => column.logicalName)));
 		const unknown = [...fetchXml.matchAll(/<attribute\s+name\s*=\s*["']([^"']+)["']/g)].map((match) => match[1]).find((name) => !known.has(name));
 		if (unknown) {
 			return queryError(400, `'${set.logicalName}' entity doesn't contain attribute with Name = '${unknown}' and NameMapping = 'Logical'.`);
@@ -1280,7 +1342,7 @@
 		].join("\r\n");
 		return new Response(text, { status: status === 200 ? 200 : 400, headers: { "Content-Type": `multipart/mixed; boundary=${boundary}` } });
 	};
-	const batchQueryResponse = (requestBody) => {
+	const batchQueryResponse = (requestBody, variant) => {
 		const requestLine = String(requestBody ?? "").match(/^GET (\S+) HTTP\/1\.1\r?$/m);
 		const marker = "/api/data/v9.2/";
 		const target = requestLine ? requestLine[1] : "";
@@ -1290,7 +1352,7 @@
 		if (!queryRun) {
 			return batchResponse(400, { error: { code: "0x0", message: "harness: the $batch stub answers only one Fetch XML GET with an absolute URL" } });
 		}
-		const { status, body } = queryRunBody(queryRun[1], queryRun[2]);
+		const { status, body } = queryRunBody(queryRun[1], queryRun[2], variant);
 		return batchResponse(status, body);
 	};
 	const queryViews = {
@@ -2786,6 +2848,28 @@
 			servicePrincipalId: guid(900),
 			alert: null,
 		},
+		"env-test": {
+			id: "env-test",
+			name: "Contoso Test",
+			environmentType: "Commercial",
+			modelDrivenAppUrl: "https://contoso-test.crm.dynamics.com/",
+			powerPagesUrl: "",
+			environmentId: "bbbbbbbb-cccc-4ddd-8eee-ffffffffffff",
+			notes: "Seeded by the harness: some accounts are missing, some differ, and four exist only here",
+			servicePrincipalId: guid(900),
+			alert: null,
+		},
+		"env-staging": {
+			id: "env-staging",
+			name: "Contoso Staging",
+			environmentType: "Commercial",
+			modelDrivenAppUrl: "https://contoso-staging.crm.dynamics.com/",
+			powerPagesUrl: "",
+			environmentId: "cccccccc-dddd-4eee-8fff-000000000000",
+			notes: "Seeded by the harness: account has no new_regions Column",
+			servicePrincipalId: guid(900),
+			alert: null,
+		},
 		"env-uat": {
 			id: "env-uat",
 			name: "Contoso UAT",
@@ -2924,7 +3008,19 @@
 								? harnessNestedFetchXml
 								: new URLSearchParams(location.search).get("queryFetchXml") === "batch"
 									? harnessBatchFetchXml()
-									: null,
+									: new URLSearchParams(location.search).get("queryFetchXml") === "regions"
+										? [
+												'<fetch version="1.0" mapping="logical">',
+												'  <entity name="account">',
+												'    <attribute name="name" />',
+												'    <attribute name="accountnumber" />',
+												'    <attribute name="revenue" />',
+												'    <attribute name="new_regions" />',
+												'    <order attribute="name" />',
+												"  </entity>",
+												"</fetch>",
+											].join("\n")
+										: null,
 				launchedAt: new Date().toISOString(),
 			},
 		},

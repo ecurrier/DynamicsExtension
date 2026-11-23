@@ -3,59 +3,59 @@ import { createStore, type StoreApi, useStore } from "zustand";
 
 import { type ConnectionTarget } from "@/shared/connections";
 import { type FetchXmlDocument, type FetchXmlParseError, type NodePath, parseFetchXml, pathAtOffset, serializeFetchXml } from "@/shared/lib/fetchxml";
-import { type QueryRow, type QueryRunResult } from "@/shared/types";
+import { type QueryRunResult } from "@/shared/types";
 
 import {
+	addConnection,
 	ancestorKeys,
+	appendPage,
 	type ChangeResult,
 	type CollapsibleGroup,
+	connectionKey,
+	failRun,
+	finishPaging,
+	finishRun,
+	idleRun,
 	type NamesLead,
 	NO_ORIGIN,
+	type PagingOutcome,
 	pathKey,
 	type QueryOrigin,
 	type QueryChange,
+	type QueryRuns,
+	type QueryRunSource,
+	type QueryRunState,
 	remapKeys,
 	remapPath,
+	removeConnection,
+	requestStop,
+	resetRuns,
 	type ResultsPaging,
 	rowPathOf,
+	runsFor,
 	samePath,
+	setFirstConnection,
+	startedRuns,
+	startPaging,
 } from "./lib";
+
+export type { PagingOutcome, QueryRunPage, QueryRuns, QueryRunSource, QueryRunState, QueryRunStatus } from "./lib";
 
 export const PARSE_DELAY_MS = 300;
 
 export const HISTORY_LIMIT = 100;
 
-export type QueryRunStatus = "idle" | "running" | "done" | "failed";
-
-export interface QueryRunSource {
+export interface ConnectionRunRequest {
 	query: FetchXmlDocument;
-	entitySetName: string;
-	pageable: boolean;
+	fetchXml: string;
+	checkLacks: boolean;
 }
 
-export interface QueryRunPage {
-	rows: QueryRow[];
-	annotations: Record<string, unknown>;
-}
+export type LoadPagesOutcome = "complete" | "stopped" | "confirm" | "failed" | "unavailable";
 
-export interface QueryRunState {
-	id: number;
-	status: QueryRunStatus;
-	connection: ConnectionTarget | null;
-	source: QueryRunSource | null;
-	rows: QueryRow[];
-	pages: QueryRunPage[];
-	pageNumber: number;
-	moreRecords: boolean;
-	pagingCookie: string | null;
-	totalRecordCount: number | null;
-	elapsedMs: number | null;
-	error: string | null;
-	paging: ResultsPaging;
-	pageError: string | null;
-	stopRequested: boolean;
-	pastLimitConfirmed: boolean;
-	awaitingLimitConfirmation: boolean;
+export interface QueryRunner {
+	start: (id: number, request: ConnectionRunRequest) => Promise<void>;
+	loadPages: (mode: Exclude<ResultsPaging, "idle">, pastLimitConfirmed: boolean) => Promise<LoadPagesOutcome>;
 }
 
 export type PaneId = "tree" | "details" | "xml" | "results";
@@ -107,6 +107,7 @@ export interface EditorHistory {
 
 export interface QueryBuilderState extends ParsedQuery {
 	connection: ConnectionTarget;
+	connections: readonly ConnectionTarget[];
 	text: string;
 	parsedText: string;
 	selectedPath: NodePath | null;
@@ -116,7 +117,7 @@ export interface QueryBuilderState extends ParsedQuery {
 	history: TreeHistory;
 	origin: QueryOrigin;
 	lastRunText: string | null;
-	run: QueryRunState;
+	runs: QueryRuns;
 	layout: PaneLayout;
 	setText: (text: string) => void;
 	loadQuery: (text: string, origin: QueryOrigin) => void;
@@ -124,6 +125,8 @@ export interface QueryBuilderState extends ParsedQuery {
 	focusXml: () => void;
 	parseNow: () => ParsedQuery;
 	setConnection: (connection: ConnectionTarget) => void;
+	addConnection: (connection: ConnectionTarget) => void;
+	removeConnection: (key: string) => void;
 	select: (path: NodePath | null, origin?: SelectionOrigin) => void;
 	selectAtOffset: (offset: number) => void;
 	setExpanded: (path: NodePath, open: boolean) => void;
@@ -133,13 +136,15 @@ export interface QueryBuilderState extends ParsedQuery {
 	undo: () => void;
 	redo: () => void;
 	attachEditor: (editor: EditorHistory) => () => void;
-	startRun: () => number;
-	finishRun: (id: number, result: QueryRunResult, source?: QueryRunSource | null) => void;
-	failRun: (id: number, message: string) => void;
-	startPaging: (id: number, paging: Exclude<ResultsPaging, "idle">, pastLimitConfirmed?: boolean) => boolean;
-	appendPage: (id: number, result: QueryRunResult) => void;
-	finishPaging: (id: number, outcome: PagingOutcome) => void;
-	requestStop: (id: number) => void;
+	startRuns: () => Readonly<Record<string, number>>;
+	finishRun: (key: string, id: number, result: QueryRunResult, source?: QueryRunSource | null) => void;
+	failRun: (key: string, id: number, message: string) => void;
+	startPaging: (key: string, id: number, paging: Exclude<ResultsPaging, "idle">, pastLimitConfirmed?: boolean) => boolean;
+	appendPage: (key: string, id: number, result: QueryRunResult) => void;
+	finishPaging: (key: string, id: number, outcome: PagingOutcome) => void;
+	requestStop: (key: string, id: number) => void;
+	registerRunner: (key: string, runner: QueryRunner) => () => void;
+	runnerFor: (key: string) => QueryRunner | undefined;
 	setResultsMaximised: (maximised: boolean) => void;
 	resizePane: (pane: ResizablePane, size: number) => void;
 	togglePane: (pane: PaneId) => void;
@@ -151,8 +156,6 @@ export interface QueryBuilderState extends ParsedQuery {
 	flushDraft: () => void;
 	dispose: () => void;
 }
-
-export type PagingOutcome = { kind: "finished" } | { kind: "confirm" } | { kind: "failed"; message: string };
 
 export interface QueryBuilderInit {
 	connection: ConnectionTarget;
@@ -170,26 +173,6 @@ export const DEFAULT_LAYOUT: PaneLayout = {
 	detailsGroups: { more: false, legacy: false },
 	xmlTab: "fetchxml",
 };
-
-const idleRun = (id: number): QueryRunState => ({
-	id,
-	status: "idle",
-	connection: null,
-	source: null,
-	rows: [],
-	pages: [],
-	pageNumber: 0,
-	moreRecords: false,
-	pagingCookie: null,
-	totalRecordCount: null,
-	elapsedMs: null,
-	error: null,
-	paging: "idle",
-	pageError: null,
-	stopRequested: false,
-	pastLimitConfirmed: false,
-	awaitingLimitConfirmation: false,
-});
 
 const EMPTY_HISTORY: TreeHistory = { undo: [], redo: [] };
 
@@ -215,8 +198,7 @@ const snapshotOf = (state: QueryBuilderState): TreeSnapshot => ({
 	origin: state.origin,
 });
 
-const updateRun = (state: QueryBuilderState, id: number, update: (run: QueryRunState) => Partial<QueryRunState>): Partial<QueryBuilderState> =>
-	state.run.id === id ? { run: { ...state.run, ...update(state.run) } } : state;
+export const firstRunOf = (state: Pick<QueryBuilderState, "connection" | "runs">): QueryRunState | undefined => state.runs[connectionKey(state.connection)];
 
 export const parseQueryText = (text: string, previous: FetchXmlDocument | null): ParsedQuery => {
 	if (text.trim() === "") {
@@ -238,7 +220,17 @@ export const createQueryBuilderStore = ({ connection, fetchXml, origin = NO_ORIG
 	let pendingOffset: number | null = null;
 	let editor: EditorHistory | null = null;
 	let draft: (() => void) | null = null;
+	let runId = 0;
+	const nextRunId = () => ++runId;
+	const runners = new Map<string, QueryRunner>();
 	return createStore<QueryBuilderState>()((set, get) => {
+		const withConnections = (state: QueryBuilderState, connections: readonly ConnectionTarget[]): Partial<QueryBuilderState> => {
+			const first = connections[0];
+			if (connections === state.connections || !first) {
+				return state;
+			}
+			return { connection: first, connections, runs: runsFor(connections, state.runs, nextRunId) };
+		};
 		const selectionAt = (query: FetchXmlDocument, offset: number): NodePath | null => {
 			const path = pathAtOffset(query, offset);
 			return path === undefined ? null : rowPathOf(query, path);
@@ -296,6 +288,7 @@ export const createQueryBuilderStore = ({ connection, fetchXml, origin = NO_ORIG
 		};
 		return {
 			connection,
+			connections: [connection],
 			text,
 			parsedText: text,
 			...parseQueryText(text, null),
@@ -306,7 +299,7 @@ export const createQueryBuilderStore = ({ connection, fetchXml, origin = NO_ORIG
 			history: EMPTY_HISTORY,
 			origin,
 			lastRunText: null,
-			run: idleRun(0),
+			runs: { [connectionKey(connection)]: idleRun(nextRunId(), connection) },
 			layout: DEFAULT_LAYOUT,
 			setText: (next) => {
 				if (next === get().text || travel(next)) {
@@ -326,7 +319,7 @@ export const createQueryBuilderStore = ({ connection, fetchXml, origin = NO_ORIG
 				const after: TreeSnapshot = { text: next, selectedPath: null, collapsed: NO_KEYS, origin: nextOrigin };
 				const entry: HistoryEntry = { before: snapshotOf(state), after };
 				restore(after, { undo: [...state.history.undo, entry].slice(-HISTORY_LIMIT), redo: [] });
-				set((current) => (current.run.status === "running" ? current : { run: idleRun(current.run.id + 1) }));
+				set((current) => ({ runs: resetRuns(current.runs, nextRunId) }));
 			},
 			setStoredQuery: (storedQueryId) => set((state) => ({ origin: { ...state.origin, storedQueryId } })),
 			focusXml: () => {
@@ -345,7 +338,9 @@ export const createQueryBuilderStore = ({ connection, fetchXml, origin = NO_ORIG
 				);
 				setTimeout(() => editor?.focus?.(), 0);
 			},
-			setConnection: (next) => set((state) => ({ connection: next, run: idleRun(state.run.id + 1) })),
+			setConnection: (next) => set((state) => withConnections(state, setFirstConnection(state.connections, next))),
+			addConnection: (next) => set((state) => withConnections(state, addConnection(state.connections, next))),
+			removeConnection: (key) => set((state) => withConnections(state, removeConnection(state.connections, key))),
 			select: (path, origin = "tree") => {
 				const state = get();
 				if (samePath(state.selectedPath, path) && state.selectionOrigin === origin) {
@@ -435,66 +430,34 @@ export const createQueryBuilderStore = ({ connection, fetchXml, origin = NO_ORIG
 					}
 				};
 			},
-			startRun: () => {
-				const { run, connection: current, text: ran } = get();
-				const id = run.id + 1;
-				set({ run: { ...idleRun(id), status: "running", connection: current }, lastRunText: ran });
-				return id;
+			startRuns: () => {
+				const { connections, text: ran } = get();
+				const runs = startedRuns(connections, nextRunId);
+				set({ runs, lastRunText: ran });
+				return Object.fromEntries(Object.entries(runs).map(([key, run]) => [key, run.id]));
 			},
-			finishRun: (id, result, source = null) =>
-				set((state) =>
-					updateRun(state, id, () => ({
-						status: "done",
-						source,
-						rows: result.rows,
-						pages: [{ rows: result.rows, annotations: result.annotations }],
-						pageNumber: 1,
-						moreRecords: result.moreRecords,
-						pagingCookie: result.pagingCookie,
-						totalRecordCount: result.totalRecordCount,
-						elapsedMs: result.elapsedMs,
-					}))
-				),
-			failRun: (id, message) => set((state) => updateRun(state, id, () => ({ status: "failed", error: message }))),
-			startPaging: (id, paging, pastLimitConfirmed = false) => {
-				const { run } = get();
-				if (run.id !== id || run.status !== "done" || run.paging !== "idle" || !run.moreRecords || !run.source?.pageable) {
+			finishRun: (key, id, result, source = null) => set((state) => ({ runs: finishRun(state.runs, key, id, result, source) })),
+			failRun: (key, id, message) => set((state) => ({ runs: failRun(state.runs, key, id, message) })),
+			startPaging: (key, id, paging, pastLimitConfirmed = false) => {
+				const runs = startPaging(get().runs, key, id, paging, pastLimitConfirmed);
+				if (!runs) {
 					return false;
 				}
-				set({
-					run: {
-						...run,
-						paging,
-						pageError: null,
-						stopRequested: false,
-						awaitingLimitConfirmation: false,
-						pastLimitConfirmed: run.pastLimitConfirmed || pastLimitConfirmed,
-					},
-				});
+				set({ runs });
 				return true;
 			},
-			appendPage: (id, result) =>
-				set((state) =>
-					updateRun(state, id, (run) => ({
-						rows: run.rows.concat(result.rows),
-						pages: [...run.pages, { rows: result.rows, annotations: result.annotations }],
-						pageNumber: run.pageNumber + 1,
-						moreRecords: result.moreRecords,
-						pagingCookie: result.pagingCookie,
-						elapsedMs: result.elapsedMs,
-					}))
-				),
-			finishPaging: (id, outcome) =>
-				set((state) =>
-					updateRun(state, id, () => ({
-						paging: "idle",
-						stopRequested: false,
-						awaitingLimitConfirmation: outcome.kind === "confirm",
-						pageError: outcome.kind === "failed" ? outcome.message : null,
-					}))
-				),
-			requestStop: (id) =>
-				set((state) => updateRun(state, id, (run) => (run.paging === "idle" ? { awaitingLimitConfirmation: false } : { stopRequested: true }))),
+			appendPage: (key, id, result) => set((state) => ({ runs: appendPage(state.runs, key, id, result) })),
+			finishPaging: (key, id, outcome) => set((state) => ({ runs: finishPaging(state.runs, key, id, outcome) })),
+			requestStop: (key, id) => set((state) => ({ runs: requestStop(state.runs, key, id) })),
+			registerRunner: (key, runner) => {
+				runners.set(key, runner);
+				return () => {
+					if (runners.get(key) === runner) {
+						runners.delete(key);
+					}
+				};
+			},
+			runnerFor: (key) => runners.get(key),
 			setResultsMaximised: (maximised) => set((state) => ({ layout: { ...state.layout, resultsMaximised: maximised } })),
 			resizePane: (pane, size) =>
 				set((state) => ({

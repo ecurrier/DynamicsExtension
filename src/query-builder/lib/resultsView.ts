@@ -1,3 +1,5 @@
+import { type ValueMode } from "./results";
+
 export const DISPLAY_PAGE_SIZE = 50;
 
 export const LOAD_ALL_CONFIRM_AT = 50_000;
@@ -46,6 +48,46 @@ export const loadAllStep = ({ loaded, moreRecords, stopRequested, pastLimitConfi
 };
 
 export type ResultsPaging = "idle" | "next" | "all";
+
+export type ResultsViewKind = "records" | "json";
+
+export interface ResultsDisplay {
+	runId: number;
+	page: number;
+	jumpTo: number | null;
+}
+
+export interface ResultsViewState {
+	view: ResultsViewKind;
+	mode: ValueMode;
+	display: ResultsDisplay;
+}
+
+export interface ResultsDisplayRun {
+	id: number;
+	rows: readonly unknown[];
+	paging: ResultsPaging;
+}
+
+export const initialResultsView = (runId: number): ResultsViewState => ({ view: "records", mode: "friendly", display: { runId, page: 0, jumpTo: null } });
+
+export const nextDisplay = (display: ResultsDisplay, run: ResultsDisplayRun): ResultsDisplay => {
+	if (display.runId !== run.id) {
+		return { runId: run.id, page: 0, jumpTo: null };
+	}
+	if (display.jumpTo === null) {
+		return display;
+	}
+	if (run.rows.length > display.jumpTo) {
+		return { ...display, page: displayPageOf(display.jumpTo), jumpTo: null };
+	}
+	return run.paging === "idle" ? { ...display, jumpTo: null } : display;
+};
+
+export const currentResultsView = (state: ResultsViewState, run: ResultsDisplayRun): ResultsViewState => {
+	const display = nextDisplay(state.display, run);
+	return display === state.display ? state : { ...state, display };
+};
 
 export interface ResultsStatusInput {
 	status: "idle" | "running" | "done" | "failed";

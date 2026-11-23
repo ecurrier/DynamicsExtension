@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { type StoreApi } from "zustand";
 
 import { PAGE_CONNECTION } from "@/shared/connections";
 import { type QueryRunResult } from "@/shared/types";
 
-import { createQueryBuilderStore, PARSE_DELAY_MS } from "./store";
+import { createQueryBuilderStore, firstRunOf, PARSE_DELAY_MS, type QueryBuilderState } from "./store";
 
 const GOOD = '<fetch><entity name="account"><attribute name="name" /></entity></fetch>';
 const OTHER = '<fetch><entity name="contact" /></fetch>';
@@ -21,6 +22,10 @@ const RESULT: QueryRunResult = {
 
 const ENVIRONMENT = { kind: "environment" as const, environmentId: "env-dev" };
 
+const DEV_KEY = "environment:env-dev";
+
+const firstRun = (store: StoreApi<QueryBuilderState>) => firstRunOf(store.getState());
+
 describe("the Query Builder store", () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
@@ -36,7 +41,7 @@ describe("the Query Builder store", () => {
 		expect(state.query?.root.name).toBe("fetch");
 		expect(state.errors).toEqual([]);
 		expect(state.selectedPath).toBeNull();
-		expect(state.run.status).toBe("idle");
+		expect(firstRunOf(state)?.status).toBe("idle");
 	});
 
 	it("opens empty with no Query and no errors", () => {
@@ -93,10 +98,10 @@ describe("the Query Builder store", () => {
 
 	it("records a Query Run from start to finish with its Connection", () => {
 		const store = createQueryBuilderStore({ connection: ENVIRONMENT, fetchXml: GOOD });
-		const id = store.getState().startRun();
-		expect(store.getState().run).toMatchObject({ status: "running", connection: ENVIRONMENT, rows: [] });
-		store.getState().finishRun(id, RESULT);
-		expect(store.getState().run).toMatchObject({
+		const id = store.getState().startRuns()[DEV_KEY] ?? 0;
+		expect(firstRun(store)).toMatchObject({ status: "running", connection: ENVIRONMENT, rows: [] });
+		store.getState().finishRun(DEV_KEY, id, RESULT);
+		expect(firstRun(store)).toMatchObject({
 			status: "done",
 			connection: ENVIRONMENT,
 			rows: RESULT.rows,
@@ -108,30 +113,91 @@ describe("the Query Builder store", () => {
 
 	it("records a failed Query Run with the platform's message", () => {
 		const store = createQueryBuilderStore({ connection: PAGE_CONNECTION, fetchXml: GOOD });
-		const id = store.getState().startRun();
-		store.getState().failRun(id, "'account' entity doesn't contain attribute with Name = 'nope'");
-		expect(store.getState().run).toMatchObject({ status: "failed", error: "'account' entity doesn't contain attribute with Name = 'nope'" });
+		const id = store.getState().startRuns().page ?? 0;
+		store.getState().failRun("page", id, "'account' entity doesn't contain attribute with Name = 'nope'");
+		expect(firstRun(store)).toMatchObject({ status: "failed", error: "'account' entity doesn't contain attribute with Name = 'nope'" });
 	});
 
 	it("clears the results and keeps the Query when the Connection changes", () => {
 		const store = createQueryBuilderStore({ connection: PAGE_CONNECTION, fetchXml: GOOD });
 		const query = store.getState().query;
-		store.getState().finishRun(store.getState().startRun(), RESULT);
+		store.getState().finishRun("page", store.getState().startRuns().page ?? 0, RESULT);
 		store.getState().setConnection(ENVIRONMENT);
 		expect(store.getState().connection).toEqual(ENVIRONMENT);
-		expect(store.getState().run.status).toBe("idle");
-		expect(store.getState().run.rows).toEqual([]);
+		expect(store.getState().connections).toEqual([ENVIRONMENT]);
+		expect(firstRun(store)).toMatchObject({ status: "idle", rows: [], connection: ENVIRONMENT });
+		expect(store.getState().runs.page).toBeUndefined();
 		expect(store.getState().query).toBe(query);
 		expect(store.getState().text).toBe(GOOD);
 	});
 
 	it("ignores a Query Run that finishes after the Connection changed", () => {
 		const store = createQueryBuilderStore({ connection: PAGE_CONNECTION, fetchXml: GOOD });
-		const id = store.getState().startRun();
+		const id = store.getState().startRuns().page ?? 0;
 		store.getState().setConnection(ENVIRONMENT);
-		store.getState().finishRun(id, RESULT);
-		store.getState().failRun(id, "late");
-		expect(store.getState().run.status).toBe("idle");
+		store.getState().finishRun("page", id, RESULT);
+		store.getState().failRun("page", id, "late");
+		expect(firstRun(store)?.status).toBe("idle");
+		expect(store.getState().runs.page).toBeUndefined();
+	});
+
+	describe("several Connections", () => {
+		const TEST = { kind: "environment" as const, environmentId: "env-test" };
+		const TEST_KEY = "environment:env-test";
+
+		it("adds Connections after the first and starts one Query Run on each", () => {
+			const store = createQueryBuilderStore({ connection: PAGE_CONNECTION, fetchXml: GOOD });
+			store.getState().addConnection(ENVIRONMENT);
+			store.getState().addConnection(TEST);
+			store.getState().addConnection(ENVIRONMENT);
+			expect(store.getState().connections).toEqual([PAGE_CONNECTION, ENVIRONMENT, TEST]);
+			const ids = store.getState().startRuns();
+			expect(Object.keys(ids)).toEqual(["page", DEV_KEY, TEST_KEY]);
+			expect(new Set(Object.values(ids)).size).toBe(3);
+			expect(Object.values(store.getState().runs).map((run) => run.status)).toEqual(["running", "running", "running"]);
+			expect(store.getState().lastRunText).toBe(GOOD);
+		});
+
+		it("keeps each Connection's results apart and clears only the removed Connection's", () => {
+			const store = createQueryBuilderStore({ connection: PAGE_CONNECTION, fetchXml: GOOD });
+			store.getState().addConnection(ENVIRONMENT);
+			store.getState().addConnection(TEST);
+			const ids = store.getState().startRuns();
+			store.getState().finishRun("page", ids.page ?? 0, RESULT);
+			store.getState().failRun(TEST_KEY, ids[TEST_KEY] ?? 0, "Column x does not exist.");
+			store.getState().removeConnection(DEV_KEY);
+			expect(store.getState().connections).toEqual([PAGE_CONNECTION, TEST]);
+			expect(store.getState().runs.page?.status).toBe("done");
+			expect(store.getState().runs[TEST_KEY]?.status).toBe("failed");
+			expect(store.getState().runs[DEV_KEY]).toBeUndefined();
+			store.getState().finishRun(DEV_KEY, ids[DEV_KEY] ?? 0, RESULT);
+			expect(store.getState().runs[DEV_KEY]).toBeUndefined();
+		});
+
+		it("swaps when the first Connection becomes one that is already in the list", () => {
+			const store = createQueryBuilderStore({ connection: PAGE_CONNECTION, fetchXml: GOOD });
+			store.getState().addConnection(ENVIRONMENT);
+			store.getState().finishRun("page", store.getState().startRuns().page ?? 0, RESULT);
+			store.getState().setConnection(ENVIRONMENT);
+			expect(store.getState().connection).toEqual(ENVIRONMENT);
+			expect(store.getState().connections).toEqual([ENVIRONMENT, PAGE_CONNECTION]);
+			expect(store.getState().runs.page?.status).toBe("done");
+		});
+
+		it("does not remove the first Connection", () => {
+			const store = createQueryBuilderStore({ connection: PAGE_CONNECTION, fetchXml: GOOD });
+			store.getState().removeConnection("page");
+			expect(store.getState().connections).toEqual([PAGE_CONNECTION]);
+		});
+
+		it("finds the runner that each Connection registers", () => {
+			const store = createQueryBuilderStore({ connection: PAGE_CONNECTION, fetchXml: GOOD });
+			const runner = { start: () => Promise.resolve(), loadPages: () => Promise.resolve("complete" as const) };
+			const release = store.getState().registerRunner("page", runner);
+			expect(store.getState().runnerFor("page")).toBe(runner);
+			release();
+			expect(store.getState().runnerFor("page")).toBeUndefined();
+		});
 	});
 
 	it("resizes and collapses panes", () => {
@@ -227,10 +293,11 @@ describe("the Query Builder store", () => {
 			if (!query) {
 				throw new Error("no query");
 			}
-			const id = store.getState().startRun();
+			const id = store.getState().startRuns().page ?? 0;
 			store
 				.getState()
 				.finishRun(
+					"page",
 					id,
 					{ ...RESULT, annotations: { "@Microsoft.Dynamics.CRM.morerecords": true } },
 					{ query, entitySetName: "accounts", pageable: true }
@@ -240,20 +307,20 @@ describe("the Query Builder store", () => {
 
 		it("keeps the first page as the first of the loaded pages", () => {
 			const { store } = pagedRun();
-			expect(store.getState().run).toMatchObject({
+			expect(firstRun(store)).toMatchObject({
 				pageNumber: 1,
 				pages: [{ rows: RESULT.rows, annotations: { "@Microsoft.Dynamics.CRM.morerecords": true } }],
 			});
-			expect(store.getState().run.source?.entitySetName).toBe("accounts");
+			expect(firstRun(store)?.source?.entitySetName).toBe("accounts");
 		});
 
 		it("accumulates each further page with its cookie and elapsed time", () => {
 			const { store, id } = pagedRun();
-			expect(store.getState().startPaging(id, "next")).toBe(true);
-			expect(store.getState().run.paging).toBe("next");
-			store.getState().appendPage(id, { ...RESULT, rows: [{ name: "Fabrikam" }], moreRecords: false, pagingCookie: null, elapsedMs: 7 });
-			store.getState().finishPaging(id, { kind: "finished" });
-			expect(store.getState().run).toMatchObject({
+			expect(store.getState().startPaging("page", id, "next")).toBe(true);
+			expect(firstRun(store)?.paging).toBe("next");
+			store.getState().appendPage("page", id, { ...RESULT, rows: [{ name: "Fabrikam" }], moreRecords: false, pagingCookie: null, elapsedMs: 7 });
+			store.getState().finishPaging("page", id, { kind: "finished" });
+			expect(firstRun(store)).toMatchObject({
 				rows: [{ name: "Contoso" }, { name: "Fabrikam" }],
 				pageNumber: 2,
 				moreRecords: false,
@@ -261,39 +328,39 @@ describe("the Query Builder store", () => {
 				elapsedMs: 7,
 				paging: "idle",
 			});
-			expect(store.getState().run.pages).toHaveLength(2);
-			expect(store.getState().startPaging(id, "next")).toBe(false);
+			expect(firstRun(store)?.pages).toHaveLength(2);
+			expect(store.getState().startPaging("page", id, "next")).toBe(false);
 		});
 
 		it("refuses to page a Query Run that cannot be paged or is already paging", () => {
 			const store = createQueryBuilderStore({ connection: PAGE_CONNECTION, fetchXml: GOOD });
-			const id = store.getState().startRun();
-			store.getState().finishRun(id, RESULT);
-			expect(store.getState().startPaging(id, "all")).toBe(false);
+			const id = store.getState().startRuns().page ?? 0;
+			store.getState().finishRun("page", id, RESULT);
+			expect(store.getState().startPaging("page", id, "all")).toBe(false);
 			const paged = pagedRun();
-			expect(paged.store.getState().startPaging(paged.id, "all")).toBe(true);
-			expect(paged.store.getState().startPaging(paged.id, "next")).toBe(false);
+			expect(paged.store.getState().startPaging("page", paged.id, "all")).toBe(true);
+			expect(paged.store.getState().startPaging("page", paged.id, "next")).toBe(false);
 		});
 
 		it("records a stop request, a pause at the limit, and a failed page without losing Records", () => {
 			const { store, id } = pagedRun();
-			store.getState().startPaging(id, "all");
-			store.getState().requestStop(id);
-			expect(store.getState().run.stopRequested).toBe(true);
-			store.getState().finishPaging(id, { kind: "confirm" });
-			expect(store.getState().run).toMatchObject({ paging: "idle", stopRequested: false, awaitingLimitConfirmation: true });
-			store.getState().startPaging(id, "all", true);
-			expect(store.getState().run).toMatchObject({ pastLimitConfirmed: true, awaitingLimitConfirmation: false });
-			store.getState().finishPaging(id, { kind: "failed", message: "boom" });
-			expect(store.getState().run).toMatchObject({ pageError: "boom", rows: RESULT.rows, status: "done" });
+			store.getState().startPaging("page", id, "all");
+			store.getState().requestStop("page", id);
+			expect(firstRun(store)?.stopRequested).toBe(true);
+			store.getState().finishPaging("page", id, { kind: "confirm" });
+			expect(firstRun(store)).toMatchObject({ paging: "idle", stopRequested: false, awaitingLimitConfirmation: true });
+			store.getState().startPaging("page", id, "all", true);
+			expect(firstRun(store)).toMatchObject({ pastLimitConfirmed: true, awaitingLimitConfirmation: false });
+			store.getState().finishPaging("page", id, { kind: "failed", message: "boom" });
+			expect(firstRun(store)).toMatchObject({ pageError: "boom", rows: RESULT.rows, status: "done" });
 		});
 
 		it("ignores pages for a Query Run that has been replaced", () => {
 			const { store, id } = pagedRun();
-			store.getState().startPaging(id, "next");
-			store.getState().startRun();
-			store.getState().appendPage(id, RESULT);
-			expect(store.getState().run.rows).toEqual([]);
+			store.getState().startPaging("page", id, "next");
+			store.getState().startRuns();
+			store.getState().appendPage("page", id, RESULT);
+			expect(firstRun(store)?.rows).toEqual([]);
 		});
 	});
 });

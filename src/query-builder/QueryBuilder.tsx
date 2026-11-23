@@ -8,19 +8,21 @@ import { useAsyncAction } from "@/shared/hooks";
 import { useSessionStore } from "@/shared/stores";
 import { type QueryBuilderLaunch } from "@/shared/types";
 
+import { ConnectionRunners } from "./ConnectionRunners";
 import { EDITORS_MIN_HEIGHT, EditorPanes } from "./EditorPanes";
 import { useQueryGateway } from "./hooks";
-import { connectionLabel, historyConnection, historyConnectionLabel, NO_ORIGIN } from "./lib";
+import { addableConnections, connectionKey, connectionLabel, historyConnection, historyConnectionLabel, isRunBusy, NO_ORIGIN } from "./lib";
 import { QueryLibraryDrawer } from "./library";
 import { QueryBuilderHeader } from "./QueryBuilderHeader";
 import { QueryDiagnosticsProvider } from "./QueryDiagnostics";
 import { useQueryHistory, useWorkingQuery } from "./remembered";
-import { ResultsPane } from "./ResultsPane";
+import { ResultsArea } from "./ResultsArea";
 import { Splitter, SPLITTER_THICKNESS } from "./Splitter";
 import { StartProvider } from "./start";
 import { createQueryBuilderStore, QueryBuilderStoreContext, useQueryBuilder, useQueryBuilderStoreApi } from "./store";
+import { type QueryRunRecord } from "./useConnectionRunner";
 import { connectionFor, type QueryBuilderBootstrapStatus } from "./useQueryBuilderBootstrap";
-import { type QueryRunRecord, useQueryRun } from "./useQueryRun";
+import { useQueryRun } from "./useQueryRun";
 
 export const RESULTS_MIN_HEIGHT = 120;
 
@@ -83,10 +85,13 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 	const store = useQueryBuilderStoreApi();
 	const { environments, byId } = useConnectableEnvironments();
 	const connection = useQueryBuilder((state) => state.connection);
+	const connections = useQueryBuilder((state) => state.connections);
 	const setConnection = useQueryBuilder((state) => state.setConnection);
+	const addConnection = useQueryBuilder((state) => state.addConnection);
+	const removeConnection = useQueryBuilder((state) => state.removeConnection);
 	const text = useQueryBuilder((state) => state.text);
 	const errors = useQueryBuilder((state) => state.errors);
-	const run = useQueryBuilder((state) => state.run);
+	const runs = useQueryBuilder((state) => state.runs);
 	const layout = useQueryBuilder((state) => state.layout);
 	const resizePane = useQueryBuilder((state) => state.resizePane);
 	const togglePane = useQueryBuilder((state) => state.togglePane);
@@ -95,10 +100,10 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 	const setNamesLead = useQueryBuilder((state) => state.setNamesLead);
 	const empty = useQueryBuilder((state) => state.text.trim() === "");
 	const tabUrl = useSessionStore((state) => state.tabUrl);
+	const tabId = useSessionStore((state) => state.tabId);
 	const { record } = useQueryHistory();
 	const [libraryOpen, setLibraryOpen] = useState(false);
 	const gateway = useQueryGateway(connection);
-	const connectionName = connectionLabel(connection, byId);
 	const onQueryRun = useCallback(
 		(queryRun: QueryRunRecord) => {
 			const target = historyConnection(queryRun.connection, tabUrl);
@@ -113,15 +118,18 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 		},
 		[byId, record, tabUrl]
 	);
-	const { run: runQuery, nextPage, loadAll, keepLoading, stop } = useQueryRun(gateway, connectionName, onQueryRun);
+	const controls = useQueryRun();
 	const connect = useAsyncAction("Cannot change the Connection");
-	const running = run.status === "running" || run.paging !== "idle";
+	const runList = Object.values(runs);
+	const running = runList.some(isRunBusy);
 	const canRun = gateway.ready && text.trim() !== "" && errors.length === 0 && !running;
 	const { collapsed, resultsMaximised: maximised } = layout;
 	const resultsCollapsed = collapsed.results && !maximised;
-	const showResults = !empty || run.status !== "idle";
+	const showResults = !empty || runList.some((run) => run.status !== "idle");
+	const added = connections.slice(1).map((target) => ({ key: connectionKey(target), name: connectionLabel(target, byId) }));
+	const addable = addableConnections(connections, { pageAvailable: tabId !== null, environments });
 
-	const onConnectionChange = (target: ConnectionTarget) =>
+	const withAccess = (target: ConnectionTarget, apply: (target: ConnectionTarget) => void) =>
 		void connect.run(async () => {
 			if (target.kind === "environment") {
 				const environment = byId[target.environmentId];
@@ -132,7 +140,7 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 					throw new Error("Power Tools does not have permission to connect to the Environment and the Microsoft sign-in service");
 				}
 			}
-			setConnection(target);
+			apply(target);
 		});
 
 	const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -150,13 +158,14 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 		event.stopPropagation();
 		store.getState().flushDraft();
 		if (canRun) {
-			void runQuery();
+			void controls.run();
 		}
 	};
 
 	return (
 		<QueryDiagnosticsProvider gateway={gateway}>
 			<StartProvider gateway={gateway}>
+				<ConnectionRunners environmentNames={byId} onQueryRun={onQueryRun} />
 				<div className={styles.root} onKeyDownCapture={onKeyDownCapture} onKeyDown={onKeyDown}>
 					<QueryBuilderHeader
 						hosted={hosted}
@@ -166,9 +175,13 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 						canRun={canRun}
 						running={running}
 						namesLead={namesLead}
-						onConnectionChange={onConnectionChange}
+						addedConnections={added}
+						addableConnections={addable}
+						onConnectionChange={(target) => withAccess(target, setConnection)}
+						onAddConnection={(target) => withAccess(target, addConnection)}
+						onRemoveConnection={removeConnection}
 						onNamesLeadChange={setNamesLead}
-						onRun={() => void runQuery()}
+						onRun={() => void controls.run()}
 						onOpenLibrary={() => setLibraryOpen(true)}
 					/>
 					<FailureBanner />
@@ -198,19 +211,13 @@ const QueryBuilderWorkspace = ({ hosted }: QueryBuilderWorkspaceProps) => {
 								!showResults && styles.hidden
 							)}
 							style={resultsCollapsed || maximised ? undefined : { height: `${layout.resultsHeight}px` }}>
-							<ResultsPane
-								run={run}
-								connection={run.connection ?? connection}
-								connectionName={run.connection ? connectionLabel(run.connection, byId) : connectionName}
-								ready={gateway.ready}
+							<ResultsArea
+								controls={controls}
+								environmentNames={byId}
 								collapsed={collapsed.results}
 								maximised={maximised}
 								onToggle={() => togglePane("results")}
 								onMaximisedChange={setResultsMaximised}
-								onNextPage={nextPage}
-								onLoadAll={loadAll}
-								onKeepLoading={keepLoading}
-								onStop={stop}
 							/>
 						</section>
 					</div>

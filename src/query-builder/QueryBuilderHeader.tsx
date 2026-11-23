@@ -5,7 +5,8 @@ import { ConnectionPicker } from "@/shared/components";
 import { type ConnectionTarget } from "@/shared/connections";
 import { type Environment } from "@/shared/storage";
 
-import { type NamesLead, problemCounts, problemCountText } from "./lib";
+import { type AddedConnection, ConnectionChips } from "./ConnectionChips";
+import { type AddableConnection, type NamesLead, problemCounts, problemCountText } from "./lib";
 import { SaveButton, StoredQueryName } from "./library";
 import { SeverityIcon } from "./ProblemIcon";
 import { useQueryDiagnostics } from "./QueryDiagnostics";
@@ -157,7 +158,11 @@ interface QueryBuilderHeaderProps {
 	canRun: boolean;
 	running: boolean;
 	namesLead: NamesLead;
+	addedConnections: readonly AddedConnection[];
+	addableConnections: readonly AddableConnection[];
 	onConnectionChange: (connection: ConnectionTarget) => void;
+	onAddConnection: (connection: ConnectionTarget) => void;
+	onRemoveConnection: (key: string) => void;
 	onNamesLeadChange: (lead: NamesLead) => void;
 	onRun: () => void;
 	onOpenLibrary: () => void;
@@ -171,7 +176,11 @@ export const QueryBuilderHeader = ({
 	canRun,
 	running,
 	namesLead,
+	addedConnections,
+	addableConnections,
 	onConnectionChange,
+	onAddConnection,
+	onRemoveConnection,
 	onNamesLeadChange,
 	onRun,
 	onOpenLibrary,
@@ -189,6 +198,13 @@ export const QueryBuilderHeader = ({
 			<div className={styles.picker}>
 				<ConnectionPicker value={connection} environments={environments} disabled={connecting || running} onChange={onConnectionChange} />
 			</div>
+			<ConnectionChips
+				added={addedConnections}
+				addable={addableConnections}
+				disabled={connecting || running}
+				onAdd={onAddConnection}
+				onRemove={onRemoveConnection}
+			/>
 			<div className={styles.divider} />
 			<div className={styles.group} role="group" aria-label="Query">
 				{empty ? null : <NewQueryMenu className={styles.queryButton} labelClassName={styles.queryLabel} />}
